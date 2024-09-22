@@ -1,17 +1,17 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Object functions
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Run objects
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 RunObjects:
-	lea	objects.w,a0			; Prepare objects
-	moveq	#OBJCOUNT-1,d7
+	lea	objects,a0			; Prepare objects
+	moveq	#OBJECT_COUNT-1,d7
 
 	moveq	#0,d0				; Prepare to get object ID
 
@@ -28,28 +28,28 @@ RunObjects:
 	moveq	#0,d0				; Prepare to get object ID
 
 .NextObj:
-	lea	oSize(a0),a0			; Get next object
+	lea	obj.struct_size(a0),a0		; Get next object
 	dbf	d7,.Loop			; Loop until finished
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle player movement with gravity
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjMoveGrv:
-	move.l	oX(a0),d2			; Get position
-	move.l	oY(a0),d3
+	move.l	obj.x(a0),d2			; Get position
+	move.l	obj.y(a0),d3
 
-	move.w	oXVel(a0),d0			; Apply X velocity
+	move.w	obj.x_speed(a0),d0		; Apply X velocity
 	ext.l	d0
 	asl.l	#8,d0
 	add.l	d0,d2
 
-	move.w	oYVel(a0),d0			; Get Y velocity
+	move.w	obj.y_speed(a0),d0		; Get Y velocity
 
 	btst	#3,oPlayerCtrl(a0)		; Are we on a rotating pole?
 	bne.s	.NoGravity			; If so, branch
@@ -58,44 +58,44 @@ ObjMoveGrv:
 
 	btst	#1,oPlayerCtrl(a0)		; Are we on a 3D ramp?
 	beq.s	.CheckGravity			; If not, branch
-	cmpi.w	#-$800,oYVel(a0)		; Are we going fast enough?
+	cmpi.w	#-$800,obj.y_speed(a0)		; Are we going fast enough?
 	bcs.s	.NoGravity			; If so, branch
 
 .CheckGravity:
 	btst	#2,oPlayerCtrl(a0)		; Are we hanging from a bar?
 	bne.s	.NoGravity			; If so, branch
-	addi.w	#$38,oYVel(a0)			; Apply gravity
+	addi.w	#$38,obj.y_speed(a0)		; Apply gravity
 
 .NoGravity:
-	tst.w	oYVel(a0)			; Are we moving up?
+	tst.w	obj.y_speed(a0)			; Are we moving up?
 	bmi.s	.NoDownVelCap			; If so, branch
-	cmpi.w	#$1000,oYVel(a0)		; Are we falling down too fast?
+	cmpi.w	#$1000,obj.y_speed(a0)		; Are we falling down too fast?
 	bcs.s	.NoDownVelCap			; If not, branch
-	move.w	#$1000,oYVel(a0)		; Cap the fall speed
+	move.w	#$1000,obj.y_speed(a0)		; Cap the fall speed
 
 .NoDownVelCap:
 	ext.l	d0				; Apply Y velocity
 	asl.l	#8,d0
 	add.l	d0,d3
 
-	move.l	d2,oX(a0)			; Update position
-	move.l	d3,oY(a0)
+	move.l	d2,obj.x(a0)			; Update position
+	move.l	d3,obj.y(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle player movement
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjMove:
-	move.l	oX(a0),d2			; Get position
-	move.l	oY(a0),d3
+	move.l	obj.x(a0),d2			; Get position
+	move.l	obj.y(a0),d3
 
-	move.w	oXVel(a0),d0			; Get X velocity
+	move.w	obj.x_speed(a0),d0		; Get X velocity
 
-	btst	#3,oFlags(a0)			; Are we standing on an object?
+	btst	#3,obj.flags(a0)		; Are we standing on an object?
 	beq.s	.NotOnObj			; If not, branch
 
 	moveq	#0,d1				; Get the object we are standing on
@@ -103,11 +103,11 @@ ObjMove:
 	lsl.w	#6,d1
 	addi.l	#objects&$FFFFFF,d1
 	movea.l	d1,a1
-	cmpi.b	#$1E,oID(a1)			; Is it a pinball flipper from CCZ?
+	cmpi.b	#$1E,obj.id(a1)			; Is it a pinball flipper from CCZ?
 	bne.s	.NotOnObj			; If not, branch
 
 	move.w	#-$100,d1			; Get resistance value
-	btst	#0,oFlags(a1)			; Is the object flipped?
+	btst	#0,obj.flags(a1)		; Is the object flipped?
 	beq.s	.NotNeg				; If not, branch
 	neg.w	d1				; Flip the resistance value
 
@@ -119,32 +119,32 @@ ObjMove:
 	asl.l	#8,d0
 	add.l	d0,d2
 
-	move.w	oYVel(a0),d0			; Apply Y velocity
+	move.w	obj.y_speed(a0),d0		; Apply Y velocity
 	ext.l	d0
 	asl.l	#8,d0
 	add.l	d0,d3
 
-	move.l	d2,oX(a0)			; Update position
-	move.l	d3,oY(a0)
+	move.l	d2,obj.x(a0)			; Update position
+	move.l	d3,obj.y(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw an object's sprite
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawObject:
-	bclr	#7,oSprFlags(a0)		; Mark this object as offscreen
+	bclr	#7,obj.sprite_flags(a0)		; Mark this object as offscreen
 
-	move.b	oSprFlags(a0),d0		; Is this object to be drawn relative to a camera?
-	andi.w	#$C,d0
+	move.b	obj.sprite_flags(a0),d0		; Is this object to be drawn relative to a camera?
+	andi.w	#%1100,d0
 	beq.w	.DrawObj			; If not, branch
 
-	move.b	oWidth(a0),d0			; Is this object onscreen horizontally?
-	move.w	oX(a0),d3
-	sub.w	cameraX.w,d3
+	move.b	obj.width(a0),d0		; Is this object onscreen horizontally?
+	move.w	obj.x(a0),d3
+	sub.w	camera_fg_x,d3
 	move.w	d3,d1
 	add.w	d0,d1
 	bmi.s	.End				; If not, branch
@@ -153,10 +153,10 @@ DrawObject:
 	cmpi.w	#320,d1
 	bge.s	.End				; If not, branch
 
-	move.b	oYRadius(a0),d0			; Get object Y position and radius
-	move.w	oY(a0),d3
+	move.b	obj.collide_height(a0),d0	; Get object Y position and radius
+	move.w	obj.y(a0),d3
 
-	cmpi.w	#$100,cameraY.w			; Are we near the top of the screen?
+	cmpi.w	#$100,camera_fg_y		; Are we near the top of the screen?
 	bcc.s	.ChkBottomWrap			; If not, branch
 	cmpi.w	#$800,d3			; Is this object at the bottom of the level?
 	bcs.s	.CheckY				; If not, branch
@@ -164,14 +164,14 @@ DrawObject:
 	bra.s	.CheckY
 
 .ChkBottomWrap:
-	cmpi.w	#$700,cameraY.w			; Are we near the bottom of the screen?
+	cmpi.w	#$700,camera_fg_y		; Are we near the bottom of the screen?
 	bcs.s	.CheckY				; If not, branch
 	cmpi.w	#$100,d3			; Is this object at the top of the level?
 	bcc.s	.CheckY				; If not, branch
 	addi.w	#$800,d3			; Wrap to the bottom of the screen
 
 .CheckY:
-	sub.w	cameraY.w,d3			; Is this object onscreen vertically?
+	sub.w	camera_fg_y,d3			; Is this object onscreen vertically?
 	move.w	d3,d1
 	add.w	d0,d1
 	bmi.s	.End				; If not, branch
@@ -181,8 +181,8 @@ DrawObject:
 	bge.s	.End				; If not, branch
 
 .DrawObj:
-	lea	objDrawQueue.w,a1		; Get the object draw queue for this object's priority level
-	move.w	oPriority(a0),d0
+	lea	object_draw_queue,a1		; Get the object draw queue for this object's priority level
+	move.w	obj.sprite_layer(a0),d0
 	lsr.w	#1,d0
 	andi.w	#$380,d0
 	adda.w	d0,a1
@@ -196,16 +196,16 @@ DrawObject:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw another object's sprite
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a1.l - Object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawOtherObject:
-	lea	objDrawQueue.w,a2		; Get the object draw queue for this object's priority level
-	move.w	oPriority(a1),d0
+	lea	object_draw_queue,a2		; Get the object draw queue for this object's priority level
+	move.w	obj.sprite_layer(a1),d0
 	lsr.w	#1,d0
 	andi.w	#$380,d0
 	adda.w	d0,a2
@@ -219,17 +219,17 @@ DrawOtherObject:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Make an object delete itself
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DeleteObject:
 	movea.l	a0,a1				; Clear object slot RAM
 	moveq	#0,d1
-	moveq	#oSize/4-1,d0
+	moveq	#obj.struct_size/4-1,d0
 
 .Clear:
 	move.l	d1,(a1)+
@@ -237,22 +237,22 @@ DeleteObject:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw all of the queued object sprites
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjDrawCameras:
 	dc.l	0				; Absolute position
-	dc.l	cameraX&$FFFFFF			; Relative to FG camera
-	dc.l	cameraBgX&$FFFFFF		; Relative to BG camera
-	dc.l	cameraBg3X&$FFFFFF		; Relative to BG3 camera
+	dc.l	camera_fg_x&$FFFFFF		; Relative to FG camera
+	dc.l	camera_bg_x&$FFFFFF		; Relative to BG camera
+	dc.l	camera_bg3_x&$FFFFFF		; Relative to BG3 camera
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawObjects:
-	lea	sprites.w,a2			; Prepare sprite table buffer
+	lea	sprites,a2			; Prepare sprite table buffer
 	moveq	#0,d5				; Prepare sprite counter
-	lea	objDrawQueue.w,a4		; Prepare object draw queue
+	lea	object_draw_queue,a4		; Prepare object draw queue
 
 	moveq	#8-1,d7				; Number of priority levels
 
@@ -267,7 +267,7 @@ DrawObjects:
 	tst.b	(a0)				; Is this object loaded?
 	beq.w	.NextObj			; If not, branch
 
-	move.b	oSprFlags(a0),d0		; Is this object to be drawn relative to a camera?
+	move.b	obj.sprite_flags(a0),d0		; Is this object to be drawn relative to a camera?
 	move.b	d0,d4
 	andi.w	#%00001100,d0
 	beq.w	.ScreenPos			; If not, branch
@@ -275,14 +275,14 @@ DrawObjects:
 	movea.l	ObjDrawCameras(pc,d0.w),a1	; Get camera that the object is relative to
 
 	moveq	#0,d0				; Get object's X position onscreen
-	move.b	oWidth(a0),d0
-	move.w	oX(a0),d3
+	move.b	obj.width(a0),d0
+	move.w	obj.x(a0),d3
 	sub.w	(a1),d3
 	addi.w	#128,d3
 
 	moveq	#0,d0				; Get object's Y position
-	move.b	oYRadius(a0),d0
-	move.w	oY(a0),d2
+	move.b	obj.collide_height(a0),d0
+	move.w	obj.y(a0),d2
 	cmpi.w	#$100,4(a1)			; Is the camera near the top of the level?
 	bcc.s	.ChkBottomWrap			; If not, branch
 	cmpi.w	#$800,d2			; Is this object near the bottom of the level?
@@ -303,19 +303,19 @@ DrawObjects:
 	bra.s	.DrawSprite
 
 .ScreenPos:
-	move.w	oYScr(a0),d2			; The object's position is an absolute screen position
-	move.w	oX(a0),d3
+	move.w	obj.screen_y(a0),d2		; The object's position is an absolute screen position
+	move.w	obj.screen_x(a0),d3
 	bra.s	.DrawSprite
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Dead code. It's a leftover from Sonic 1, in which if bit 4 of the object's
 ; render flags is clear, it ignores the object's Y radius for its Y position
 ; onscreen check. However, since DrawObject handles the onscreen check now, this
 ; is left unused.
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-.NoYRadChk:
-	move.w	oY(a0),d2			; Get object's Y position onscreen
+.Nobj.yRadChk:
+	move.w	obj.y(a0),d2			; Get object's Y position onscreen
 	sub.w	4(a1),d2
 	addi.w	#128,d2
 	cmpi.w	#0-32+128,d2			; Is it onscreen?
@@ -323,15 +323,15 @@ DrawObjects:
 	cmpi.w	#224+32+128,d2
 	bcc.s	.NextObj			; If not, branch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .DrawSprite:
-	movea.l	oMap(a0),a1			; Get object mappings
+	movea.l	obj.sprites(a0),a1		; Get object mappings
 	moveq	#0,d1
 	btst	#5,d4				; Is the pointer to the mappings a pointer to static mappings data?
 	bne.s	.StaticMap			; If so, branch
 
-	move.b	oMapFrame(a0),d1		; Get pointer to the object's frame mappings
+	move.b	obj.sprite_frame(a0),d1		; Get pointer to the object's frame mappings
 	add.w	d1,d1
 	adda.w	(a1,d1.w),a1
 
@@ -344,7 +344,7 @@ DrawObjects:
 	bsr.w	DrawSprite			; Draw the sprite
 
 .DrawDone:
-	bset	#7,oSprFlags(a0)		; Mark the object as onscreen
+	bset	#7,obj.sprite_flags(a0)		; Mark the object as onscreen
 
 .NextObj:
 	addq.w	#2,d6				; Next entry in the draw queue
@@ -355,7 +355,7 @@ DrawObjects:
 	lea	$80(a4),a4			; Next priority level draw queue
 	dbf	d7,.LevelLoop			; Loop until all the priority levels have been gone through
 
-	move.b	d5,spriteCount.w		; Save sprite count
+	move.b	d5,sprite_count			; Save sprite count
 	cmpi.b	#80,d5				; Is the sprite table full?
 	beq.s	.TableFull			; If so, branch
 
@@ -366,9 +366,9 @@ DrawObjects:
 	move.b	#0,-5(a2)			; Mark the last sprite table entry as the last
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw a sprite from mappings data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d1.w - Sprite piece count
 ;	d2.w - Y position
@@ -378,10 +378,10 @@ DrawObjects:
 ;	a0.l - Object RAM
 ;	a1.l - Sprite mappings data pointer
 ;	a2.l - Sprite table buffer pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawSprite:
-	movea.w	oTile(a0),a3			; Get base tile
+	movea.w	obj.sprite_tile(a0),a3		; Get base tile
 
 	btst	#0,d4				; Is the sprite flipped horizontally?
 	bne.s	DrawSprite_FlipX		; If so, branch
@@ -423,7 +423,7 @@ DrawSprite:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawSprite_FlipX:
 	btst	#1,d4				; Is the sprite flipped vertically?
@@ -471,7 +471,7 @@ DrawSprite_FlipX:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawSprite_FlipY:
 .Loop:
@@ -516,7 +516,7 @@ DrawSprite_FlipY:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawSprite_FlipXY:
 .Loop:
@@ -567,22 +567,22 @@ DrawSprite_FlipXY:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check if an object is onscreen
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ChkObjOnScreen:
-	move.w	oX(a0),d0			; Is the object onscreen horizontally?
-	sub.w	cameraX.w,d0
+	move.w	obj.x(a0),d0			; Is the object onscreen horizontally?
+	sub.w	camera_fg_x,d0
 	bmi.s	.OffScreen			; If not, branch
 	cmpi.w	#320,d0
 	bge.s	.OffScreen			; If not, branch
 
-	move.w	oY(a0),d1			; Is the object onscreen vertically?
-	sub.w	cameraY.w,d1
+	move.w	obj.y(a0),d1			; Is the object onscreen vertically?
+	sub.w	camera_fg_y,d1
 	bmi.s	.OffScreen			; If not, branch
 	cmpi.w	#224,d1
 	bge.s	.OffScreen			; If not, branch
@@ -594,13 +594,13 @@ ChkObjOnScreen:
 	moveq	#1,d0				; Mark as offscreen
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ChkObjOnScrWidth:
 	moveq	#0,d1				; Is the object onscreen horizontally?
-	move.b	oWidth(a0),d1
-	move.w	oX(a0),d0
-	sub.w	cameraX.w,d0
+	move.b	obj.width(a0),d1
+	move.w	obj.x(a0),d0
+	sub.w	camera_fg_x,d0
 	add.w	d1,d0
 	bmi.s	.OffScreen			; If not, branch
 	add.w	d1,d1
@@ -608,8 +608,8 @@ ChkObjOnScrWidth:
 	cmpi.w	#320,d0
 	bge.s	.OffScreen			; If not, branch
 
-	move.w	oY(a0),d1			; Is the object onscreen vertically?
-	sub.w	cameraY.w,d1
+	move.w	obj.y(a0),d1			; Is the object onscreen vertically?
+	sub.w	camera_fg_y,d1
 	bmi.s	.OffScreen			; If not, branch
 	cmpi.w	#224,d1
 	bge.s	.OffScreen			; If not, branch
@@ -621,4 +621,4 @@ ChkObjOnScrWidth:
 	moveq	#1,d0				; Mark as offscreen
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

@@ -1,9 +1,9 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Title screen Main CPU program
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	include	"_Include/Common.i"
 	include	"_Include/Main CPU.i"
@@ -12,151 +12,151 @@
 	include	"_Include/MMD.i"
 	include	"Title Screen/_Common.i"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Image buffer VRAM constants
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-IMGVRAM		EQU	$0020			; VRAM address
-IMGV1LEN	EQU	IMGLENGTH/2		; Part 1 length
+IMGVRAM			equ $0020				; VRAM address
+IMGV1LEN		equ IMGLENGTH/2				; Part 1 length
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Object variables structure
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	rsreset
-oAddr		rs.w	1			; Address
-oActive		rs.b	1			; Active flag
-oFlags		rs.b	1			; Flags
-oTile		rs.w	1			; Base sprite tile
-oMap		rs.l	1			; Mappings
-oMapFrame	rs.b	1			; Mappings frame
-		rs.b	1
-oX		rs.l	1			; X position
-oY		rs.l	1			; Y position
-oVars		rs.b	$40-__rs		; Object specific variables
-oSize		rs.b	0			; Size of structure
+obj.addr		rs.w 1					; Address
+obj.active		rs.b 1					; Active flag
+obj.flags		rs.b 1					; Flags
+obj.sprite_tile		rs.w 1					; Base sprite tile
+obj.sprites		rs.l 1					; Mappings
+obj.sprite_frame	rs.b 1					; Mappings frame
+			rs.b 1
+obj.x			rs.l 1					; X position
+obj.y			rs.l 1					; Y position
+obj.vars		rs.b $40-__rs				; Object specific variables
+obj.struct_size		rs.b 0					; Size of structure
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Variables
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-	rsset	WORKRAM+$FF00A000
-VARSSTART	rs.b	0			; Start of variables
-cloudsImage	rs.b	IMGLENGTH		; Clouds image buffer
-hscroll		rs.b	$380			; Horizontal scroll buffer
-		rs.b	$80
-sprites		rs.b	80*8			; Sprite buffer
-scrollBuf	rs.b	$100			; Scroll buffer
-		rs.b	$B80
+	rsset	WORK_RAM+$FF00A000
+VARIABLES		rs.b 0					; Start of variables
+clouds_image		rs.b IMGLENGTH				; Clouds image buffer
+hscroll			rs.b $380				; Horizontal scroll buffer
+			rs.b $80
+sprites			rs.b 80*8				; Sprite buffer
+water_scroll		rs.b $100				; Scroll buffer
+			rs.b $B80
 
-objects		rs.b	0			; Object pool
-object0		rs.b	oSize			; Object 0
-object1		rs.b	oSize			; Object 1
-object2		rs.b	oSize			; Object 2
-object3		rs.b	oSize			; Object 3
-object4		rs.b	oSize			; Object 4
-object5		rs.b	oSize			; Object 5
-object6		rs.b	oSize			; Object 6
-object7		rs.b	oSize			; Object 7
+objects			rs.b 0					; Object pool
+object0			rs.b obj.struct_size			; Object 0
+object1			rs.b obj.struct_size			; Object 1
+object2			rs.b obj.struct_size			; Object 2
+object3			rs.b obj.struct_size			; Object 3
+object4			rs.b obj.struct_size			; Object 4
+object5			rs.b obj.struct_size			; Object 5
+object6			rs.b obj.struct_size			; Object 6
+object7			rs.b obj.struct_size			; Object 7
 	if REGION<>JAPAN
-object8		rs.b	oSize			; Object 8
-object9		rs.b	oSize			; Object 9
+object8			rs.b obj.struct_size			; Object 8
+object9			rs.b obj.struct_size			; Object 9
 	endif
-objectsEnd	rs.b	0			; End of object pool
-OBJCOUNT	EQU	(__rs-objects)/oSize
+objects_end		rs.b 0					; End of object pool
+OBJECT_COUNT		equ (__rs-objects)/obj.struct_size
 
 	if REGION=JAPAN
-		rs.b	$1200
+			rs.b $1200
 	else
-		rs.b	$1180
+			rs.b $1180
 	endif
 
-nemBuffer	rs.b	$200			; Nemesis decompression buffer
-palette		rs.w	$40			; Palette buffer
-fadePalette	rs.w	$40			; Fade palette buffer
-		rs.b	1
-unkPalFadeFlag	rs.b	1			; Unknown palette fade flag
-palFadeInfo	rs.b	0			; Palette fade info
-palFadeStart	rs.b	1			; Palette fade start
-palFadeLen	rs.b	1			; Palette fade length
-titleMode	rs.b	1			; Title screen mode
-		rs.b	5
-unkObjYSpeed	rs.w	1			; Unknown global object Y speed
-palCycleFrame	rs.b	1			; Palette cycle frame
-palCycleDelay	rs.b	1			; Palette cycle delay
-exitFlag	rs.b	1			; Exit flag
-menuSel		rs.b	1			; Menu selection
-menuOptions	rs.b	8			; Available menu options
-p2CtrlData	rs.b	0			; Player 2 controller data
-p2CtrlHold	rs.b	1			; Player 2 controller held buttons data
-p2CtrlTap	rs.b	1			; Player 2 controller tapped buttons data
-p1CtrlData	rs.b	0			; Player 1 controller data
-p1CtrlHold	rs.b	1			; Player 1 controller held buttons data
-p1CtrlTap	rs.b	1			; Player 1 controller tapped buttons data
-cloudsCtrlFlag	rs.b	1			; Clouds control flag
-		RSEVEN
-fmSndQueue	rs.b	1			; FM sound queue
-		RSEVEN
-subWaitTime	rs.l	1			; Sub CPU wait time
-subFailCount	rs.b	1			; Sub CPU fail count
-		RSEVEN
-enableDisplay	rs.b	1			; Enable display flag
-		rs.b	$19
-vintRoutine	rs.w	1			; V-INT routine ID
-timer		rs.w	1			; Timer
-vintCounter	rs.w	1			; V-INT counter
-savedSR		rs.w	1			; Saved status register
-spriteCount	rs.b	1			; Sprite count
-		RSEVEN
-curSpriteSlot	rs.l	1			; Current sprite slot
-		rs.b	$B2
-VARSLEN		EQU	__rs-VARSSTART		; Size of variables area
+nem_code_table		rs.b $200				; Nemesis decompression code table
+palette			rs.w $40				; Palette buffer
+fade_palette		rs.w $40				; Fade palette buffer
+			rs.b 1
+unk_palette_fade_flag	rs.b 1					; Unknown palette fade flag
+palette_fade_params	rs.b 0					; Palette fade parameters
+palette_fade_start	rs.b 1					; Palette fade start
+palette_fade_length	rs.b 1					; Palette fade length
+title_mode		rs.b 1					; Title screen mode
+			rs.b 5
+unk_object_y_speed	rs.w 1					; Unknown global object Y speed
+palette_cycle_frame	rs.b 1					; Palette cycle frame
+palette_cycle_delay	rs.b 1					; Palette cycle delay
+exit_flag		rs.b 1					; Exit flag
+menu_selection		rs.b 1					; Menu selection
+menu_options		rs.b 8					; Available menu options
+p2_ctrl_data		rs.b 0					; Player 2 controller data
+p2_ctrl_hold		rs.b 1					; Player 2 controller held buttons data
+p2_ctrl_tap		rs.b 1					; Player 2 controller tapped buttons data
+p1_ctrl_data		rs.b 0					; Player 1 controller data
+p1_ctrl_hold		rs.b 1					; Player 1 controller held buttons data
+p1_ctrl_tap		rs.b 1					; Player 1 controller tapped buttons data
+control_clouds		rs.b 1					; Control clouds flag
+			rs.b 1
+fm_sound_queue		rs.b 1					; FM sound queue
+			rs.b 1
+sub_wait_time		rs.l 1					; Sub CPU wait time
+sub_fail_count		rs.b 1					; Sub CPU fail count
+			rs.b 1
+enable_display		rs.b 1					; Enable display flag
+			rs.b $19
+vblank_routine		rs.w 1					; V-BLANK routine ID
+timer			rs.w 1					; Timer
+frame_count		rs.w 1					; V-INT counter
+saved_sr		rs.w 1					; Saved status register
+sprite_count		rs.b 1					; Sprite count
+			rs.b 1
+cur_sprite_slot		rs.l 1					; Current sprite slot
+			rs.b $B2
+VARIABLES_SIZE		equ __rs-VARIABLES			; Size of variables area
 
-lagCounter	rs.l	1			; Lag counter
+lag_counter		rs.l 1					; Lag counter
 
-subP2CtrlData	EQU	GACOMCMDE		; Sub CPU player 2 controller data
-subP2CtrlHold	EQU	subP2CtrlData		; Sub CPU player 2 controller held buttons data
-subP2CtrlTap	EQU	subP2CtrlData+1		; Sub CPU player 2 controller tapped buttons data
+sub_p2_ctrl_data	equ MCD_MAIN_COMM_14			; Sub CPU player 2 controller data
+sub_p2_ctrl_hold	equ sub_p2_ctrl_data			; Sub CPU player 2 controller held buttons data
+sub_p2_ctrl_tap		equ sub_p2_ctrl_data+1			; Sub CPU player 2 controller tapped buttons data
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; MMD header
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	MMD	MMDSUBM, &
-		WORKRAMFILE, $8000, &
+		work_ram_file, $8000, &
 		Start, 0, 0
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Program start
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Start:
-	move.w	#$8134,ipxVDPReg1		; Disable display
-	move.w	ipxVDPReg1,VDPCTRL
+	move.w	#$8134,ipx_vdp_reg_81		; Disable display
+	move.w	ipx_vdp_reg_81,VDP_CTRL
 	
 	move.l	#VInterrupt,_LEVEL6+2.w		; Set V-INT address
-	move.l	#-1,lagCounter.w		; Disable lag counter
+	move.l	#-1,lag_counter		; Disable lag counter
 
 	moveq	#0,d0				; Clear communication registers
-	move.l	d0,GACOMCMD0
-	move.l	d0,GACOMCMD4
-	move.l	d0,GACOMCMD8
-	move.l	d0,GACOMCMDC
-	move.b	d0,GAMAINFLAG
+	move.l	d0,MCD_MAIN_COMM_0
+	move.l	d0,MCD_MAIN_COMM_4
+	move.l	d0,MCD_MAIN_COMM_8
+	move.l	d0,MCD_MAIN_COMM_C
+	move.b	d0,MCD_MAIN_FLAG
 	
-	move.b	d0,enableDisplay.w		; Clear display enable flag
-	move.l	d0,subWaitTime.w		; Reset Sub CPU wait time
-	move.b	d0,subFailCount.w		; Reset Sub CPU fail count
+	move.b	d0,enable_display		; Clear display enable flag
+	move.l	d0,sub_wait_time		; Reset Sub CPU wait time
+	move.b	d0,sub_fail_count		; Reset Sub CPU fail count
 	
-	lea	VARSSTART.w,a0			; Clear variables
-	move.w	#VARSLEN/4-1,d7
+	lea	VARIABLES.w,a0			; Clear variables
+	move.w	#VARIABLES_SIZE/4-1,d7
 
 .ClearVars:
 	clr.l	(a0)+
 	dbf	d7,.ClearVars
 	
 	bsr.w	WaitSubCPUStart			; Wait for the Sub CPU program to start
-	bsr.w	GiveWordRAMAccess		; Give Word RAM access
+	bsr.w	GiveWordRamAccess		; Give Word RAM access
 	bsr.w	WaitSubCPUInit			; Wait for the Sub CPU program to finish initializing
 	
 	bsr.w	InitMD				; Initialize Mega Drive hardware
@@ -164,46 +164,52 @@ Start:
 	bsr.w	ClearObjects			; Clear objects
 	bsr.w	DrawTilemaps			; Draw tilemaps
 	
-	VDPCMD	move.l,$D800,VRAM,WRITE,VDPCTRL	; Load press start text art
+	VDP_CMD move.l,$D800,VRAM,WRITE,VDP_CTRL	; Load press start text art
 	lea	Art_PressStartText(pc),a0
 	bsr.w	NemDec
-	VDPCMD	move.l,$DC00,VRAM,WRITE,VDPCTRL	; Load menu arrow art
+	
+	VDP_CMD move.l,$DC00,VRAM,WRITE,VDP_CTRL	; Load menu arrow art
 	lea	Art_MenuArrow(pc),a0
 	bsr.w	NemDec
+	
 	if REGION=USA				; Load copyright/TM art
-		VDPCMD	move.l,$DE00,VRAM,WRITE,VDPCTRL
+		VDP_CMD move.l,$DE00,VRAM,WRITE,VDP_CTRL
 		lea	Art_CopyrightTM(pc),a0
 		bsr.w	NemDec
-		VDPCMD	move.l,$DFC0,VRAM,WRITE,VDPCTRL
+		
+		VDP_CMD move.l,$DFC0,VRAM,WRITE,VDP_CTRL
 		lea	Art_TM(pc),a0
 		bsr.w	NemDec
 	else
-		VDPCMD	move.l,$DE00,VRAM,WRITE,VDPCTRL
+		VDP_CMD move.l,$DE00,VRAM,WRITE,VDP_CTRL
 		lea	Art_Copyright(pc),a0
 		bsr.w	NemDec
-		VDPCMD	move.l,$DF20,VRAM,WRITE,VDPCTRL
+		
+		VDP_CMD move.l,$DF20,VRAM,WRITE,VDP_CTRL
 		lea	Art_TM(pc),a0
 		bsr.w	NemDec
 	endif
-	VDPCMD	move.l,$F000,VRAM,WRITE,VDPCTRL	; Load banner art
+	
+	VDP_CMD move.l,$F000,VRAM,WRITE,VDP_CTRL	; Load banner art
 	lea	Art_Banner(pc),a0
 	bsr.w	NemDec
-	VDPCMD	move.l,$6D00,VRAM,WRITE,VDPCTRL	; Load Sonic art
+	
+	VDP_CMD move.l,$6D00,VRAM,WRITE,VDP_CTRL	; Load Sonic art
 	lea	Art_Sonic(pc),a0
 	bsr.w	NemDec
 
-	lea	ObjSonic(pc),a2			; Spawn Sonic
+	lea	ObjSonic(pc),a2				; Spawn Sonic
 	bsr.w	SpawnObject
 	
-	VDPCMD	move.l,$BC20,VRAM,WRITE,VDPCTRL	; Load solid tiles
+	VDP_CMD move.l,$BC20,VRAM,WRITE,VDP_CTRL	; Load solid tiles
 	lea	Art_SolidColor(pc),a0
 	bsr.w	NemDec
 	
 	bsr.w	DrawCloudsMap			; Draw clouds map
 	bsr.w	VSync				; VSync
 
-	move.b	#1,enableDisplay.w		; Enable display
-	move.w	#4,vintRoutine.w		; VSync
+	move.b	#1,enable_display		; Enable display
+	move.w	#4,vblank_routine		; VSync
 	bsr.w	VSync
 
 	if REGION=USA
@@ -214,58 +220,61 @@ Start:
 		dbf	d7,.Delay
 	endif
 
-	move.l	#0,lagCounter.w			; Enable and reset lag counter
+	move.l	#0,lag_counter			; Enable and reset lag counter
 	jsr	RunObjects(pc)			; Run objects
-	move.w	#5,vintRoutine.w		; VSync
+	move.w	#5,vblank_routine		; VSync
 	bsr.w	VSync
 
 	lea	Pal_Title+($30*2),a1		; Fade in Sonic palette
-	lea	fadePalette+($30*2).w,a2
+	lea	fade_palette+($30*2),a2
 	movem.l	(a1)+,d0-d7
 	movem.l	d0-d7,(a2)
-	move.w	#($30<<9)|($10-1),palFadeInfo.w
+	move.w	#($30<<9)|($10-1),palette_fade_params
 	bsr.w	FadeFromBlack
 
 .WaitSonicTurn:
-	move.b	#1,titleMode.w			; Set to "Sonic turning" mode
+	move.b	#1,title_mode			; Set to "Sonic turning" mode
 	
 	jsr	ClearSprites(pc)		; Clear sprites
 	jsr	RunObjects(pc)			; Run objects
 
-	btst	#7,titleMode.w			; Has Sonic turned around?
+	btst	#7,title_mode			; Has Sonic turned around?
 	bne.s	.FlashWhite			; If so, branch
-	move.w	#5,vintRoutine.w		; VSync
+	move.w	#5,vblank_routine		; VSync
 	bsr.w	VSync
 	bra.w	.WaitSonicTurn			; Loop
 
 .FlashWhite:
-	bclr	#7,titleMode.w			; Clear Sonic turned flag
+	bclr	#7,title_mode			; Clear Sonic turned flag
 
-	VDPCMD	move.l,$6D80,VRAM,WRITE,VDPCTRL	; Load emblem art
+	VDP_CMD move.l,$6D80,VRAM,WRITE,VDP_CTRL	; Load emblem art
 	lea	Art_Emblem(pc),a0
 	bsr.w	NemDec
 
 	lea	Pal_Title,a1			; Flash white and fade in title screen paltte
-	lea	fadePalette.w,a2
+	lea	fade_palette,a2
 	bsr.w	Copy128
-	move.w	#($00<<9)|($30-1),palFadeInfo.w
+	move.w	#($00<<9)|($30-1),palette_fade_params
 	bsr.w	FadeFromWhite2
 
 	lea	ObjPlanet(pc),a2		; Spawn background planet
 	bsr.w	SpawnObject
+	
 	lea	ObjMenu,a2			; Spawn menu
 	bsr.w	SpawnObject
+	
 	lea	ObjCopyright(pc),a2		; Spawn copyright
 	bsr.w	SpawnObject
+	
 	if REGION<>JAPAN
 		lea	ObjTM(pc),a2		; Spawn TM symbol
 		bsr.w	SpawnObject
 	endif
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 MainLoop:
-	move.b	#2,titleMode.w			; Set to "menu" mode
+	move.b	#2,title_mode			; Set to "menu" mode
 	
 	; Show clouds buffer 2, render to buffer 1
 	bsr.w	RenderClouds			; Start rendering clouds
@@ -273,19 +282,19 @@ MainLoop:
 	jsr	RunObjects(pc)			; Run objects
 	bsr.w	PaletteCycle			; Run palette cycle
 	bsr.w	ScrollBgBuf2			; Scroll background (show clouds buffer 2)
-	move.w	#0,vintRoutine.w		; VSync (copy 1st half of last rendered clouds art to buffer 1)
+	move.w	#0,vblank_routine		; VSync (copy 1st half of last rendered clouds art to buffer 1)
 	bsr.w	VSync
 
 	jsr	ClearSprites(pc)		; Clear sprites
 	jsr	RunObjects(pc)			; Run objects
-	move.w	#1,vintRoutine.w		; VSync (copy 2nd half of last rendered clouds art to buffer 1)
+	move.w	#1,vblank_routine		; VSync (copy 2nd half of last rendered clouds art to buffer 1)
 	bsr.w	VSync
 
-	bsr.w	WaitWordRAMAccess		; Wait for Word RAM access
+	bsr.w	WaitWordRamAccess		; Wait for Word RAM access
 	bsr.w	GetCloudsImage			; Get rendered clouds image
-	bsr.w	GiveWordRAMAccess		; Give back Word RAM access
+	bsr.w	GiveWordRamAccess		; Give back Word RAM access
 
-	tst.b	exitFlag.w			; Are we exiting the title screen?
+	tst.b	exit_flag			; Are we exiting the title screen?
 	bne.s	.Exit				; If so, branch
 	
 	; Show clouds buffer 1, render to buffer 2
@@ -294,40 +303,40 @@ MainLoop:
 	bsr.w	PaletteCycle			; Run palette cycle
 	bsr.w	RenderClouds			; Start rendering clouds
 	bsr.w	ScrollBgBuf1			; Scroll background (show clouds buffer 1)
-	move.w	#2,vintRoutine.w		; VSync (copy 1st half of last rendered clouds art to buffer 2)
+	move.w	#2,vblank_routine		; VSync (copy 1st half of last rendered clouds art to buffer 2)
 	bsr.w	VSync
 
 	jsr	ClearSprites(pc)		; Clear sprites
 	jsr	RunObjects(pc)			; Run objects
-	move.w	#3,vintRoutine.w		; VSync (copy 2nd half of last rendered clouds art to buffer 12)
+	move.w	#3,vblank_routine		; VSync (copy 2nd half of last rendered clouds art to buffer 12)
 	bsr.w	VSync
 
-	bsr.w	WaitWordRAMAccess		; Wait for Word RAM access
+	bsr.w	WaitWordRamAccess		; Wait for Word RAM access
 	bsr.w	GetCloudsImage			; Get rendered clouds image
-	bsr.w	GiveWordRAMAccess		; Give back Word RAM access
+	bsr.w	GiveWordRamAccess		; Give back Word RAM access
 
-	tst.b	exitFlag.w			; Are we exiting the title screen?
+	tst.b	exit_flag			; Are we exiting the title screen?
 	bne.s	.Exit				; If so, branch
 	bra.w	MainLoop			; Loop
 
 .Exit:
 	if REGION=USA
-		cmpi.b	#4,subFailCount.w	; Is the Sub CPU deemed unreliable?
+		cmpi.b	#4,sub_fail_count	; Is the Sub CPU deemed unreliable?
 		bcc.s	.FadeOut		; If so, branch
 	endif
-	bset	#0,GAMAINFLAG			; Tell Sub CPU we are finished
+	bset	#0,MCD_MAIN_FLAG		; Tell Sub CPU we are finished
 
 .WaitSubCPU:
-	btst	#0,GASUBFLAG			; Has the Sub CPU received our tip?
+	btst	#0,MCD_SUB_FLAG			; Has the Sub CPU received our tip?
 	beq.s	.WaitSubCPU			; If not, branch
-	bclr	#0,GAMAINFLAG			; Respond to the Sub CPU
+	bclr	#0,MCD_MAIN_FLAG		; Respond to the Sub CPU
 
 .FadeOut:
-	move.w	#5,vintRoutine.w		; Fade to black
+	move.w	#5,vblank_routine		; Fade to black
 	bsr.w	FadeToBlack
 
 	moveq	#0,d1				; Set exit code
-	move.b	exitFlag.w,d1
+	move.b	exit_flag,d1
 	bmi.s	.NegFlag			; If it was negative, branch
 	rts
 
@@ -335,51 +344,51 @@ MainLoop:
 	moveq	#0,d1				; Override with 0
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; VSync
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VSync:
-	bset	#0,ipxVSync			; Set VSync flag
+	bset	#0,ipx_vsync			; Set VSync flag
 	move	#$2500,sr			; Enable interrupts
 
 .Wait:
-	btst	#0,ipxVSync			; Has the V-INT handler run?
+	btst	#0,ipx_vsync			; Has the V-INT handler run?
 	bne.s	.Wait				; If not, wait
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; V-BLANK interrupt
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInterrupt:
 	movem.l	d0-a6,-(sp)			; Save registers
 
-	move.b	#1,GAIRQ2			; Trigger IRQ2 on Sub CPU
-	bclr	#0,ipxVSync			; Clear VSync flag
+	move.b	#1,MCD_IRQ2			; Trigger IRQ2 on Sub CPU
+	bclr	#0,ipx_vsync			; Clear VSync flag
 	beq.w	VInt_Lag			; If it wasn't set, branch
 	
-	tst.b	enableDisplay.w			; Should we enable the display?
+	tst.b	enable_display			; Should we enable the display?
 	beq.s	.Update				; If not, branch
-	bset	#6,ipxVDPReg1+1			; Enable display
-	move.w	ipxVDPReg1,VDPCTRL
-	clr.b	enableDisplay.w			; Clear enable display flag
+	bset	#6,ipx_vdp_reg_81+1		; Enable display
+	move.w	ipx_vdp_reg_81,VDP_CTRL
+	clr.b	enable_display			; Clear enable display flag
 
 .Update:
-	lea	VDPCTRL,a1			; VDP control port
-	lea	VDPDATA,a2			; VDP data port
+	lea	VDP_CTRL,a1			; VDP control port
+	lea	VDP_DATA,a2			; VDP data port
 	move.w	(a1),d0				; Reset V-BLANK flag
 
 	jsr	StopZ80(pc)			; Stop the Z80
-	DMA68K	palette,$0000,$80,CRAM		; Copy palette data
-	DMA68K	hscroll,$D000,$380,VRAM		; Copy horizontal scroll data
+	DMA_M68K palette,$0000,$80,CRAM		; Copy palette data
+	DMA_M68K hscroll,$D000,$380,VRAM		; Copy horizontal scroll data
 
-	move.w	vintRoutine.w,d0		; Run routine
+	move.w	vblank_routine,d0		; Run routine
 	add.w	d0,d0
 	move.w	.Routines(pc,d0.w),d0
 	jmp	.Routines(pc,d0.w)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Routines:
 	dc.w	VInt_CopyClouds1_1-.Routines	; Copy 1st half of rendered clouds image to buffer 1
@@ -389,125 +398,125 @@ VInterrupt:
 	dc.w	VInt_Nothing-.Routines		; Does nothing
 	dc.w	VInt_NoClouds-.Routines		; Don't render clouds
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyClouds1_1:
-	DMA68K	sprites,$D400,$280,VRAM		; Copy sprite data
-	COPYIMG	cloudsImage, 0, 0		; Copy rendered clouds image
+	DMA_M68K sprites,$D400,$280,VRAM	; Copy sprite data
+	COPYIMG	clouds_image,0,0			; Copy rendered clouds image
 	jsr	ReadControllers(pc)		; Read controllers
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyClouds1_2:
-	DMA68K	sprites,$D400,$280,VRAM		; Copy sprite data
-	COPYIMG	cloudsImage, 0, 1		; Copy rendered clouds image
+	DMA_M68K sprites,$D400,$280,VRAM	; Copy sprite data
+	COPYIMG	clouds_image,0,1			; Copy rendered clouds image
 	jsr	ReadControllers(pc)		; Read controllers
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyClouds2_1:
-	DMA68K	sprites,$D400,$280,VRAM		; Copy sprite data
-	COPYIMG	cloudsImage, 1, 0		; Copy rendered clouds image
+	DMA_M68K sprites,$D400,$280,VRAM	; Copy sprite data
+	COPYIMG	clouds_image,1,0			; Copy rendered clouds image
 	jsr	ReadControllers(pc)		; Read controllers
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyClouds2_2:
-	DMA68K	sprites,$D400,$280,VRAM		; Copy sprite data
-	COPYIMG	cloudsImage, 1, 1		; Copy rendered clouds image
+	DMA_M68K sprites,$D400,$280,VRAM	; Copy sprite data
+	COPYIMG	clouds_image,1,1			; Copy rendered clouds image
 	jsr	ReadControllers(pc)		; Read controllers
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_Nothing:
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_NoClouds:
-	DMA68K	sprites,$D400,$280,VRAM		; Copy sprite data
+	DMA_M68K sprites,$D400,$280,VRAM	; Copy sprite data
 	jsr	ReadControllers(pc)		; Read controllers
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_Finish:
-	tst.b	fmSndQueue.w			; Is there a sound queued?
+	tst.b	fm_sound_queue			; Is there a sound queued?
 	beq.s	.NoSound			; If not, branch
-	move.b	fmSndQueue.w,FMDrvQueue2	; Queue sound in driver
-	clr.b	fmSndQueue.w			; Clear sound queue
+	move.b	fm_sound_queue,FMDrvQueue2	; Queue sound in driver
+	clr.b	fm_sound_queue			; Clear sound queue
 
 .NoSound:
 	bsr.w	StartZ80			; Start the Z80
 	
-	tst.w	timer.w				; Is the timer running?
+	tst.w	timer				; Is the timer running?
 	beq.s	.NoTimer			; If not, branch
-	subq.w	#1,timer.w			; Decrement timer
+	subq.w	#1,timer			; Decrement timer
 
 .NoTimer:
-	addq.w	#1,vintCounter.w		; Increment counter
+	addq.w	#1,frame_count			; Increment frame count
 	
 	movem.l	(sp)+,d0-a6			; Restore registers
 	rte
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_Lag:
-	cmpi.l	#-1,lagCounter.w		; Is the lag counter disabled?
+	cmpi.l	#-1,lag_counter			; Is the lag counter disabled?
 	beq.s	.NoLagCounter			; If so, branch
-	addq.l	#1,lagCounter.w			; Increment lag counter
-	move.b	vintRoutine+1.w,lagCounter.w	; Save routine ID
+	addq.l	#1,lag_counter			; Increment lag counter
+	move.b	vblank_routine+1,lag_counter	; Save routine ID
 
 .NoLagCounter:
 	movem.l	(sp)+,d0-a6			; Restore registers
 	rte
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Unused functions to show a clouds buffer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a1.l - VDP control port
 ;	a2.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowCloudsBuf1:
-	move.w	#$8F20,(a1)			; Set for every 8 scanlines
-	VDPCMD	move.l,$D002,VRAM,WRITE,VDPCTRL	; Write background scroll data
-	moveq	#0,d0				; Show clouds buffer 1
+	move.w	#$8F20,(a1)				; Set for every 8 scanlines
+	VDP_CMD move.l,$D002,VRAM,WRITE,VDP_CTRL	; Write background scroll data
+	moveq	#0,d0					; Show clouds buffer 1
 	bra.s	ShowCloudsBuf
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowCloudsBuf2:
-	move.w	#$8F20,(a1)			; Set for every 8 scanlines
-	VDPCMD	move.l,$D002,VRAM,WRITE,VDPCTRL	; Write background scroll data
-	move.w	#$100,d0			; Show clouds buffer 2
+	move.w	#$8F20,(a1)				; Set for every 8 scanlines
+	VDP_CMD move.l,$D002,VRAM,WRITE,VDP_CTRL	; Write background scroll data
+	move.w	#$100,d0				; Show clouds buffer 2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowCloudsBuf:
-	rept	(IMGHEIGHT-8)/8			; Set scroll offset for clouds
+	rept	(IMGHEIGHT-8)/8				; Set scroll offset for clouds
 		move.w	d0,(a2)
 	endr
-	move.w	#$8F02,(a1)			; Restore autoincrement
+	move.w	#$8F02,(a1)				; Restore autoincrement
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll background (show clouds buffer 1)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ScrollBgBuf1:
-	lea	hscroll.w,a1			; Show clouds buffer 1
+	lea	hscroll,a1			; Show clouds buffer 1
 	moveq	#(IMGHEIGHT-8)-1,d1
 
 .ShowClouds:
 	clr.l	(a1)+
 	dbf	d1,.ShowClouds
 
-	lea	scrollBuf.w,a2			; Water scroll buffer
+	lea	water_scroll,a2			; Water scroll buffer
 	moveq	#64-1,d2			; 64 scanlines
 	move.l	#$1000,d1			; Speed accumulator
 	move.l	#$4000,d0			; Initial speed
@@ -517,8 +526,8 @@ ScrollBgBuf1:
 	add.l	d1,d0				; Increase speed
 	dbf	d2,.MoveWaterSects		; Loop until all lines are moved
 
-	lea	scrollBuf.w,a2			; Set water scroll positions
-	lea	hscroll+(160*4).w,a1
+	lea	water_scroll,a2			; Set water scroll positions
+	lea	hscroll+(160*4),a1
 	moveq	#64-1,d2			; 64 scanlines
 	moveq	#0,d0
 
@@ -529,19 +538,19 @@ ScrollBgBuf1:
 	dbf	d2,.SetWaterScroll		; Loop until all scanlines are set
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll background (show clouds buffer 2)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ScrollBgBuf2:
-	lea	hscroll.w,a1			; Show clouds buffer 2
+	lea	hscroll,a1			; Show clouds buffer 2
 	moveq	#(IMGHEIGHT-8)-1,d1
 
 .ShowClouds:
 	move.l	#$100,(a1)+
 	dbf	d1,.ShowClouds
 
-	lea	scrollBuf.w,a2			; Water scroll buffer
+	lea	water_scroll,a2			; Water scroll buffer
 	moveq	#64-1,d2			; 64 scanlines
 	move.l	#$1000,d1			; Speed accumulator
 	move.l	#$4000,d0			; Initial speed
@@ -551,8 +560,8 @@ ScrollBgBuf2:
 	add.l	d1,d0				; Increase speed
 	dbf	d2,.MoveWaterSects		; Loop until all lines are moved
 
-	lea	scrollBuf.w,a2			; Set water scroll positions
-	lea	hscroll+(160*4).w,a1
+	lea	water_scroll,a2			; Set water scroll positions
+	lea	hscroll+(160*4),a1
 	moveq	#64-1,d2			; 64 scanlines
 	moveq	#0,d0
 
@@ -563,22 +572,24 @@ ScrollBgBuf2:
 	dbf	d2,.SetWaterScroll		; Loop until all scanlines are set
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Read controller data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ReadControllers:
-	lea	p1CtrlData.w,a0			; Player 1 controller data buffer
-	lea	IODATA1,a1			; Controller port 1
+	lea	p1_ctrl_data,a0			; Player 1 controller data buffer
+	lea	IO_DATA_1,a1			; Controller port 1
 	bsr.s	ReadController			; Read controller data
 	
-	lea	p2CtrlData.w,a0			; Player 2 controller data buffer
+	lea	p2_ctrl_data,a0			; Player 2 controller data buffer
 	lea	IODATA2,a1			; Controller port 2
-	tst.b	cloudsCtrlFlag.w		; Are the clouds controllable?
-	beq.s	ReadController			; If not, branch
-	move.w	p2CtrlData.w,subP2CtrlData	; Send controller data to Sub CPU for controlling the clouds
 
-; -------------------------------------------------------------------------
+	tst.b	control_clouds			; Are the clouds controllable?
+	beq.s	ReadController			; If not, branch
+	
+	move.w	p2_ctrl_data,sub_p2_ctrl_data	; Send controller data to Sub CPU for controlling the clouds
+
+; ------------------------------------------------------------------------------
 
 ReadController:
 	move.b	#0,(a1)				; TH = 0
@@ -603,28 +614,28 @@ ReadController:
 	move.b	d0,(a0)+
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Run palette cycle
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PaletteCycle:
-	addi.b	#$40,palCycleDelay.w		; Run delay timer
+	addi.b	#$40,palette_cycle_delay	; Run delay timer
 	bcs.s	.Update				; If it's time to update, branch
 	rts
 
 .Update:
 	moveq	#0,d0				; Get frame
-	move.b	palCycleFrame.w,d0
+	move.b	palette_cycle_frame,d0
 	addq.b	#1,d0				; Increment frame
 	cmpi.b	#3,d0				; Is it time to wrap?
 	bcs.s	.NoWrap				; If not, branch
 	clr.b	d0				; Wrap back to start
 
 .NoWrap:
-	move.b	d0,palCycleFrame.w		; Update frame ID
+	move.b	d0,palette_cycle_frame		; Update frame ID
 
 	lea	.WaterPalCycle(pc),a1		; Set palette cycle colors
-	lea	palette+(5*2).w,a2
+	lea	palette+(5*2),a2
 	add.b	d0,d0
 	add.b	d0,d0
 	add.b	d0,d0
@@ -633,33 +644,33 @@ PaletteCycle:
 	move.l	(a1)+,(a2)+
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .WaterPalCycle:
 	dc.w	$ECC, $ECA, $EEE, $EA8
 	dc.w	$EA8, $ECC, $ECC, $ECA
 	dc.w	$ECA, $EA8, $ECA, $ECC
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw clouds tilemap
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawCloudsMap:
-	lea	VDPCTRL,a2			; VDP control port
-	lea	VDPDATA,a3			; VDP data port
+	lea	VDP_CTRL,a2			; VDP control port
+	lea	VDP_DATA,a3			; VDP data port
 
 	move.w	#$8001,d6			; Draw buffer 1 tilemap
-	VDPCMD	move.l,$E000,VRAM,WRITE,d0
+	VDP_CMD move.l,$E000,VRAM,WRITE,d0
 	moveq	#IMGWTILE-1,d1
 	moveq	#IMGHTILE-1,d2
 	bsr.s	.DrawMap
 
 	move.w	#$8181,d6			; Draw buffer 2 tilemap
-	VDPCMD	move.l,$E040,VRAM,WRITE,d0
+	VDP_CMD move.l,$E040,VRAM,WRITE,d0
 	moveq	#IMGWTILE-1,d1
 	moveq	#IMGHTILE-1,d2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .DrawMap:
 	move.l	#$800000,d4			; Row delta
@@ -679,119 +690,119 @@ DrawCloudsMap:
 	dbf	d2,.DrawRow			; Loop until map is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Render the clouds
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 RenderClouds:
-	cmpi.b	#4,subFailCount.w		; Is the Sub CPU deemed unreliable?
+	cmpi.b	#4,sub_fail_count		; Is the Sub CPU deemed unreliable?
 	bcc.s	.End				; If so, branch
 	
-	move.b	#1,GACOMCMD2			; Tell Sub CPU to render clouds
+	move.b	#1,MCD_MAIN_COMM_2		; Tell Sub CPU to render clouds
 
 .WaitSubCPU:
 	cmpi.b	#1,GACOMSTAT2			; Has the Sub CPU responded?
 	beq.s	.CommDone			; If so, branch
-	addq.w	#1,subWaitTime.w		; Increment wait time
+	addq.w	#1,sub_wait_time		; Increment wait time
 	bcc.s	.WaitSubCPU			; If we should wait some more, loop
 
 .CommDone:
-	clr.l	subWaitTime.w			; Reset Sub CPU wait time
-	move.b	#0,GACOMCMD2			; Respond to the Sub CPU
+	clr.l	sub_wait_time			; Reset Sub CPU wait time
+	move.b	#0,MCD_MAIN_COMM_2		; Respond to the Sub CPU
 
 .WaitSubCPU2:
 	tst.b	GACOMSTAT2			; Has the Sub CPU responded?
 	beq.s	.End				; If so, branch
-	addq.w	#1,subWaitTime.w		; Increment wait time
+	addq.w	#1,sub_wait_time		; Increment wait time
 	bcc.s	.WaitSubCPU2			; If we should wait some more, loop
 
 .End:
-	clr.l	subWaitTime.w			; Reset Sub CPU wait time
+	clr.l	sub_wait_time			; Reset Sub CPU wait time
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wait for the Sub CPU program to start
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 WaitSubCPUStart:
-	cmpi.b	#4,subFailCount.w		; Is the Sub CPU deemed unreliable?
+	cmpi.b	#4,sub_fail_count		; Is the Sub CPU deemed unreliable?
 	bcc.s	.End				; If so, branch
 	
-	btst	#7,GASUBFLAG			; Has the Sub CPU program started?
+	btst	#7,MCD_SUB_FLAG			; Has the Sub CPU program started?
 	bne.s	.End				; If so, branch
-	addq.w	#1,subWaitTime.w		; Increment wait time
+	addq.w	#1,sub_wait_time		; Increment wait time
 	bcc.s	WaitSubCPUStart			; If we should wait some more, loop
-	addq.b	#1,subFailCount.w		; Increment Sub CPU fail count
+	addq.b	#1,sub_fail_count		; Increment Sub CPU fail count
 
 .End:
-	clr.l	subWaitTime.w			; Reset Sub CPU wait time
+	clr.l	sub_wait_time			; Reset Sub CPU wait time
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wait for the Sub CPU program to finish initializing
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 WaitSubCPUInit:
-	cmpi.b	#4,subFailCount.w		; Is the Sub CPU deemed unreliable?
+	cmpi.b	#4,sub_fail_count		; Is the Sub CPU deemed unreliable?
 	bcc.s	.End				; If so, branch
 	
-	btst	#7,GASUBFLAG			; Has the Sub CPU program initialized?
+	btst	#7,MCD_SUB_FLAG			; Has the Sub CPU program initialized?
 	beq.s	.End				; If so, branch
-	addq.w	#1,subWaitTime.w		; Increment wait time
+	addq.w	#1,sub_wait_time		; Increment wait time
 	bcc.s	WaitSubCPUInit			; If we should wait some more, loop
-	addq.b	#1,subFailCount.w		; Increment Sub CPU fail count
+	addq.b	#1,sub_fail_count		; Increment Sub CPU fail count
 
 .End:
-	clr.l	subWaitTime.w			; Reset Sub CPU wait time
+	clr.l	sub_wait_time			; Reset Sub CPU wait time
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Give Sub CPU Word RAM access
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-GiveWordRAMAccess:
-	cmpi.b	#4,subFailCount.w		; Is the Sub CPU deemed unreliable?
+GiveWordRamAccess:
+	cmpi.b	#4,sub_fail_count		; Is the Sub CPU deemed unreliable?
 	bcc.s	.Done				; If so, branch
 	
-	btst	#1,GAMEMMODE			; Does the Sub CPU already have Word RAM Access?
+	btst	#1,MCD_MEM_MODE			; Does the Sub CPU already have Word RAM Access?
 	bne.s	.End				; If so, branch
-	bset	#1,GAMEMMODE			; Give Sub CPU Word RAM access
+	bset	#1,MCD_MEM_MODE			; Give Sub CPU Word RAM access
 
 .Wait:
-	btst	#1,GAMEMMODE			; Has it been given?
+	btst	#1,MCD_MEM_MODE			; Has it been given?
 	bne.s	.Done				; If so, branch
-	addq.w	#1,subWaitTime.w		; Increment wait time
+	addq.w	#1,sub_wait_time		; Increment wait time
 	bcc.s	.Wait				; If we should wait some more, loop
-	addq.b	#1,subFailCount.w		; Increment Sub CPU fail count
+	addq.b	#1,sub_fail_count		; Increment Sub CPU fail count
 
 .Done:
-	clr.l	subWaitTime.w			; Reset Sub CPU wait time
+	clr.l	sub_wait_time			; Reset Sub CPU wait time
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wait for Word RAM access
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-WaitWordRAMAccess:
-	cmpi.b	#4,subFailCount.w		; Is the Sub CPU deemed unreliable?
+WaitWordRamAccess:
+	cmpi.b	#4,sub_fail_count		; Is the Sub CPU deemed unreliable?
 	bcc.s	.End				; If so, branch
 
-	btst	#0,GAMEMMODE			; Do we have Word RAM access?
+	btst	#0,MCD_MEM_MODE			; Do we have Word RAM access?
 	bne.s	.End				; If so, branch
 
-	addq.w	#1,subWaitTime.w		; Increment wait time
-	bcc.s	WaitWordRAMAccess		; If we should wait some more, loop
-	addq.b	#1,subFailCount.w		; Increment Sub CPU fail count
+	addq.w	#1,sub_wait_time		; Increment wait time
+	bcc.s	WaitWordRamAccess		; If we should wait some more, loop
+	addq.b	#1,sub_fail_count		; Increment Sub CPU fail count
 
 .End:
-	clr.l	subWaitTime.w			; Reset Sub CPU wait time
+	clr.l	sub_wait_time			; Reset Sub CPU wait time
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize the Mega Drive hardware
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitMD:
 	lea	.VDPRegs(pc),a0			; Set up VDP registers
@@ -800,22 +811,22 @@ InitMD:
 
 .SetVDPRegs:
 	move.b	(a0)+,d0
-	move.w	d0,VDPCTRL
+	move.w	d0,VDP_CTRL
 	addi.w	#$100,d0
 	dbf	d7,.SetVDPRegs
 
 	moveq	#$40,d0				; Set up controller ports
-	move.b	d0,IOCTRL1
-	move.b	d0,IOCTRL2
-	move.b	d0,IOCTRL3
-	move.b	#$C0,IODATA1
+	move.b	d0,IO_CTRL_1
+	move.b	d0,IO_CTRL_2
+	move.b	d0,IO_CTRL_3
+	move.b	#$C0,IO_DATA_1
 
 	jsr	StopZ80(pc)			; Stop the Z80
 
 	DMAFILL	0,$10000,0			; Clear VRAM
 
 	lea	.Palette(pc),a0			; Load palette
-	lea	palette.w,a1
+	lea	palette,a1
 	moveq	#(.PaletteEnd-.Palette)/4-1,d7
 
 .LoadPal:
@@ -823,14 +834,14 @@ InitMD:
 	move.l	d0,(a1)+
 	dbf	d7,.LoadPal
 
-	VDPCMD	move.l,0,VSRAM,WRITE,VDPCTRL	; Clear VSRAM
-	move.l	#0,VDPDATA
+	VDP_CMD move.l,0,VSRAM,WRITE,VDP_CTRL	; Clear VSRAM
+	move.l	#0,VDP_DATA
 
 	jsr	StartZ80(pc)			; Start the Z80
-	move.w	#$8134,ipxVDPReg1		; Reset IPX VDP register 1 cache
+	move.w	#$8134,ipx_vdp_reg_81		; Reset IPX VDP register 1 cache
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .VDPRegs:
 	dc.b	%00000100			; No H-INT
@@ -860,40 +871,40 @@ InitMD:
 .PaletteEnd:
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Palette
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Pal_Title:
 	incbin	"Title Screen/Data/Palette.bin"
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Stop the Z80
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 StopZ80:
-	move	sr,savedSR.w			; Save status register
+	move	sr,saved_sr			; Save status register
 	move	#$2700,sr			; Disable interrupts
 	Z80STOP					; Stop the Z80
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Start the Z80
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 StartZ80:
 	Z80START				; Start the Z80
-	move	savedSR.w,sr			; Restore status register
+	move	saved_sr,sr			; Restore status register
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get clouds image
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 GetCloudsImage:
-	lea	WORDRAM2M+IMGBUFFER,a1		; Rendered image in Word RAM
-	lea	cloudsImage.w,a2		; Destination buffer
+	lea	WORD_RAM_2M+IMGBUFFER,a1	; Rendered image in Word RAM
+	lea	clouds_image,a2			z; Destination buffer
 	move.w	#(IMGLENGTH/$800)-1,d7		; Number of $800 byte chunks to copy
 
 .CopyChunks:
@@ -903,13 +914,13 @@ GetCloudsImage:
 	dbf	d7,.CopyChunks			; Loop until chunks are copied
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Copy 128 bytes from a source to a destination buffer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMAETERS:
 ;	a1.l - Pointer to source
 ;	a2.l - Pointer to destination buffer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Copy128:
 	movem.l	(a1)+,d0-d5/a3-a4
@@ -923,46 +934,46 @@ Copy128:
 	lea	$80(a2),a2
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade to black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToBlack:
-	move.w	#($00<<9)|($40-1),palFadeInfo.w	; Fade entire palette
-	move.w	#(7*3),d4			; Number of fade frames
+	move.w	#($00<<9)|($40-1),palette_fade_params	; Fade entire palette
+	move.w	#(7*3),d4				; Number of fade frames
 
 .Loop:
-	move.b	#1,unkPalFadeFlag.w		; Set unknown flag
-	bsr.w	VSync				; VSync
-	bsr.s	FadeToBlackFrame		; Do a frame of fading
-	dbf	d4,.Loop			; Loop until palette is faded
+	move.b	#1,unk_palette_fade_flag		; Set unknown flag
+	bsr.w	VSync					; VSync
+	bsr.s	FadeToBlackFrame			; Do a frame of fading
+	dbf	d4,.Loop				; Loop until palette is faded
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Do a frame of a fade to black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToBlackFrame:
-	moveq	#0,d0				; Get palette offset
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	moveq	#0,d0					; Get palette offset
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 
-	move.b	palFadeLen.w,d0			; Get color count
+	move.b	palette_fade_length,d0			; Get color count
 
 .FadeColors:
-	bsr.s	FadeColorToBlack		; Fade color
-	dbf	d0,.FadeColors			; Loop until all colors have faded a frame
+	bsr.s	FadeColorToBlack			; Fade color
+	dbf	d0,.FadeColors				; Loop until all colors have faded a frame
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade a color to black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to palette color
 ; RETURNS:
 ;	a0.l - Pointer to next color
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorToBlack:
 	move.w	(a0),d2				; Get color
@@ -993,17 +1004,17 @@ FadeColorToBlack:
 	addq.w	#2,a0				; Skip to next color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade from black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromBlack:
 	moveq	#0,d0				; Get palette offset
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	moveq	#0,d1				; Black
-	move.b	palFadeLen.w,d0			; Get color count
+	move.b	palette_fade_length,d0		; Get color count
 
 .FillBlack:
 	move.w	d1,(a0)+			; Fill palette region with black
@@ -1012,40 +1023,40 @@ FadeFromBlack:
 	move.w	#(7*3),d4			; Number of fade frames
 
 .Loop:
-	move.b	#1,unkPalFadeFlag.w		; Set unknown flag
+	move.b	#1,unk_palette_fade_flag	; Set unknown flag
 	bsr.w	VSync				; VSync
 	bsr.s	FadeFromBlackFrame		; Do a frame of fading
 	dbf	d4,.Loop			; Loop until palette is faded
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Do a frame of a fade from black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromBlackFrame:
 	moveq	#0,d0				; Get palette offsets
-	lea	palette.w,a0
-	lea	fadePalette.w,a1
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	lea	fade_palette,a1
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	adda.w	d0,a1
-	move.b	palFadeLen.w,d0			; Get color count
+	move.b	palette_fade_length,d0		; Get color count
 
 .FadeColors:
 	bsr.s	FadeColorFromBlack		; Fade color
 	dbf	d0,.FadeColors			; Loop until all colors have faded a frame
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade a color from black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to palette color
 ;	a1.l - Pointer to target palette color
 ; RETURNS:
 ;	a0.l - Pointer to next color
 ;	a1.l - Pointer to next target color
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorFromBlack:
 	move.w	(a1)+,d2			; Get target color
@@ -1077,70 +1088,70 @@ FadeColorFromBlack:
 	addq.w	#2,a0				; Skip to next color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade from white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromWhite:
-	move.w	#($00<<9)|($40-1),palFadeInfo.w	; Fade entire palette
+	move.w	#($00<<9)|($40-1),palette_fade_params	; Fade entire palette
 	
 FadeFromWhite2:
-	moveq	#0,d0				; Get palette offset
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	moveq	#0,d0					; Get palette offset
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
-	move.w	#$EEE,d1			; White
-	move.b	palFadeLen.w,d0			; Get color count
+	move.w	#$EEE,d1				; White
+	move.b	palette_fade_length,d0			; Get color count
 
 .FillWhite:
-	move.w	d1,(a0)+			; Fill palette region with black
+	move.w	d1,(a0)+				; Fill palette region with black
 	dbf	d0,.FillWhite
-	move.w	#0,palette+($2E*2).w		; Set line 2 color 14 to black
+	move.w	#0,palette+($2E*2).w			; Set line 2 color 14 to black
 
-	move.w	#(7*3),d4			; Number of fade frames
+	move.w	#(7*3),d4				; Number of fade frames
 
 .Loop:
-	move.b	#1,unkPalFadeFlag.w		; Set unknown flag
-	bsr.w	VSync				; VSync
+	move.b	#1,unk_palette_fade_flag		; Set unknown flag
+	bsr.w	VSync					; VSync
 	
-	move.l	d4,-(sp)			; Scrapped code?
+	move.l	d4,-(sp)				; Scrapped code?
 	; ?
 	move.l	(sp)+,d4
 	
-	bsr.s	FadeFromWhiteFrame		; Do a frame of fading
-	dbf	d4,.Loop			; Loop until palette is faded
+	bsr.s	FadeFromWhiteFrame			; Do a frame of fading
+	dbf	d4,.Loop				; Loop until palette is faded
 	
-	clr.b	unkPalFadeFlag.w		; Clear unknown flag
+	clr.b	unk_palette_fade_flag			; Clear unknown flag
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Do a frame of a fade from white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromWhiteFrame:
 	moveq	#0,d0				; Get palette offsets
-	lea	palette.w,a0
-	lea	fadePalette.w,a1
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	lea	fade_palette,a1
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	adda.w	d0,a1
-	move.b	palFadeLen.w,d0			; Get color count
+	move.b	palette_fade_length,d0		; Get color count
 
 .FadeColors:
 	bsr.s	FadeColorFromWhite		; Fade color
 	dbf	d0,.FadeColors			; Loop until all colors have faded a frame
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade a color from white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to palette color
 ;	a1.l - Pointer to target palette color
 ; RETURNS:
 ;	a0.l - Pointer to next color
 ;	a1.l - Pointer to next target color
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorFromWhite:
 	move.w	(a1)+,d2			; Get target color
@@ -1174,48 +1185,48 @@ FadeColorFromWhite:
 	addq.w	#2,a0				; Skip to next color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade to white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToWhite:
-	move.w	#($00<<9)|($40-1),palFadeInfo.w	; Fade entire palette
+	move.w	#($00<<9)|($40-1),palette_fade_params	; Fade entire palette
 	move.w	#(7*3),d4			; Number of fade frames
 
 .Loop:
-	move.b	#1,unkPalFadeFlag.w		; Set unknown flag
+	move.b	#1,unk_palette_fade_flag		; Set unknown flag
 	bsr.w	VSync				; VSync
 	bsr.s	FadeToWhiteFrame		; Do a frame of fading
 	dbf	d4,.Loop			; Loop until palette is faded
 	
-	clr.b	unkPalFadeFlag.w		; Clear unknown flag
+	clr.b	unk_palette_fade_flag		; Clear unknown flag
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Do a frame of a fade to white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToWhiteFrame:
 	moveq	#0,d0				; Get palette offset
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 
-	move.b	palFadeLen.w,d0			; Get color count
+	move.b	palette_fade_length,d0			; Get color count
 
 .FadeColors:
 	bsr.s	FadeColorToWhite		; Fade color
 	dbf	d0,.FadeColors			; Loop until all colors have faded a frame
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade a color to white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to palette color
 ; RETURNS:
 ;	a0.l - Pointer to next color
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorToWhite:
 	move.w	(a0),d2				; Get color
@@ -1250,36 +1261,36 @@ FadeColorToWhite:
 	addq.w	#2,a0				; Skip to next color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Nemesis art into VRAM (Note: VDP write command must be
 ; set beforehand)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Nemesis art pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec:
 	movem.l	d0-a1/a3-a5,-(sp)
 	lea	NemPCD_WriteRowToVDP,a3		; Write all data to the same location
-	lea	VDPDATA,a4			; VDP data port
+	lea	VDP_DATA,a4			; VDP data port
 	bra.s	NemDecMain
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Nemesis data into RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Nemesis data pointer
 ;	a4.l - Destination buffer pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDecToRAM:
 	movem.l	d0-a1/a3-a5,-(sp)
 	lea	NemPCD_WriteRowToRAM,a3		; Advance to the next location after each write
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDecMain:
-	lea	nemBuffer.w,a1			; Prepare decompression buffer
+	lea	nem_code_table,a1			; Prepare decompression buffer
 	move.w	(a0)+,d2			; Get number of patterns
 	lsl.w	#1,d2
 	bcc.s	.NormalMode			; Branch if not in XOR mode
@@ -1300,7 +1311,7 @@ NemDecMain:
 	movem.l	(sp)+,d0-a1/a3-a5
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec_ProcessCompressedData:
 	move.w	d6,d7
@@ -1336,7 +1347,7 @@ NemDec_RunLoop:
 	bne.s	NemPCD_WritePixel_Loop		; If not, loop
 	jmp	(a3)				; Otherwise, write the row to its destination
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_NewRow:
 	moveq	#0,d4				; Reset row
@@ -1346,7 +1357,7 @@ NemPCD_WritePixel_Loop:
 	dbf	d0,NemDec_RunLoop
 	bra.s	NemDec_ProcessCompressedData
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_InlineData:
 	subq.w	#6,d6				; 6 bits needed to signal inline data
@@ -1370,7 +1381,7 @@ NemPCD_InlineData:
 	move.b	(a0)+,d5
 	bra.s	NemDec_GetRunLength
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToVDP:
 	move.l	d4,(a4)				; Write 8-pixel row
@@ -1379,7 +1390,7 @@ NemPCD_WriteRowToVDP:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToVDP_XOR:
 	eor.l	d4,d2				; XOR the previous row with the current row
@@ -1389,7 +1400,7 @@ NemPCD_WriteRowToVDP_XOR:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToRAM:
 	move.l	d4,(a4)+			; Write 8-pixel row
@@ -1398,7 +1409,7 @@ NemPCD_WriteRowToRAM:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToRAM_XOR:
 	eor.l	d4,d2				; XOR the previous row with the current row
@@ -1408,7 +1419,7 @@ NemPCD_WriteRowToRAM_XOR:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec_BuildCodeTable:
 	move.b	(a0)+,d0			; Read first byte
@@ -1458,80 +1469,80 @@ NemBCT_ShortCode_Loop:
 
 	bra.s	NemBCT_Loop			; Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Run objects
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 RunObjects:
-	lea	objects.w,a0			; Object pool
-	moveq	#OBJCOUNT-1,d7			; Number of objects
+	lea	objects,a0				; Object pool
+	moveq	#OBJECT_COUNT-1,d7			; Number of objects
 
 .RunLoop:
-	tst.b	oActive(a0)			; Is this slot active?
-	beq.s	.NextObjRun			; If not, branch
+	tst.b	obj.active(a0)				; Is this slot active?
+	beq.s	.NextObjRun				; If not, branch
 
-	move.l	d7,-(sp)			; Run object
+	move.l	d7,-(sp)				; Run object
 	jsr	RunObject
 	move.l	(sp)+,d7
 
-	btst	#1,oFlags(a0)			; Should the global Y speed be applied?
-	beq.s	.NextObjRun			; If not, branch
+	btst	#1,obj.flags(a0)			; Should the global Y speed be applied?
+	beq.s	.NextObjRun				; If not, branch
 	moveq	#0,d0
-	move.w	unkObjYSpeed.w,d0		; Apply global Y speed
+	move.w	unk_object_y_speed,d0			; Apply global Y speed
 	swap	d0
-	sub.l	d0,oY(a0)
+	sub.l	d0,obj.y(a0)
 
 .NextObjRun:
-	lea	oSize(a0),a0			; Next object
-	dbf	d7,.RunLoop			; Loop until all objects are run
+	lea	obj.struct_size(a0),a0			; Next object
+	dbf	d7,.RunLoop				; Loop until all objects are run
 
-	lea	objectsEnd-oSize.w,a0		; Start from the bottom of the object pool
-	moveq	#OBJCOUNT-1,d7			; Number of objects
+	lea	objects_end-obj.struct_size.w,a0	; Start from the bottom of the object pool
+	moveq	#OBJECT_COUNT-1,d7			; Number of objects
 
 .DrawLoop:
-	tst.b	oActive(a0)			; Is this slot active?
-	beq.s	.NextObjDraw			; If not, branch
-	btst	#0,oFlags(a0)			; Is this object set to be drawn?
-	beq.s	.NextObjDraw			; If not, branch
-	bsr.w	DrawObject			; Draw object
+	tst.b	obj.active(a0)				; Is this slot active?
+	beq.s	.NextObjDraw				; If not, branch
+	btst	#0,obj.flags(a0)			; Is this object set to be drawn?
+	beq.s	.NextObjDraw				; If not, branch
+	bsr.w	DrawObject				; Draw object
 
 .NextObjDraw:
-	lea	-oSize(a0),a0			; Next object
-	dbf	d7,.DrawLoop			; Loop until all objects are drawn
+	lea	-obj.struct_size(a0),a0			; Next object
+	dbf	d7,.DrawLoop				; Loop until all objects are drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Run an object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to object slot
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 RunObject:
 	moveq	#$FFFFFFFF,d0			; Run object
-	move.w	oAddr(a0),d0
+	move.w	obj.addr(a0),d0
 	movea.l	d0,a1
 	jmp	(a1)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Spawn an object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a2.l - Pointer to object code
 ; RETURNS:
 ;	eq/ne - Object slot not found/Found
 ;	a1.l  - Found object slot
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 SpawnObject:
 	moveq	#-1,d0				; Active flag
-	lea	objects.w,a1			; Object pool
-	moveq	#OBJCOUNT-1,d2			; Number of objects
+	lea	objects,a1			; Object pool
+	moveq	#OBJECT_COUNT-1,d2		; Number of objects
 
 .FindSlot:
-	tst.b	oActive(a1)			; Is this slot active?
+	tst.b	obj.active(a1)			; Is this slot active?
 	beq.s	.Found				; If not, branch
-	lea	oSize(a1),a1			; Next object slot
+	lea	obj.struct_size(a1),a1		; Next object slot
 	dbf	d2,.FindSlot			; Loop until all slots are checked
 
 .NotFound:
@@ -1539,143 +1550,143 @@ SpawnObject:
 	rts
 
 .Found:
-	move.b	d0,oActive(a1)			; Set active flag
-	move.w	a2,oAddr(a1)			; Set code address
+	move.b	d0,obj.active(a1)		; Set active flag
+	move.w	a2,obj.addr(a1)			; Set code address
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Clear objects
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ClearObjects:
-	lea	objects.w,a0			; Clear object data
+	lea	objects,a0			; Clear object data
 	
-	if OBJCOUNT<=8
-		moveq	#(objectsEnd-objects)/4-1,d7
+	if OBJECT_COUNT<=8
+		moveq	#(objects_end-objects)/4-1,d7
 	else
-		move.l	#(objectsEnd-objects)/4-1,d7
+		move.l	#(objects_end-objects)/4-1,d7
 	endif
 
 .Clear:
 	clr.l	(a0)+
 	dbf	d7,.Clear
 
-	if ((objectsEnd-objects)&2)<>0		; Clear leftovers
+	if ((objects_end-objects)&2)<>0		; Clear leftovers
 		clr.w	(a0)+
 	endif
-	if ((objectsEnd-objects)&1)<>0
+	if ((objects_end-objects)&1)<>0
 		clr.b	(a0)+
 	endif
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Set object bookmark and exit
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to object slot
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BookmarkObject:
 	move.l	(sp)+,d0			; Set bookmark and exit
-	move.w	d0,oAddr(a0)
+	move.w	d0,obj.addr(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Set object bookmark and continue
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to object slot
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BookmarkObjCont:
 	move.l	(sp)+,d0			; Set bookmark
-	move.w	d0,oAddr(a0)
+	move.w	d0,obj.addr(a0)
 	movea.l	d0,a0				; BUG: Overwrites object slot pointer
 	jmp	(a0)				; Go back to object code
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Set object address
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to object slot
 ;	a1.l - Pointer to object code
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 SetObjectAddr:
-	move.l	a1,oAddr(a0)			; BUG: Writes longword when it should've been truncated to a word
+	move.l	a1,obj.addr(a0)			; BUG: Writes longword when it should've been truncated to a word
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Delete object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to object slot
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DeleteObject:
 	; BUG: It advances a0, but doesn't restore it, so when it exits
 	; back to RunObjects, it'll skip the object after this one
-	moveq	#oSize/4-1,d0			; Clear object
+	moveq	#obj.struct_size/4-1,d0			; Clear object
 
 .Clear:
 	clr.l	(a0)+
 	dbf	d0,.Clear
 
-	if (oSize&2)<>0				; Clear leftovers
+	if (obj.struct_size&2)<>0			; Clear leftovers
 		clr.w	(a0)+
 	endif
-	if (oSize&1)<>0
+	if (obj.struct_size&1)<>0
 		clr.b	(a0)+
 	endif
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Clear sprites
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ClearSprites:
-	lea	sprites.w,a0			; Clear sprite buffer
+	lea	sprites,a0			; Clear sprite buffer
 	moveq	#(64*8)/4-1,d0			; H32 mode only allows 64 sprites
 
 .Clear:
 	clr.l	(a0)+
 	dbf	d0,.Clear
 
-	move.b	#1,spriteCount.w		; Reset sprite count
-	lea	sprites.w,a0			; Reset sprite slot
-	move.l	a0,curSpriteSlot.w
+	move.b	#1,sprite_count			; Reset sprite count
+	lea	sprites,a0			; Reset sprite slot
+	move.l	a0,cur_sprite_slot
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw an object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to object slot
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawObject:
 	move.l	d7,-(sp)			; Save d7
 
-	move.w	oX(a0),d4			; Get X position
-	move.w	oY(a0),d3			; Get Y position
+	move.w	obj.x(a0),d4			; Get X position
+	move.w	obj.y(a0),d3			; Get Y position
 	addi.w	#128,d4				; Add screen origin point
 	addi.w	#128,d3
-	move.w	oTile(a0),d5			; Get base sprite tile ID
+	move.w	obj.sprite_tile(a0),d5		; Get base sprite tile ID
 	
-	movea.l	oMap(a0),a3			; Get pointer to sprite frame
+	movea.l	obj.sprites(a0),a3		; Get pointer to sprite frame
 	moveq	#0,d0
-	move.b	oMapFrame(a0),d0
+	move.b	obj.sprite_frame(a0),d0
 	add.w	d0,d0
 	move.w	(a3,d0.w),d0
 	lea	(a3,d0.w),a4
-	movea.l	curSpriteSlot.w,a5		; Get current sprite slot
+	movea.l	cur_sprite_slot,a5		; Get current sprite slot
 
 	move.b	(a4)+,d7			; Get sprite count
 	beq.s	.End				; If there are no sprites, branch
 	subq.b	#1,d7				; Subtract 1 for DBF
 
 .DrawLoop:
-	cmpi.b	#64,spriteCount.w		; Are there too many sprites?
+	cmpi.b	#64,sprite_count		; Are there too many sprites?
 	bcc.s	.End				; If so, branch
 
 	move.b	(a4)+,d0			; Set sprite Y position
@@ -1684,8 +1695,8 @@ DrawObject:
 	move.w	d0,(a5)+
 
 	move.b	(a4)+,(a5)+			; Set sprite size
-	move.b	spriteCount.w,(a5)+		; Set sprite link
-	addq.b	#1,spriteCount.w		; Increment sprite count
+	move.b	sprite_count,(a5)+		; Set sprite link
+	addq.b	#1,sprite_count			; Increment sprite count
 
 	move.b	(a4)+,d0			; Get sprite tile ID
 	lsl.w	#8,d0
@@ -1714,11 +1725,11 @@ DrawObject:
 	dbf	d7,.DrawLoop			; Loop until all sprites are drawn
 
 .End:
-	move.l	a5,curSpriteSlot.w		; Update current sprite slot
+	move.l	a5,cur_sprite_slot		; Update current sprite slot
 	move.l	(sp)+,d7			; Restore d7
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	include	"Title Screen/Objects/Sonic/Main.asm"
 	include	"Title Screen/Objects/Banner/Main.asm"
@@ -1726,40 +1737,40 @@ DrawObject:
 	include	"Title Screen/Objects/Menu/Main.asm"
 	include	"Title Screen/Objects/Copyright/Main.asm"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw tilemaps
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawTilemaps:
-	lea	VDPCTRL,a2			; VDP control port
-	lea	VDPDATA,a3			; VDP data port
+	lea	VDP_CTRL,a2			; VDP control port
+	lea	VDP_DATA,a3			; VDP data port
 
 	lea	Map_Emblem(pc),a0		; Draw emblem
-	VDPCMD	move.l,$C206,VRAM,WRITE,d0
+	VDP_CMD move.l,$C206,VRAM,WRITE,d0
 	moveq	#$1A-1,d1
 	moveq	#$13-1,d2
 	bsr.s	DrawFgTilemap
 
 	lea	Map_Water(pc),a0		; Draw water (left side)
-	VDPCMD	move.l,$EA00,VRAM,WRITE,d0
+	VDP_CMD move.l,$EA00,VRAM,WRITE,d0
 	moveq	#$20-1,d1
 	moveq	#8-1,d2
 	bsr.s	DrawBgTilemap
 
 	lea	Map_Water(pc),a0		; Draw water (right side)
-	VDPCMD	move.l,$EA40,VRAM,WRITE,d0
+	VDP_CMD move.l,$EA40,VRAM,WRITE,d0
 	moveq	#$20-1,d1
 	moveq	#8-1,d2
 	bsr.s	DrawBgTilemap
 
 	lea	Map_Mountains(pc),a0		; Draw mountains
-	VDPCMD	move.l,$E580,VRAM,WRITE,d0
+	VDP_CMD move.l,$E580,VRAM,WRITE,d0
 	moveq	#$20-1,d1
 	moveq	#9-1,d2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw background tilemap
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - VDP command
 ;	d1.w - Width
@@ -1767,7 +1778,7 @@ DrawTilemaps:
 ;	a0.l - Pointer to tilemap
 ;	a2.l - VDP control port
 ;	a3.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawBgTilemap:
 	move.l	#$800000,d4			; Row delta
@@ -1790,9 +1801,9 @@ DrawBgTilemap:
 	dbf	d2,.DrawRow			; Loop until map is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw foreground tilemap
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - VDP command
 ;	d1.w - Width
@@ -1800,7 +1811,7 @@ DrawBgTilemap:
 ;	a0.l - Pointer to tilemap
 ;	a2.l - VDP control port
 ;	a3.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawFgTilemap:
 	move.l	#$800000,d4			; Row delta
@@ -1823,9 +1834,9 @@ DrawFgTilemap:
 	dbf	d2,.DrawRow			; Loop until map is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Map_Water:
 	incbin	"Title Screen/Data/Water Mappings.bin"
@@ -1917,8 +1928,8 @@ Art_TM:
 		even
 	endif
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 End:
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

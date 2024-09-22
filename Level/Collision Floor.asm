@@ -1,35 +1,35 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Floor collision functions
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle the player's collision on the ground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_GroundCol:
-	btst	#3,oFlags(a0)			; Are we standing on an object?
+	btst	#3,obj.flags(a0)			; Are we standing on an object?
 	beq.s	.OnGround			; If not, then we are on the ground
 
 	moveq	#0,d0				; Reset angle buffers
-	move.b	d0,primaryAngle.w
-	move.b	d0,secondaryAngle.w
+	move.b	d0,angle_buffer_1
+	move.b	d0,angle_buffer_2
 	rts
 
 .OnGround:
 	moveq	#3,d0				; Reset angle buffers
-	move.b	d0,primaryAngle.w
-	move.b	d0,secondaryAngle.w
+	move.b	d0,angle_buffer_1
+	move.b	d0,angle_buffer_2
 
-	move.b	oAngle(a0),d0			; Get the quadrant that we are in
+	move.b	obj.angle(a0),d0			; Get the quadrant that we are in
 	addi.b	#$20,d0
 	bpl.s	.HighAngle
-	move.b	oAngle(a0),d0
+	move.b	obj.angle(a0),d0
 	bpl.s	.SkipSub
 	subq.b	#1,d0
 
@@ -38,7 +38,7 @@ Player_GroundCol:
 	bra.s	.GotAngle
 
 .HighAngle:
-	move.b	oAngle(a0),d0
+	move.b	obj.angle(a0),d0
 	bpl.s	.SkipAdd
 	addq.b	#1,d0
 
@@ -55,42 +55,42 @@ Player_GroundCol:
 	cmpi.b	#$C0,d0				; Are we on a right wall?
 	beq.w	Player_WalkVertR		; If so, branch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move the player along a floor
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_WalkFloor:
-	move.w	oY(a0),d2			; Get primary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get primary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	add.w	d0,d2
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	add.w	d0,d3
-	lea	primaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_1,a4		; Get floor information from this sensor
 	movea.w	#$10,a3
 	move.w	#0,d6
 	moveq	#$D,d5
 	bsr.w	FindLevelFloor
 	move.w	d1,-(sp)
 
-	move.w	oY(a0),d2			; Get secondary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get secondary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	add.w	d0,d2
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	neg.w	d0
 	add.w	d0,d3
 
-	lea	secondaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_2,a4		; Get floor information from this sensor
 	movea.w	#$10,a3
 	move.w	#0,d6
 	moveq	#$D,d5
@@ -103,7 +103,7 @@ Player_WalkFloor:
 	bpl.s	.CheckLedge			; If we are outside the floor, branch
 	cmpi.w	#-$E,d1				; Have we hit a wall?
 	blt.s	Player_AnglePos_Done		; If so, branch
-	add.w	d1,oY(a0)			; Align outselves onto the floor
+	add.w	d1,obj.y(a0)			; Align outselves onto the floor
 
 .End:
 	rts
@@ -113,157 +113,157 @@ Player_WalkFloor:
 	bgt.s	.CheckStick			; If so, branch
 
 .SetY:
-	add.w	d1,oY(a0)			; Align ourselves onto the floor
+	add.w	d1,obj.y(a0)			; Align ourselves onto the floor
 	rts
 
 .CheckStick:
 	tst.b	oPlayerStick(a0)		; Are we sticking to a surface?
 	bne.s	.SetY				; If so, align to the floor anyways
 
-	bset	#1,oFlags(a0)			; Fall off the ground
-	bclr	#5,oFlags(a0)
-	move.b	#1,oPrevAnim(a0)
+	bset	#1,obj.flags(a0)			; Fall off the ground
+	bclr	#5,obj.flags(a0)
+	move.b	#1,obj.prev_anim_id(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_AnglePos_Done:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Some kind of unsued object movement with gravity routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d3.l - Y position
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjMoveGrvUnused:
-	move.l	oX(a0),d2			; Apply X velocity
-	move.w	oXVel(a0),d0
+	move.l	obj.x(a0),d2			; Apply X velocity
+	move.w	obj.x_speed(a0),d0
 	ext.l	d0
 	asl.l	#8,d0
 	sub.l	d0,d2
-	move.l	d2,oX(a0)
+	move.l	d2,obj.x(a0)
 
 	move.w	#$38,d0				; Apply gravity without first applying Y velocity
 	ext.l	d0				; ...and getting the Y position first
 	asl.l	#8,d0
 	sub.l	d0,d3
-	move.l	d3,oY(a0)
+	move.l	d3,obj.y(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_WalkVert_Done:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Unused routine to apply Y velocity and reverse gravity onto an object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjMoveYRevGrv:
-	move.l	oY(a0),d3			; Apply Y velocity
-	move.w	oYVel(a0),d0
+	move.l	obj.y(a0),d3			; Apply Y velocity
+	move.w	obj.y_speed(a0),d0
 	subi.w	#$38,d0				; ...and reversed gravity
-	move.w	d0,oYVel(a0)
+	move.w	d0,obj.y_speed(a0)
 	ext.l	d0
 	asl.l	#8,d0
 	sub.l	d0,d3
-	move.l	d3,oY(a0)
+	move.l	d3,obj.y(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Apply X and Y velocity onto an object (unused)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjMoveUnused:
 	rts
-	move.l	oX(a0),d2			; Get position
-	move.l	oY(a0),d3
+	move.l	obj.x(a0),d2			; Get position
+	move.l	obj.y(a0),d3
 
-	move.w	oXVel(a0),d0			; Apply X velocity
+	move.w	obj.x_speed(a0),d0		; Apply X velocity
 	ext.l	d0
 	asl.l	#8,d0
 	sub.l	d0,d2
 
-	move.w	oYVel(a0),d0			; Apply Y velocity
+	move.w	obj.y_speed(a0),d0		; Apply Y velocity
 	ext.l	d0
 	asl.l	#8,d0
 	sub.l	d0,d3
 
-	move.l	d2,oX(a0)			; Update position
-	move.l	d3,oY(a0)
+	move.l	d2,obj.x(a0)			; Update position
+	move.l	d3,obj.y(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Pick a sensor to use to align the player to the ground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_PickSensor:
-	move.b	secondaryAngle.w,d2		; Use secondary angle
+	move.b	angle_buffer_2,d2		; Use secondary angle
 	cmp.w	d0,d1				; Is the primary sensor on the higher ground?
 	ble.s	.GotAngle			; If not, branch
-	move.b	primaryAngle.w,d2		; Use primary angle
+	move.b	angle_buffer_1,d2		; Use primary angle
 	move.w	d0,d1				; Use primary floor height
 
 .GotAngle:
 	btst	#0,d2				; Was the level block found a flat surface?
 	bne.s	.FlatSurface			; If so, branch
-	move.b	d2,oAngle(a0)			; Update angle
+	move.b	d2,obj.angle(a0)		; Update angle
 	rts
 
 .FlatSurface:
-	move.b	oAngle(a0),d2			; Shift ourselves to the next quadrant
+	move.b	obj.angle(a0),d2		; Shift ourselves to the next quadrant
 	addi.b	#$20,d2
 	andi.b	#$C0,d2
-	move.b	d2,oAngle(a0)
+	move.b	d2,obj.angle(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move the player along a right wall
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_WalkVertR:
-	move.w	oY(a0),d2			; Get primary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get primary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	neg.w	d0
 	add.w	d0,d2
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	add.w	d0,d3
-	lea	primaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_1,a4		; Get floor information from this sensor
 	movea.w	#$10,a3
 	move.w	#0,d6
 	moveq	#$D,d5
 	bsr.w	FindLevelWall
 	move.w	d1,-(sp)
 
-	move.w	oY(a0),d2			; Get secondary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get secondary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	add.w	d0,d2
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	add.w	d0,d3
-	lea	secondaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_2,a4		; Get floor information from this sensor
 	movea.w	#$10,a3
 	move.w	#0,d6
 	moveq	#$D,d5
@@ -276,7 +276,7 @@ Player_WalkVertR:
 	bpl.s	.CheckLedge			; If we are outside the wall, branch
 	cmpi.w	#-$E,d1				; Have we hit a wall?
 	blt.w	Player_WalkVert_Done		; If so, branch
-	add.w	d1,oX(a0)			; Align outselves onto the wall
+	add.w	d1,obj.x(a0)			; Align outselves onto the wall
 
 .End:
 	rts
@@ -286,54 +286,54 @@ Player_WalkVertR:
 	bgt.s	.CheckStick			; If so, branch
 
 .SetX:
-	add.w	d1,oX(a0)			; Align ourselves onto the wall
+	add.w	d1,obj.x(a0)			; Align ourselves onto the wall
 	rts
 
 .CheckStick:
 	tst.b	oPlayerStick(a0)		; Are we sticking to a surface?
 	bne.s	.SetX				; If so, align to the wall anyways
 
-	bset	#1,oFlags(a0)			; Fall off the ground
-	bclr	#5,oFlags(a0)
-	move.b	#1,oPrevAnim(a0)
+	bset	#1,obj.flags(a0)			; Fall off the ground
+	bclr	#5,obj.flags(a0)
+	move.b	#1,obj.prev_anim_id(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move the player along a ceiling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_WalkCeiling:
-	move.w	oY(a0),d2			; Get primary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get primary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	sub.w	d0,d2
 	eori.w	#$F,d2
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	add.w	d0,d3
-	lea	primaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_1,a4		; Get floor information from this sensor
 	movea.w	#-$10,a3
 	move.w	#$1000,d6
 	moveq	#$D,d5
 	bsr.w	FindLevelFloor
 	move.w	d1,-(sp)
 
-	move.w	oY(a0),d2			; Get secondary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get secondary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	sub.w	d0,d2
 	eori.w	#$F,d2
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	sub.w	d0,d3
-	lea	secondaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_2,a4		; Get floor information from this sensor
 	movea.w	#-$10,a3
 	move.w	#$1000,d6
 	moveq	#$D,d5
@@ -346,7 +346,7 @@ Player_WalkCeiling:
 	bpl.s	.CheckLedge			; If we are outside the ceiling, branch
 	cmpi.w	#-$E,d1				; Have we hit a ceiling?
 	blt.w	Player_AnglePos_Done		; If so, branch
-	sub.w	d1,oY(a0)			; Align outselves onto the ceiling
+	sub.w	d1,obj.y(a0)			; Align outselves onto the ceiling
 
 .End:
 	rts
@@ -356,54 +356,54 @@ Player_WalkCeiling:
 	bgt.s	.CheckStick			; If so, branch
 
 .SetY:
-	sub.w	d1,oY(a0)			; Align ourselves onto the ceiling
+	sub.w	d1,obj.y(a0)			; Align ourselves onto the ceiling
 	rts
 
 .CheckStick:
 	tst.b	oPlayerStick(a0)		; Are we sticking to a surface?
 	bne.s	.SetY				; If so, align to the ceiling anyways
 
-	bset	#1,oFlags(a0)			; Fall off the ground
-	bclr	#5,oFlags(a0)
-	move.b	#1,oPrevAnim(a0)
+	bset	#1,obj.flags(a0)			; Fall off the ground
+	bclr	#5,obj.flags(a0)
+	move.b	#1,obj.prev_anim_id(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move the player along a left wall
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_WalkVertL:
-	move.w	oY(a0),d2			; Get primary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get primary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	sub.w	d0,d2
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	sub.w	d0,d3
 	eori.w	#$F,d3
-	lea	primaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_1,a4		; Get floor information from this sensor
 	movea.w	#-$10,a3
 	move.w	#$800,d6
 	moveq	#$D,d5
 	bsr.w	FindLevelWall
 	move.w	d1,-(sp)
 
-	move.w	oY(a0),d2			; Get secondary sensor position
-	move.w	oX(a0),d3
+	move.w	obj.y(a0),d2			; Get secondary sensor position
+	move.w	obj.x(a0),d3
 	moveq	#0,d0
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	add.w	d0,d2
-	move.b	oYRadius(a0),d0
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	sub.w	d0,d3
 	eori.w	#$F,d3
-	lea	secondaryAngle.w,a4		; Get floor information from this sensor
+	lea	angle_buffer_2,a4		; Get floor information from this sensor
 	movea.w	#-$10,a3
 	move.w	#$800,d6
 	moveq	#$D,d5
@@ -416,7 +416,7 @@ Player_WalkVertL:
 	bpl.s	.CheckLedge			; If we are outside the wall, branch
 	cmpi.w	#-$E,d1				; Have we hit a wall?
 	blt.w	Player_WalkVert_Done		; If so, branch
-	sub.w	d1,oX(a0)			; Align outselves onto the wall
+	sub.w	d1,obj.x(a0)			; Align outselves onto the wall
 
 .End:
 	rts
@@ -426,28 +426,28 @@ Player_WalkVertL:
 	bgt.s	.CheckStick			; If so, branch
 
 .SetX:
-	sub.w	d1,oX(a0)			; Align ourselves onto the wall
+	sub.w	d1,obj.x(a0)			; Align ourselves onto the wall
 	rts
 
 .CheckStick:
 	tst.b	oPlayerStick(a0)		; Are we sticking to a surface?
 	bne.s	.SetX				; If so, align to the wall anyways
 
-	bset	#1,oFlags(a0)			; Fall off the ground
-	bclr	#5,oFlags(a0)
-	move.b	#1,oPrevAnim(a0)
+	bset	#1,obj.flags(a0)			; Fall off the ground
+	bclr	#5,obj.flags(a0)
+	move.b	#1,obj.prev_anim_id(a0)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get level Block metadata at a position
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Y position
 ;	d3.w - X position
 ;	a0.l - Object RAM
 ; RETURNS:
 ;	a1.l - Block metadata pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 GetLevelBlock:
 	move.w	d2,d0				; Get Y position
@@ -464,7 +464,7 @@ GetLevelBlock:
 	add.w	d1,d0				; Combine the X and Y into a level layout data index value
 
 	move.l	#LevelChunks,d1			; Get base chunk data pointer
-	lea	levelLayout.w,a1		; Get chunk that the block we want is in
+	lea	map_layout,a1			; Get chunk that the block we want is in
 	move.b	(a1,d0.w),d1
 	beq.s	.Blank				; If it's a blank chunk, branch
 	bmi.s	.LoopChunk			; If it's a loop chunk, branch
@@ -475,12 +475,12 @@ GetLevelBlock:
 	bne.s	.NotMMZ				; If not, branch
 
 .SSZ:
-	andi.w	#$7FFF,oTile(a0)		; Set the object's sprite to be low priority
+	andi.w	#$7FFF,obj.sprite_tile(a0)	; Set the object's sprite to be low priority
 
 .NotMMZ:
 	cmpi.b	#4,zone				; Are we in Wacky Workbench?
 	bne.s	.NotWWZ				; If not, branch
-	bclr	#6,oSprFlags(a0)		; Move the object onto the lower path layer
+	bclr	#6,obj.sprite_flags(a0)		; Move the object onto the lower path layer
 
 .NotWWZ:
 	subq.b	#1,d1				; Prepare chunk data index value from X and Y position
@@ -499,7 +499,7 @@ GetLevelBlock:
 	movea.l	d1,a1				; Get pointer to block
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .LoopChunk:
 	andi.w	#$7F,d1				; Get chunk ID
@@ -507,12 +507,12 @@ GetLevelBlock:
 	cmpi.b	#4,zone				; Are we in Wacky Workbench?
 	bne.s	.NotWWZ2			; If not, branch
 
-	btst	#6,oSprFlags(a0)		; Is the object on the higher path layer?
+	btst	#6,obj.sprite_flags(a0)		; Is the object on the higher path layer?
 	bne.s	.LowPlane			; If so, branch
 	cmpi.b	#$14,d1				; Is this chunk $14?
 	bne.w	.GetBlock			; If not, branch
-	bset	#6,oSprFlags(a0)		; Move the object onto the higher path layer
-	andi.b	#$7F,oTile(a0)			; Set the object's sprite to be low priority
+	bset	#6,obj.sprite_flags(a0)		; Move the object onto the higher path layer
+	andi.b	#$7F,obj.sprite_tile(a0)	; Set the object's sprite to be low priority
 	bra.w	.GetBlock
 
 .LowPlane:
@@ -539,13 +539,13 @@ GetLevelBlock:
 	move.w	#$63,d1				; Change it to chunk $63
 	bra.w	.GetBlock
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .NotWWZ2:
 	cmpi.b	#5,zone				; Are we in Stardust Speedway?
 	bne.w	.NotSSZ				; If not, branch
 
-	ori.w	#$8000,oTile(a0)		; Set the object's sprite to be high priority
+	ori.w	#$8000,obj.sprite_tile(a0)	; Set the object's sprite to be high priority
 	cmpi.b	#4,d1				; Is this chunk 4?
 	beq.s	.SwapChunkIfLow			; If so, branch
 	cmpi.b	#6,d1				; Is this chunk 6?
@@ -553,7 +553,7 @@ GetLevelBlock:
 
 	tst.b	layer				; Are we on the first layer?
 	beq.w	.GetBlock			; If so, branch
-	andi.w	#$7FFF,oTile(a0)		; Set the object's sprite to be low priority
+	andi.w	#$7FFF,obj.sprite_tile(a0)	; Set the object's sprite to be low priority
 	cmpi.b	#$28,d1				; Is this chunk $28?
 	beq.s	.SwapChunk			; If so, branch
 	cmpi.b	#$3C,d1				; Is this chunk $3C?
@@ -567,26 +567,26 @@ GetLevelBlock:
 	bra.w	.GetBlock
 
 .SwapChunkIfLow:
-	andi.w	#$7FFF,oTile(a0)		; Set the object's sprite to be low priority
-	btst	#6,oSprFlags(a0)		; Is the object on the lower path layer?
+	andi.w	#$7FFF,obj.sprite_tile(a0)	; Set the object's sprite to be low priority
+	btst	#6,obj.sprite_flags(a0)		; Is the object on the lower path layer?
 	beq.w	.GetBlock			; If so, branch
 
 .SwapChunk:
 	addq.b	#1,d1				; Swap chunks
 	bra.w	.GetBlock
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .NotSSZ:
 	cmpi.b	#6,zone				; Are we in Metallic Madness?
 	bne.s	.NotMMZ2			; If not, branch
-	cmpi.b	#3,oID(a0)			; Is this a player object?
+	cmpi.b	#3,obj.id(a0)			; Is this a player object?
 	bcc.w	.GetBlock			; If not, branch
 
-	ori.w	#$8000,oTile(a0)		; Set the object's sprite to be high priority
+	ori.w	#$8000,obj.sprite_tile(a0)	; Set the object's sprite to be high priority
 	tst.b	layer				; Are we on layer 1?
 	beq.s	.GetBlock			; If so, branch
-	andi.w	#$7FFF,oTile(a0)		; Set the object's sprite to be low priority
+	andi.w	#$7FFF,obj.sprite_tile(a0)	; Set the object's sprite to be low priority
 
 	cmpi.b	#$46,d1				; Is this chunk $46?
 	bne.s	.Not46
@@ -623,10 +623,10 @@ GetLevelBlock:
 	move.w	#$6F,d1				; Change it to chunk $6F
 	bra.s	.GetBlock
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .NotMMZ2:
-	btst	#6,oSprFlags(a0)		; Is the object on the lower path layer?
+	btst	#6,obj.sprite_flags(a0)		; Is the object on the lower path layer?
 	beq.s	.GetBlock			; If so, branch
 
 	addq.w	#1,d1				; Swap chunks
@@ -634,7 +634,7 @@ GetLevelBlock:
 	bne.s	.GetBlock			; If not, branch
 	move.w	#$51,d1				; If so, change it to chunk $51
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .GetBlock:
 	subq.b	#1,d1				; Prepare chunk data index value from X and Y position
@@ -651,9 +651,9 @@ GetLevelBlock:
 	movea.l	d1,a1				; Get pointer to block
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get the distance to the nearest block vertically
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Y position
 ;	d3.w - X position
@@ -665,7 +665,7 @@ GetLevelBlock:
 ;	d1.w - Distance from the block
 ;	a1.l - Block metadata pointer
 ;	(a4).b - Angle
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FindLevelFloor:
 	bsr.w	GetLevelBlock			; Get block at position
@@ -687,7 +687,7 @@ FindLevelFloor:
 	rts
 
 .IsSolid:
-	movea.l	collisionPtr.w,a2		; Get collision block ID
+	movea.l	map_collision,a2		; Get collision block ID
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0
 	beq.s	.IsBlank			; If it's blank, branch
@@ -756,7 +756,7 @@ FindLevelFloor:
 	subi.w	#$10,d1				; Decrement height
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FindLevelFloor2:
 	bsr.w	GetLevelBlock			; Get block at position
@@ -778,7 +778,7 @@ FindLevelFloor2:
 	rts
 
 .IsSolid:
-	movea.l	collisionPtr.w,a2		; Get collision block ID
+	movea.l	map_collision,a2		; Get collision block ID
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0
 	beq.s	.IsBlank			; If it's blank, branch
@@ -840,9 +840,9 @@ FindLevelFloor2:
 	not.w	d1				; Flip the height
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get the distance to the nearest block horizontally
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Y position
 ;	d3.w - X position
@@ -854,7 +854,7 @@ FindLevelFloor2:
 ;	d1.w - Distance from the block
 ;	a1.l - Block metadata pointer
 ;	(a4).b - Angle
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FindLevelWall:
 	bsr.w	GetLevelBlock			; Get block at position
@@ -876,7 +876,7 @@ FindLevelWall:
 	rts
 
 .IsSolid:
-	movea.l	collisionPtr.w,a2		; Get collision block ID
+	movea.l	map_collision,a2		; Get collision block ID
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0
 	beq.s	.IsBlank			; If it's blank, branch
@@ -936,7 +936,7 @@ FindLevelWall:
 	subi.w	#$10,d1				; Decrement width
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FindLevelWall2:
 	bsr.w	GetLevelBlock			; Get block at position
@@ -958,7 +958,7 @@ FindLevelWall2:
 	rts
 
 .IsSolid:
-	movea.l	collisionPtr.w,a2		; Get collision block ID
+	movea.l	map_collision,a2		; Get collision block ID
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0
 	beq.s	.IsBlank			; If it's blank, branch
@@ -1011,11 +1011,11 @@ FindLevelWall2:
 	not.w	d1				; Flip the width
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; This subroutine takes 'raw' bitmap-like collision block data as input and
 ; converts it into the proper collision arrays. Pointers to said raw data
 ; are dummied out.
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 RawColBlocks		EQU	ColHeightMap
 ConvRowColBlocks	EQU	ColHeightMap
@@ -1056,7 +1056,7 @@ ConvColArray:
 	lea	RawColBlocks,a1			; Convert heights
 	lea	ColHeightMap,a2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .ConvToColBlocks:
 	move.w	#$1000-1,d3			; Size of a standard collision arary
@@ -1101,4 +1101,4 @@ ConvColArray:
 	dbf	d3,.ProcCollision		; Loop until finished
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

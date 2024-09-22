@@ -1,474 +1,478 @@
-; -------------------------------------------------------------------------
-; Sonic CD Disassembly
-; By Ralakimus 2021
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; Sonic CD (1993) Disassembly
+; By Devon Artmeier
+; ------------------------------------------------------------------------------
 ; Main CPU definitions
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-MAINCPU		EQU	1
+MAIN_CPU		equ 1					; Main CPU
 
-; -------------------------------------------------------------------------
-; Addresses
-; -------------------------------------------------------------------------
-
-; Cartridge
-CARTRIDGE	EQU	$400000			; Cartridge start
-CARTRIDGEE	EQU	$800000			; Cartridge end
-CARTRIDGES	EQU	CARTRIDGEE-CARTRIDGES	; Cartridge size
-CARTID		EQU	CARTRIDGE+$000001	; RAM cartridge ID
-CARTDATA	EQU	CARTRIDGE+$200001	; RAM cartridge data
-CARTDATAE	EQU	CARTRIDGE+$300000	; RAM cartridge data end
-CARTDATAS	EQU	(CARTDATAE-CARTDATA)/2+1; RAM cartridge data size
-CARTWREN	EQU	CARTRIDGE+$3FFFFF	; RAM cartridge write enable
-CARTSPECID	EQU	CARTRIDGE+$000010	; Special RAM cartridge ID
-CARTSPECPRG	EQU	CARTRIDGE+$000020	; Special RAM cartridge handler
+; ------------------------------------------------------------------------------
+; Memory map
+; ------------------------------------------------------------------------------
 
 ; Expansion
-EXPANSION	EQU	$000000			; Expansion memory start
-EXPANSIONE	EQU	$400000			; Expansion memory end
-EXPANDS		EQU	EXPANSIONE-EXPANSION	; Expansion memory size
-
-; Z80
-Z80RAM		EQU	$A00000			; Z80 RAM start
-Z80RAME		EQU	$A02000			; Z80 RAM end
-Z80RAMS		EQU	Z80RAME-Z80RAM		; Z80 RAM size
-Z80BUS		EQU	$A11100			; Z80 bus request
-Z80RESET	EQU	$A11200			; Z80 reset
-
-; Work RAM
-WORKRAM		EQU	$FF0000			; Work RAM start
-WORKRAME	EQU	$1000000		; Work RAM end
-WORKRAMS	EQU	WORKRAME-WORKRAM	; Work RAM size
-
-; Sound
-YMADDR0		EQU	$A04000			; YM2612 address port 0
-YMDATA0		EQU	$A04001			; YM2612 data port 0
-YMADDR1		EQU	$A04002			; YM2612 address port 1
-YMDATA1		EQU	$A04003			; YM2612 data port 1
-PSGCTRL		EQU	$C00011			; PSG control port
-
-; VDP
-VDPDATA		EQU	$C00000			; VDP data port
-VDPCTRL		EQU	$C00004			; VDP control port
-VDPHVCNT	EQU	$C00008			; VDP H/V counter
-VDPDEBUG	EQU	$C0001C			; VDP debug register
-
-; I/O
-VERSION		EQU	$A10001			; Hardware version
-IODATA1		EQU	$A10003			; I/O port 1 data port
-IODATA2		EQU	$A10005			; I/O port 2 data port
-IODATA3		EQU	$A10007			; I/O port 3 data port
-IOCTRL1		EQU	$A10009			; I/O port 1 control port
-IOCTRL2		EQU	$A1000B			; I/O port 2 control port
-IOCTRL3		EQU	$A1000D			; I/O port 3 control port
-
-; TMSS
-TMSSSEGA	EQU	$A14000			; TMSS "SEGA" register
-TMSSMODE	EQU	$A14100			; TMSS bus mode
+EXPANSION		equ 0					; Expansion memory start
+EXPANSION_SIZE		equ $400000				; Expansion memory end
+EXPANSION_END		equ EXPANSION+EXPANSION_SIZE		; Expansion memory size
 
 ; Mega CD BIOS ROM
-CDBIOS		EQU	EXPANSION+$000000	; MCD BIOS ROM start
-CDBIOSE		EQU	EXPANSION+$020000	; MCD BIOS ROM end
-CDBIOSS		EQU	CDBIOSE-CDBIOS		; MCD BIOS ROM size
-
-; Mega CD PRG-RAM
-PRGRAM		EQU	EXPANSION+$020000	; MCD PRG-RAM bank start
-PRGRAME		EQU	EXPANSION+$040000	; MCD PRG-RAM bank end
-PRGRAMS		EQU	PRGRAME-PRGRAM		; MCD PRG-RAM bank size
-SUBPRGRAM	EQU	$000000			; MCD Sub CPU address for PRG-RAM
-
-; Mega CD Word RAM
-WORDRAM1M	EQU	EXPANSION+$200000	; MCD Word RAM start (1M/1M)
-WORDRAM1ME	EQU	EXPANSION+$220000	; MCD Word RAM end (1M/1M)
-WORDRAM1MS	EQU	WORDRAM1ME-WORDRAM1M	; MCD Word RAM size (1M/1M)
-WORDRAM2M	EQU	EXPANSION+$200000	; MCD Word RAM start (2M)
-WORDRAM2ME	EQU	EXPANSION+$240000	; MCD Word RAM end (2M)
-WORDRAM2MS	EQU	WORDRAM2ME-WORDRAM2M	; MCD Word RAM size (2M)
-WORDRAMIMG	EQU	EXPANSION+$220000	; MCD VRAM image of Word RAM start (1M/1M)
-WORDRAMIMGE	EQU	EXPANSION+$240000	; MCD VRAM image of Word RAM end (1M/1M)
-WORDRAMIMGS	EQU	WORDRAMIMGE-WORDRAMIMGS	; MCD VRAM image of Word RAM size (1M/1M)
-SUBWORDRAM2M	EQU	$080000			; MCD Sub CPU address for Word RAM (2M)
-SUBWORDRAM1M	EQU	$0C0000			; MCD Sub CPU address for Word RAM (1M/1M)
-
-; Mega CD gate array
-GATEARRAY	EQU	$A12000			; Gate array
-GAIRQ2		EQU	GATEARRAY+$0000		; IRQ2 send
-GARESET		EQU	GATEARRAY+$0001		; Reset
-GAPROTECT	EQU	GATEARRAY+$0002		; Write protection
-GAMEMMODE	EQU	GATEARRAY+$0003		; Memory mode
-GACDCMODE	EQU	GATEARRAY+$0004		; CDC mode/Device destination
-GAUSERHINT	EQU	GATEARRAY+$0006		; User H-INT address
-GACDCHOST	EQU	GATEARRAY+$0008		; 16-bit CDC data to host
-GASTOPWATCH	EQU	GATEARRAY+$000C		; Stopwatch
-GACOMFLAGS	EQU	GATEARRAY+$000E		; Communication flags
-GAMAINFLAG	EQU	GATEARRAY+$000E		; Main CPU communication flag
-GASUBFLAG	EQU	GATEARRAY+$000F		; Sub CPU communication flag
-GACOMCMDS	EQU	GATEARRAY+$0010		; Communication commands
-GACOMCMD0	EQU	GATEARRAY+$0010		; Communication command 0
-GACOMCMD1	EQU	GATEARRAY+$0011		; Communication command 0
-GACOMCMD2	EQU	GATEARRAY+$0012		; Communication command 1
-GACOMCMD3	EQU	GATEARRAY+$0013		; Communication command 1
-GACOMCMD4	EQU	GATEARRAY+$0014		; Communication command 2
-GACOMCMD5	EQU	GATEARRAY+$0015		; Communication command 2
-GACOMCMD6	EQU	GATEARRAY+$0016		; Communication command 3
-GACOMCMD7	EQU	GATEARRAY+$0017		; Communication command 3
-GACOMCMD8	EQU	GATEARRAY+$0018		; Communication command 4
-GACOMCMD9	EQU	GATEARRAY+$0019		; Communication command 4
-GACOMCMDA	EQU	GATEARRAY+$001A		; Communication command 5
-GACOMCMDB	EQU	GATEARRAY+$001B		; Communication command 5
-GACOMCMDC	EQU	GATEARRAY+$001C		; Communication command 6
-GACOMCMDD	EQU	GATEARRAY+$001D		; Communication command 6
-GACOMCMDE	EQU	GATEARRAY+$001E		; Communication command 7
-GACOMCMDF	EQU	GATEARRAY+$001F		; Communication command 7
-GACOMSTATS	EQU	GATEARRAY+$0020		; Communication statuses
-GACOMSTAT0	EQU	GATEARRAY+$0020		; Communication status 0
-GACOMSTAT1	EQU	GATEARRAY+$0021		; Communication status 0
-GACOMSTAT2	EQU	GATEARRAY+$0022		; Communication status 1
-GACOMSTAT3	EQU	GATEARRAY+$0023		; Communication status 1
-GACOMSTAT4	EQU	GATEARRAY+$0024		; Communication status 2
-GACOMSTAT5	EQU	GATEARRAY+$0025		; Communication status 2
-GACOMSTAT6	EQU	GATEARRAY+$0026		; Communication status 3
-GACOMSTAT7	EQU	GATEARRAY+$0027		; Communication status 3
-GACOMSTAT8	EQU	GATEARRAY+$0028		; Communication status 4
-GACOMSTAT9	EQU	GATEARRAY+$0029		; Communication status 4
-GACOMSTATA	EQU	GATEARRAY+$002A		; Communication status 5
-GACOMSTATB	EQU	GATEARRAY+$002B		; Communication status 5
-GACOMSTATC	EQU	GATEARRAY+$002C		; Communication status 6
-GACOMSTATD	EQU	GATEARRAY+$002D		; Communication status 6
-GACOMSTATE	EQU	GATEARRAY+$002E		; Communication status 7
-GACOMSTATF	EQU	GATEARRAY+$002F		; Communication status 7
+CD_BIOS			equ EXPANSION				; BIOS start
+CD_BIOS_SIZE		equ $20000				; BIOS size
+CD_BIOS_END		equ CD_BIOS+CD_BIOS_SIZE		; BIOS end
 
 ; BIOS functions
-BIOS_SetVDPRegs	EQU	CDBIOS+$2B0		; Set up VDP registers
-BIOS_DMA68k	EQU	CDBIOS+$2D4		; DMA 68000 data to VDP memory
+BiosSetVdpRegs		equ CD_BIOS+$2B0			; Set up VDP registers
+BiosDma68k		equ CD_BIOS+$2D4			; DMA 68000 data to VDP memory
+
+; Mega CD PRG-RAM
+PRG_RAM_BANK		equ EXPANSION+$20000			; Program RAM bank start
+PRG_RAM_BANK_SIZE	equ $40000				; Program RAM bank size
+PRG_RAM_BANK_END	equ PRG_RAM_BANK+PRG_RAM_BANK_SIZE	; Program RAM bank end
+
+; Mega CD Word RAM
+WORD_RAM_1M		equ EXPANSION+$200000			; Word RAM start (1M/1M)
+WORD_RAM_1M_SIZE	equ $20000				; Word RAM size (1M/1M)
+WORD_RAM_1M_END		equ WORD_RAM_1M+WORD_RAM_1M_SIZE	; Word RAM end (1M/1M)
+WORD_RAM_2M		equ EXPANSION+$200000			; Word RAM start (2M)
+WORD_RAM_2M_SIZE	equ $40000				; Word RAM size (2M)
+WORD_RAM_2M_END		equ WORD_RAM_2M+WORD_RAM_2M_SIZE	; Word RAM end (2M)
+WORD_RAM_IMAGE		equ EXPANSION+$220000			; Word RAM image start (1M/1M)
+WORD_RAM_IMAGE_SIZE	equ $20000				; Word RAM image size (1M/1M)
+WORD_RAM_IMAGE_END	equ WORD_RAM_IMAGE+WORD_RAM_IMAGE_SIZE	; Word RAM image size (1M/1M)
+
+; Cartridge
+CARTRIDGE		equ $400000				; Cartridge start
+CARTRIDGE_SIZE		equ $400000				; Cartridge size
+CARTRIDGE_END		equ CARTRIDGE+CARTRIDGE_SIZE		; Cartridge end
+
+; RAM cartridge
+RAM_CART_ID		equ CARTRIDGE+1				; RAM cartridge ID
+RAM_CART_DATA		equ CARTRIDGE+$200001			; RAM cartridge data
+RAM_CART_DATA_SIZE	equ $80000				; RAM cartridge data size
+RAM_CART_DATA_END	equ RAM_CART_DATA+RAM_CART_DATA_SIZE	; RAM cartridge data end
+RAM_CART_PROTECT	equ CARTRIDGE+$3FFFFF			; RAM cartridge memory protection flag
+
+; Special cartridge
+SPECIAL_CART_ID		equ CARTRIDGE+$10			; Special cartridge ID
+SPECIAL_CART_START	equ CARTRIDGE+$20			; Special cartridge entry point
+
+; Z80 RAM
+Z80_RAM			equ $A00000				; Z80 RAM start
+Z80_RAM_SIZE		equ $2000				; Z80 RAM size
+Z80_RAM_END		equ Z80_RAM+Z80_RAM_SIZE		; Z80 RAM end
+
+; YM2612
+YM_ADDR_0		equ $A04000				; YM2612 address port 0
+YM_DATA_0		equ $A04001				; YM2612 data port 0
+YM_ADDR_1		equ $A04002				; YM2612 address port 1
+YM_DATA_1		equ $A04003				; YM2612 data port 1
+
+; I/O
+IO_REGS			equ $A10000				; I/O registers base
+VERSION			equ $A10001				; Hardware version
+IO_DATA_1		equ $A10003				; I/O port 1 data
+IO_DATA_2		equ $A10005				; I/O port 2 data
+IO_DATA_3		equ $A10007				; I/O port 3 data
+IO_CTRL_1		equ $A10009				; I/O port 1 control
+IO_CTRL_2		equ $A1000B				; I/O port 2 control
+IO_CTRL_3		equ $A1000D				; I/O port 3 control
+
+; Z80 bus
+Z80_BUS			equ $A11100				; Z80 bus request
+Z80_RESET		equ $A11200				; Z80 reset
+
+; Mega CD registers
+MCD_REGS		equ $A12000				; Mega CD registers base
+MCD_IRQ2		equ $A12000				; IRQ2 request
+MCD_RESET		equ $A12001				; Reset
+MCD_PROTECT		equ $A12002				; Program RAM write protection
+MCD_MEM_MODE		equ $A12003				; Memory mode
+MCD_CDC_MODE		equ $A12004				; CDC mode/Device destination
+MCD_USER_HBLANK		equ $A12006				; User H-BLANK interrupt address
+MCD_CDC_HOST		equ $A12008				; CDC data
+MCD_STOPWATCH		equ $A1200C				; Stopwatch
+MCD_COMM_FLAGS		equ $A1200E				; Communication flags
+MCD_MAIN_FLAG		equ $A1200E				; Main CPU communication flag
+MCD_SUB_FLAG		equ $A1200F				; Sub CPU communication flag
+MCD_MAIN_COMMS		equ $A12010				; Main CPU communication registers
+MCD_MAIN_COMM_0		equ $A12010				; Main CPU communication register 0
+MCD_MAIN_COMM_1		equ $A12011				; Main CPU communication register 1
+MCD_MAIN_COMM_2		equ $A12012				; Main CPU communication register 2
+MCD_MAIN_COMM_3		equ $A12013				; Main CPU communication register 3
+MCD_MAIN_COMM_4		equ $A12014				; Main CPU communication register 4
+MCD_MAIN_COMM_5		equ $A12015				; Main CPU communication register 5
+MCD_MAIN_COMM_6		equ $A12016				; Main CPU communication register 6
+MCD_MAIN_COMM_7		equ $A12017				; Main CPU communication register 7
+MCD_MAIN_COMM_8		equ $A12018				; Main CPU communication register 8
+MCD_MAIN_COMM_9		equ $A12019				; Main CPU communication register 9
+MCD_MAIN_COMM_10	equ $A1201A				; Main CPU communication register 10
+MCD_MAIN_COMM_11	equ $A1201B				; Main CPU communication register 11
+MCD_MAIN_COMM_12	equ $A1201C				; Main CPU communication register 12
+MCD_MAIN_COMM_13	equ $A1201D				; Main CPU communication register 13
+MCD_MAIN_COMM_14	equ $A1201E				; Main CPU communication register 14
+MCD_MAIN_COMM_15	equ $A1201F				; Main CPU communication register 15
+MCD_SUB_COMMS		equ $A12020				; Sub CPU communication registers
+MCD_SUB_COMM_0		equ $A12020				; Sub CPU communication register 0
+MCD_SUB_COMM_1		equ $A12021				; Sub CPU communication register 1
+MCD_SUB_COMM_2		equ $A12022				; Sub CPU communication register 2
+MCD_SUB_COMM_3		equ $A12023				; Sub CPU communication register 3
+MCD_SUB_COMM_4		equ $A12024				; Sub CPU communication register 4
+MCD_SUB_COMM_5		equ $A12025				; Sub CPU communication register 5
+MCD_SUB_COMM_6		equ $A12026				; Sub CPU communication register 6
+MCD_SUB_COMM_7		equ $A12027				; Sub CPU communication register 7
+MCD_SUB_COMM_8		equ $A12028				; Sub CPU communication register 8
+MCD_SUB_COMM_9		equ $A12029				; Sub CPU communication register 9
+MCD_SUB_COMM_10		equ $A1202A				; Sub CPU communication register 10
+MCD_SUB_COMM_11		equ $A1202B				; Sub CPU communication register 11
+MCD_SUB_COMM_12		equ $A1202C				; Sub CPU communication register 12
+MCD_SUB_COMM_13		equ $A1202D				; Sub CPU communication register 13
+MCD_SUB_COMM_14		equ $A1202E				; Sub CPU communication register 14
+MCD_SUB_COMM_15		equ $A1202F				; Sub CPU communication register 15
+
+; TMSS
+TMSS_SEGA		equ $A14000				; TMSS write register
+
+; VDP/PSG
+VDP_DATA		equ $C00000				; VDP data port
+VDP_CTRL		equ $C00004				; VDP control port
+VDP_HV			equ $C00008				; VDP H/V counter
+PSG_CTRL		equ $C00011				; PSG control port
+
+; Work RAM
+WORK_RAM		equ $FFFF0000				; Work RAM start
+WORK_RAM_SIZE		equ $10000				; Work RAM size
+WORK_RAM_END		equ WORK_RAM+WORK_RAM_SIZE		; Work RAM end
 
 ; CD Work RAM assignments
-_EXCPT		EQU	$FFFFFD00		; Exception
-_LEVEL6		EQU	$FFFFFD06		; V-INT
-_LEVEL4		EQU	$FFFFFD0C		; H-INT
-_LEVEL2		EQU	$FFFFFD12		; EXT-INT
-_TRAP00		EQU	$FFFFFD18		; TRAP #00
-_TRAP01		EQU	$FFFFFD1E		; TRAP #01
-_TRAP02		EQU	$FFFFFD24		; TRAP #02
-_TRAP03		EQU	$FFFFFD2A		; TRAP #03
-_TRAP04		EQU	$FFFFFD30		; TRAP #04
-_TRAP05		EQU	$FFFFFD36		; TRAP #05
-_TRAP06		EQU	$FFFFFD3C		; TRAP #06
-_TRAP07		EQU	$FFFFFD42		; TRAP #07
-_TRAP08		EQU	$FFFFFD48		; TRAP #08
-_TRAP09		EQU	$FFFFFD4E		; TRAP #09
-_TRAP10		EQU	$FFFFFD54		; TRAP #10
-_TRAP11		EQU	$FFFFFD5A		; TRAP #11
-_TRAP12		EQU	$FFFFFD60		; TRAP #12
-_TRAP13		EQU	$FFFFFD66		; TRAP #13
-_TRAP14		EQU	$FFFFFD6C		; TRAP #14
-_TRAP15		EQU	$FFFFFD72		; TRAP #15
-_CHKERR		EQU	$FFFFFD78		; CHK exception
-_ADRERR		EQU	$FFFFFD7E		; Address error
-_CODERR		EQU	$FFFFFD7E		; Illegal instruction
-_DIVERR		EQU	$FFFFFD84		; Division by zero
-_TRPERR		EQU	$FFFFFD8A		; TRAPV
-_NOCOD0		EQU	$FFFFFD90		; Line A emulator
-_NOCOD1		EQU	$FFFFFD96		; Line F emulator
-_SPVERR		EQU	$FFFFFD9C		; Privilege violation
-_TRACE		EQU	$FFFFFDA2		; TRACE exception
-_BURAM		EQU	$FFFFFDAE		; Cartridge Backup RAM handler
+_EXCPT			equ $FFFFFD00				; Exception
+_LEVEL6			equ $FFFFFD06				; V-BLANK interrupt
+_LEVEL4			equ $FFFFFD0C				; H-BLANK interrupt
+_LEVEL2			equ $FFFFFD12				; External interrupt
+_TRAP00			equ $FFFFFD18				; TRAP #00
+_TRAP01			equ $FFFFFD1E				; TRAP #01
+_TRAP02			equ $FFFFFD24				; TRAP #02
+_TRAP03			equ $FFFFFD2A				; TRAP #03
+_TRAP04			equ $FFFFFD30				; TRAP #04
+_TRAP05			equ $FFFFFD36				; TRAP #05
+_TRAP06			equ $FFFFFD3C				; TRAP #06
+_TRAP07			equ $FFFFFD42				; TRAP #07
+_TRAP08			equ $FFFFFD48				; TRAP #08
+_TRAP09			equ $FFFFFD4E				; TRAP #09
+_TRAP10			equ $FFFFFD54				; TRAP #10
+_TRAP11			equ $FFFFFD5A				; TRAP #11
+_TRAP12			equ $FFFFFD60				; TRAP #12
+_TRAP13			equ $FFFFFD66				; TRAP #13
+_TRAP14			equ $FFFFFD6C				; TRAP #14
+_TRAP15			equ $FFFFFD72				; TRAP #15
+_CHKERR			equ $FFFFFD78				; CHK exception
+_ADRERR			equ $FFFFFD7E				; Address error
+_CODERR			equ $FFFFFD7E				; Illegal instruction
+_DIVERR			equ $FFFFFD84				; Division by zero
+_TRPERR			equ $FFFFFD8A				; TRAPV exception
+_NOCOD0			equ $FFFFFD90				; Line A emulator
+_NOCOD1			equ $FFFFFD96				; Line F emulator
+_SPVERR			equ $FFFFFD9C				; Privilege violation
+_TRACE			equ $FFFFFDA2				; TRACE exception
+_BURAM			equ $FFFFFDAE				; Cartridge Backup RAM handler
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; BIOS function codes
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-BRMINIT		EQU	$00
-BRMSTAT		EQU	$01
-BRMSERCH	EQU	$02
-BRMREAD		EQU	$03
-BRMWRITE	EQU	$04
-BRMDEL		EQU	$05
-BRMFORMAT	EQU	$06
-BRMDIR		EQU	$07
-BRMVERIFY	EQU	$08
+BRMINIT			equ $00					; Backup RAM initialization
+BRMSTAT			equ $01					; Backup RAM status
+BRMSERCH		equ $02					; Backup RAM searchh
+BRMREAD			equ $03					; Backup RAM read
+BRMWRITE		equ $04					; Backup RAM write
+BRMDEL			equ $05					; Backup RAM delete
+BRMFORMAT		equ $06					; Backup RAM format
+BRMDIR			equ $07					; Backup RAM directory
+BRMVERIFY		equ $08					; Backup RAM verify
 
-; -------------------------------------------------------------------------
-; Constants
-; -------------------------------------------------------------------------
-
-PALLNCOLORS	EQU	$10			; Colors per palette line
-PALLINES	EQU	4			; Number of palette lines
-VSCRLCNT	EQU	$14			; Number of vertial scroll entries
-HSCRLCNT	EQU	$E0			; Number of horizontal scroll entries
-SPRITECNT	EQU	$50			; Nunber of sprites
-
-; -------------------------------------------------------------------------
-; Palette line structure
-; -------------------------------------------------------------------------
-
-	rsreset
-	RSRPT.W	palCol, PALLNCOLORS, 1		; Palette entries
-PALLINESZ	rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; Palette structure
-; -------------------------------------------------------------------------
-
-	rsreset
-	RSRPT.B	palLn, PALLINES, PALLINESZ	; Palette lines
-PALETTESZ	rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; Scroll entry structure
-; -------------------------------------------------------------------------
-
-	rsreset
-scrlFG		rs.w	1			; Foreground entry
-scrlBG		rs.w	1			; Background entry
-SCRLENTRYSZ	rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; Vertical scroll structure
-; -------------------------------------------------------------------------
-
-	rsreset
-	RSRPT.B	vscrl, VSCRLCNT, SCRLENTRYSZ	; Scroll entries
-VSCROLLSZ	rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; Horizontal scroll structure
-; -------------------------------------------------------------------------
-
-	rsreset
-	RSRPT.B	hscrl, HSCRLCNT, SCRLENTRYSZ	; Scroll entries
-HSCROLLSZ	rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; Sprite table entry structure
-; -------------------------------------------------------------------------
-
-	rsreset
-sprY		rs.w	1			; Y position
-sprSize		rs.b	1			; Sprite size
-sprLink		rs.b	1			; Link data
-sprTile		rs.w	1			; Tile attributes
-sprX		rs.w	1			; X position
-SPRENTRYSZ	rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; Sprite table structure
-; -------------------------------------------------------------------------
-
-	rsreset
-	RSRPT.B	spr, SPRITECNT, SPRENTRYSZ	; Sprite entries
-SPRTABLESZ	rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; YM2612 register bank structure
-; -------------------------------------------------------------------------
-	
-	rsreset
-ymAddr		rs.b	1			; Address
-ymData		rs.b	1			; Data
-YMREGSZ		rs.b	0			; Structure size
-
-; -------------------------------------------------------------------------
-; Request Z80 bus access
-; -------------------------------------------------------------------------
-
-Z80REQ macros
-	move.w	#$100,Z80BUS			; Request Z80 bus access
-
-; -------------------------------------------------------------------------
-; Wait for Z80 bus request acknowledgement
-; -------------------------------------------------------------------------
-
-Z80WAIT macro
-.Wait\@:
-	btst	#0,Z80BUS			; Was the request acknowledged?
-	bne.s	.Wait\@				; If not, wait
-	endm
-
-; -------------------------------------------------------------------------
-; Request Z80 bus access
-; -------------------------------------------------------------------------
-
-Z80STOP macro
-	Z80REQ					; Request Z80 bus access
-	Z80WAIT					; Wait for acknowledgement
-	endm
-
-; -------------------------------------------------------------------------
-; Release the Z80 bus
-; -------------------------------------------------------------------------
-
-Z80START macros
-	move.w	#0,Z80BUS			; Release the bus
-
-; -------------------------------------------------------------------------
-; Request Z80 reset
-; -------------------------------------------------------------------------
-
-Z80RESON macro
-	move.w	#0,Z80RESET			; Request Z80 reset
-	ror.b	#8,d0				; Delay
-	endm
-
-; -------------------------------------------------------------------------
-; Cancel Z80 reset
-; -------------------------------------------------------------------------
-
-Z80RESOFF macros
-	move.w	#$100,Z80RESET			; Cancel Z80 reset
-
-; -------------------------------------------------------------------------
-; Wait for DMA to finish
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; Reqeust Z80 bus access
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
-;	ctrl - (OPTIONAL) VDP control port address register
-; -------------------------------------------------------------------------
+;	reg - Z80 control port (optional)
+; ------------------------------------------------------------------------------
 
-DMAWAIT macro ctrl
+REQUEST_Z80 macro reg
+	if narg>0
+		move.w	#$100,\reg
+	else
+		move.w	#$100,Z80_BUS
+	endif
+	endm
+
+; ------------------------------------------------------------------------------
+; Wait for Z80 bus acknowledgement
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	reg - Z80 control port (optional)
+; ------------------------------------------------------------------------------
+
+WAIT_Z80 macro reg
 .Wait\@:
 	if narg>0
-		btst	#1,1(\ctrl)		; Is DMA active?
+		btst	#0,\reg
 	else
-		move.w	VDPCTRL,d0		; Is DMA active?
-		btst	#1,d0
+		btst	#0,Z80_BUS
 	endif
-	bne.s	.Wait\@				; If so, wait
+	bne.s	.Wait\@
 	endm
 
-; -------------------------------------------------------------------------
-; VDP command instruction
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; Stop the Z80 and get bus access
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
+;	reg - Z80 control port (optional)
+; ------------------------------------------------------------------------------
+
+STOP_Z80 macro reg
+	if narg>0
+		REQUEST_Z80 \reg
+		WAIT_Z80 \reg
+	else
+		REQUEST_Z80
+		WAIT_Z80
+	endif
+	endm
+
+; ------------------------------------------------------------------------------
+; Start the Z80 and release bus access
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	reg - Z80 bus port (optional)
+; ------------------------------------------------------------------------------
+
+START_Z80 macro reg
+	if narg>0
+		move.w	#0,\reg
+	else
+		move.w	#0,Z80_BUS
+	endif
+	endm
+
+; ------------------------------------------------------------------------------
+; Start Z80 reset
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	reg - Z80 reset port (optional)
+; ------------------------------------------------------------------------------
+
+RESET_Z80_ON macro reg
+	if narg>0
+		move.w	#0,\reg
+	else
+		move.w	#0,Z80_RESET
+	endif
+	ror.b	#8,d0
+	endm
+
+; ------------------------------------------------------------------------------
+; Stop Z80 reset
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	reg - Z80 reset port (optional)
+; ------------------------------------------------------------------------------
+
+RESET_Z80_OFF macro reg
+	if narg>0
+		move.w	#$100,\reg
+	else
+		move.w	#$100,Z80_RESET
+	endif
+	endm
+
+; ------------------------------------------------------------------------------
+; Wait for a VDP DMA to finish
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	ctrl - VDP control port (optional)
+; ------------------------------------------------------------------------------
+
+WAIT_DMA macro ctrl
+.Wait\@:
+	if narg>0
+		btst	#1,\reg
+	else
+		move.w	VDP_CTRL,d0
+		btst	#1,d0
+	endif
+	bne.s	.Wait\@
+	endm
+
+; ------------------------------------------------------------------------------
+; VDP command instruction
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	ins  - Instruction
 ;	addr - Address in VDP memory
 ;	type - Type of VDP memory
 ;	rwd  - VDP command
-;	end  - Destination, or modifier if end2 is defined
-;	end2 - Destination if defined
-; -------------------------------------------------------------------------
+;	dest - Destination (optional)
+; ------------------------------------------------------------------------------
 
-VRAMWRITE	EQU	$40000000		; VRAM write
-CRAMWRITE	EQU	$C0000000		; CRAM write
-VSRAMWRITE	EQU	$40000010		; VSRAM write
-VRAMREAD	EQU	$00000000		; VRAM read
-CRAMREAD	EQU	$00000020		; CRAM read
-VSRAMREAD	EQU	$00000010		; VSRAM read
-VRAMDMA		EQU	$40000080		; VRAM DMA
-CRAMDMA		EQU	$C0000080		; CRAM DMA
-VSRAMDMA	EQU	$40000090		; VSRAM DMA
-VRAMCOPY	EQU	$000000C0		; VRAM DMA copy
+VRAM_WRITE_CMD		equ $40000000				; VRAM write
+CRAM_WRITE_CMD		equ $C0000000				; CRAM write
+VSRAM_WRITE_CMD		equ $40000010				; VSRAM write
+VRAM_READ_CMD		equ $00000000				; VRAM read
+CRAM_READ_CMD		equ $00000020				; CRAM read
+VSRAM_READ_CMD		equ $00000010				; VSRAM read
+VRAM_DMA_CMD		equ $40000080				; VRAM DMA
+CRAM_DMA_CMD		equ $C0000080				; CRAM DMA
+VSRAM_DMA_CMD		equ $40000090				; VSRAM DMA
+VRAM_COPY_CMD		equ $000000C0				; VRAM DMA copy
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-VDPCMD macro ins, addr, type, rwd, end, end2
-	local	cmd
-cmd	= (\type\\rwd\)|(((\addr)&$3FFF)<<16)|((\addr)/$4000)
+VDP_CMD macro ins, addr, type, rwd, dest
+	local cmd
+	cmd: = (\type\_\rwd\_CMD)|(((\addr)&$3FFF)<<16)|((\addr)/$4000)
 	if narg=5
-		\ins	#\#cmd,\end
-	elseif narg>=6
-		\ins	#(\#cmd)\end,\end2
+		\ins	#\#cmd,\dest
 	else
 		\ins	cmd
 	endif
 	endm
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; VDP command instruction (low word)
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	ins  - Instruction
+;	addr - Address in VDP memory
+;	type - Type of VDP memory
+;	rwd  - VDP command
+;	dest - Destination (optional)
+; ------------------------------------------------------------------------------
+
+VDP_CMD_LO macro ins, addr, type, rwd, dest
+	local cmd
+	cmd: = ((\type\_\rwd\_CMD)&$FFFF)|((\addr)/$4000)
+	if narg=5
+		\ins	#\#cmd,\dest
+	else
+		\ins	cmd
+	endif
+	endm
+
+; ------------------------------------------------------------------------------
+; VDP command instruction (high word)
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	ins  - Instruction
+;	addr - Address in VDP memory
+;	type - Type of VDP memory
+;	rwd  - VDP command
+;	dest - Destination (optional)
+; ------------------------------------------------------------------------------
+
+VDP_CMD_HI macro ins, addr, type, rwd, dest
+	local cmd
+	cmd: = ((\type\_\rwd\_CMD)>>16)|((\addr)&$3FFF)
+	if narg=5
+		\ins	#\#cmd,\dest
+	else
+		\ins	cmd
+	endif
+	endm
+
+; ------------------------------------------------------------------------------
 ; VDP DMA from 68000 memory to VDP memory
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	src  - Source address in 68000 memory
 ;	dest - Destination address in VDP memory
-;	len  - Length of data in bytes
+;	size - Size of data in bytes
 ;	type - Type of VDP memory
 ;	a6.l - VDP control port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-DMA68K2 macro src, dest, len, type
-	; DMA data
-	move.l	#$93009400|((((\len)/2)&$FF00)>>8)|((((\len)/2)&$FF)<<16),(a6)
+DMA_M68K_2 macro src, dest, size, type
+	move.l	#$93009400|((((\size)/2)&$FF00)>>8)|((((\size)/2)&$FF)<<16),(a6)
 	move.l	#$95009600|((((\src)/2)&$FF00)>>8)|((((\src)/2)&$FF)<<16),(a6)
 	move.w	#$9700|(((\src)>>17)&$7F),(a6)
-	VDPCMD	move.w,\dest,\type,DMA,>>16,(a6)
-	VDPCMD	move.w,\dest,\type,DMA,&$FFFF,-(sp)
+	VDP_CMD_HI move.w,\dest,\type,DMA,(a6)
+	VDP_CMD_LO move.w,\dest,\type,DMA,-(sp)
 	move.w	(sp)+,(a6)
 
-	; Manually write first word
-	VDPCMD	move.l,\dest,\type,WRITE,(a6)
-	move.w	\src,VDPDATA
+	VDP_CMD move.l,\dest,\type,WRITE,(a6)
+	move.w	\src,VDP_DATA
 	endm
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; VDP DMA from 68000 memory to VDP memory
 ; (Automatically sets VDP control port in a6)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	src  - Source address in 68000 memory
 ;	dest - Destination address in VDP memory
-;	len  - Length of data in bytes
+;	size - Size of data in bytes
 ;	type - Type of VDP memory
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-DMA68K macro src, dest, len, type
-	lea	VDPCTRL,a6
-	DMA68K2	\src,\dest,\len,\type
+DMA_M68K macro src, dest, size, type
+	lea	VDP_CTRL,a6
+	DMA_M68K_2 \src,\dest,\size,\type
 	endm
 
-; -------------------------------------------------------------------------
-; VDP DMA fill VRAM with byte
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; Fill VRAM with byte
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	addr - Address in VRAM
-;	len  - Length of fill in bytes
+;	size - Size of fill in bytes
 ;	byte - Byte to fill VRAM with
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-DMAFILL macro addr, len, byte
-	; DMA fill
-	lea	VDPCTRL,a6
+VRAM_FILL macro addr, size, byte, ctrl, data
+	lea	VDP_CTRL,a6
 	move.w	#$8F01,(a6)
-	move.l	#$93009400|((((\len)-1)&$FF00)>>8)|((((\len)-1)&$FF)<<16),(a6)
+	move.l	#$93009400|((((\size)-1)&$FF00)>>8)|((((\size)-1)&$FF)<<16),(a6)
 	move.w	#$9780,(a6)
-	VDPCMD	move.l,\addr,VRAM,DMA,(a6)
-	move.w	#(\byte)<<8,VDPDATA
-	DMAWAIT	a6
-	
-	; Manually write first word
-	VDPCMD	move.l,\addr,VRAM,WRITE,(a6)
-	move.w	#((\byte)<<8)|(\byte),VDPDATA
+	VDP_CMD move.l,\addr,VRAM,DMA,(a6)
+	move.w	#(\byte)<<8,VDP_DATA
+	WAIT_DMA 1(a6)
+
+	VDP_CMD move.l,\addr,VRAM,WRITE,(a6)
+	move.w	#((\byte)<<8)|(\byte),VDP_DATA
 	move.w	#$8F02,(a6)
 	endm
 
-; -------------------------------------------------------------------------
-; VDP DMA copy region of VRAM to another location in VRAM
-; Auto-increment should be set to 1 beforehand.
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; Copy a region of VRAM to a location in VRAM
+; (Auto-increment should be set to 1 beforehand)
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	src  - Source address in VRAM
 ;	dest - Destination address in VRAM
-;	len  - Length of copy in bytes
-; -------------------------------------------------------------------------
+;	size - Size of copy in bytes
+; ------------------------------------------------------------------------------
 
-DMACOPY macro src, dest, len
-	lea	VDPCTRL,a6
+VRAM_COPY macro src, dest, size, ctrl
+	lea	VDP_CTRL,a6
 	move.w	#$8F01,(a6)
-	move.l	#$93009400|((((\len)-1)&$FF00)>>8)|((((\len)-1)&$FF)<<16),(a6)
+	move.l	#$93009400|((((\size)-1)&$FF00)>>8)|((((\size)-1)&$FF)<<16),(a6)
 	move.l	#$95009600|(((\src)&$FF00)>>8)|(((\src)&$FF)<<16),(a6)
 	move.w	#$97C0,(a6)
-	VDPCMD	move.l,\addr,VRAM,COPY,(a6)
-	DMAWAIT	a6
+	VDP_CMD move.l,\dest,VRAM,COPY,(a6)
+	WAIT_DMA 1(a6)
 	move.w	#$8F02,(a6)
 	endm
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Copy image buffer to VRAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	src  - Source address
 ;	buf  - Buffer ID
 ;	part - Buffer part ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 COPYIMG macro src, buf, part
-	local off, len, vadr
+	local off, size, vadr
 	
 	if (\part)=0
 		off: = 0
@@ -486,4 +490,4 @@ COPYIMG macro src, buf, part
 	DMA68K	(\src)+off,vadr,\#len,VRAM
 	endm
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

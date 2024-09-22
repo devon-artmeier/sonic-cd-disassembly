@@ -1,9 +1,9 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Special stage Main CPU program
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	include	"_Include/Common.i"
 	include	"_Include/Main CPU.i"
@@ -14,16 +14,16 @@
 	include	"Special Stage/_Global Variables.i"
 	include	"Special Stage/Stage Data Labels.i"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Image buffer VRAM constants
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 IMGVRAM		EQU	$0020			; VRAM address
 IMGV1LEN	EQU	$2000			; Part 1 length
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Variables
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	rsset	WORKRAM+$FF00B000
 VARSSTART	rs.b	0			; Start of variables
@@ -70,17 +70,17 @@ VARSLEN		EQU	__rs-VARSSTART		; Size of variables area
 
 lagCounter	rs.l	1			; Lag counter
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; MMD header
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	MMD	0, &
-		WORKRAMFILE, $9000, &
+		work_ram_file, $9000, &
 		Start, 0, 0
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Program start
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Start:
 	move.l	#VInterrupt,_LEVEL6+2.w		; Set V-INT address
@@ -151,7 +151,7 @@ Start:
 	bsr.w	GiveWordRAMAccess		; Give back Word RAM access
 	
 	lea	Stage1Demo(pc),a0		; Get stage 1 demo data
-	cmpi.b	#5,demoID			; Are we in the stage 6 demo?
+	cmpi.b	#5,demo_id			; Are we in the stage 6 demo?
 	bne.s	.DecompDemo			; If not, branch
 	lea	Stage6Demo(pc),a0		; Get stage 6 demo data
 
@@ -162,15 +162,15 @@ Start:
 	
 	bsr.w	PrepFadeFromWhite		; Prepare to fade from white
 	bsr.w	VSync				; VSync
-	bset	#6,ipxVDPReg1+1			; Enable screen
-	move.w	ipxVDPReg1,VDPCTRL
+	bset	#6,ipx_vdp_reg_81+1			; Enable screen
+	move.w	ipx_vdp_reg_81,VDPCTRL
 	bsr.w	FadeFromWhite			; Fade from white
 	
 	move.b	#1,demoActive.w			; Activate the demo
 	move.b	#$80,paused.w			; Enable pausing
 	move.l	#0,lagCounter.w			; Enable and reset lag counter
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 MainLoop:
 	; Show stage buffer 2, render to stage 1
@@ -232,7 +232,7 @@ MainLoop:
 	bra.w	MainLoop			; Loop
 	
 .Exit:
-	move.b	ufoCount,specStageLost		; Mark the stage as beaten or not based on UFOs left
+	move.b	ufoCount,special_stage_lost	; Mark the stage as beaten or not based on UFOs left
 	move.b	specStageFlags,flagsCopy.w	; Copy flags
 	move.b	#0,paused.w			; Disable pausing
 	move.b	#1,scrollDisable		; Disable scrolling
@@ -243,7 +243,7 @@ MainLoop:
 	
 	btst	#1,specStageFlags		; Are we in time attack mode?
 	beq.s	.MarkDone			; If not, branch
-	move.l	specStageTimer,timeAttackTime	; Save time
+	move.l	specStageTimer,time_attack_time	; Save time
 	move.b	#1,lives			; Mark the stage as beaten or not
 	tst.b	ufoCount
 	beq.s	.MarkDone
@@ -269,15 +269,15 @@ MainLoop:
 	
 	btst	#2,flagsCopy.w			; Were we in the secret special stage?
 	beq.s	.FadeToBlack			; If not, branch
-	tst.b	specStageLost			; Did we lose the secret special stage?
+	tst.b	special_stage_lost			; Did we lose the secret special stage?
 	beq.w	FadeToWhite			; If not, fade to white
 
 .FadeToBlack:
 	bra.w	FadeToBlack			; Fade to black
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Results screen
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Results:
 	move.w	specStageRings,d0		; Get ring bonus
@@ -290,11 +290,11 @@ Results:
 	bsr.w	GiveWordRAMAccess		; Give Word RAM access to the Sub CPU
 	
 	move.b	#0,demoActive.w			; Deactivate the demo
-	move.b	#0,specialStage			; Clear special stage flag
+	move.b	#0,special_stage		; Clear special stage flag
 	move.w	#6,vintRoutine.w		; Fade to white
 	bsr.w	FadeToWhite
-	move.b	specStageID,curSpecStage	; Save next stage ID
-	move.b	timeStonesSub,timeStones	; Save time stones retrieved
+	move.b	specStageID,current_special_stage	; Save next stage ID
+	move.b	timeStonesSub,time_stones	; Save time stones retrieved
 	
 	bset	#0,GAMAINFLAG			; Tell Sub CPU the stage is over
 
@@ -309,8 +309,8 @@ Results:
 	move.l	d0,GACOMCMD8
 	move.l	d0,GACOMCMDC
 	
-	bclr	#6,ipxVDPReg1+1			; Disable screen
-	move.w	ipxVDPReg1,VDPCTRL
+	bclr	#6,ipx_vdp_reg_81+1			; Disable screen
+	move.w	ipx_vdp_reg_81,VDPCTRL
 	
 	bsr.w	GiveWordRAMAccess		; Give Word RAM access to the Sub CPU
 	
@@ -349,14 +349,14 @@ Results:
 	bsr.w	DrawResultsBase			; Draw results base
 	bsr.w	PrepFadeFromWhite		; Prepare to fade from white
 	bsr.w	VSync				; VSync
-	bset	#6,ipxVDPReg1+1			; Enable screen
-	move.w	ipxVDPReg1,VDPCTRL
+	bset	#6,ipx_vdp_reg_81+1			; Enable screen
+	move.w	ipx_vdp_reg_81,VDPCTRL
 	bsr.w	FadeFromWhite			; Fade from white
 	
 	move.w	#8*60,resultsTimer.w		; Results screen lasts 8 seconds
 	move.w	#0,extraPlayerCnt.w		; Reset extra player count
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Results_MainLoop:
 	tst.l	ringBonus			; Tally ring bonus
@@ -402,7 +402,7 @@ Results_MainLoop:
 	bsr.w	FadeToWhite			; Fade to white
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 timeBonus:
 	dc.l	0				; Time bonus
@@ -413,9 +413,9 @@ scoreTallied:
 scrollDisable:
 	dc.b	0				; Scroll disable flag
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Tally score
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 TallyScore:
 	if REGION<>EUROPE
@@ -424,21 +424,21 @@ TallyScore:
 	endif
 	moveq	#20,d0				; Add 20 points
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Add points to score
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - Points to add
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 AddScore:
 	move.l	score,d1			; Add points
 	add.l	d1,d0
 
 .Check1UP:
-	cmp.l	nextLifeScore,d0		; Have we crossed an extra life score threshold?
+	cmp.l	next_1up_score,d0		; Have we crossed an extra life score threshold?
 	bcs.s	.SetScore			; If not, branch
-	addi.l	#5000,nextLifeScore		; Set next extra life score threshold
+	addi.l	#5000,next_1up_score		; Set next extra life score threshold
 	addq.b	#1,lives			; Add life
 	addq.w	#1,extraPlayerCnt.w		; Add extra player icon
 	cmpi.b	#250,lives			; Do we have more than 249 lives?
@@ -455,9 +455,9 @@ AddScore:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle pausing
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 HandlePause:
 	move.w	vintRoutine.w,d0		; Get V-BLANK interrupt routine ID
@@ -489,16 +489,16 @@ HandlePause:
 	moveq	#1,d0				; Exit the special stage
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw results screen base
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawResultsBase:
 	moveq	#$3D,d5				; "SPECIAL STAGE"
 	tst.l	timeBonus			; Did we run out of time?
 	beq.s	.DrawHeader			; If so, branch
 	moveq	#$3F,d5				; "GOT THEM ALL!!"
-	cmpi.b	#%1111111,timeStones		; Do we have all the time stones?
+	cmpi.b	#%1111111,time_stones		; Do we have all the time stones?
 	beq.s	.DrawHeader			; If so, branch
 	moveq	#$3E,d5				; "TIME STONES"
 
@@ -506,43 +506,43 @@ DrawResultsBase:
 	bsr.w	DrawTilemaps			; Draw header
 
 .CheckStone1:
-	btst	#0,timeStones			; Draw time stone 1
+	btst	#0,time_stones			; Draw time stone 1
 	beq.s	.CheckStone2
 	moveq	#$29,d5
 	bsr.w	DrawTilemaps
 
 .CheckStone2:
-	btst	#1,timeStones			; Draw time stone 2
+	btst	#1,time_stones			; Draw time stone 2
 	beq.s	.CheckStone3
 	moveq	#$2A,d5
 	bsr.w	DrawTilemaps
 
 .CheckStone3:
-	btst	#2,timeStones			; Draw time stone 3
+	btst	#2,time_stones			; Draw time stone 3
 	beq.s	.CheckStone4
 	moveq	#$2B,d5
 	bsr.w	DrawTilemaps
 
 .CheckStone4:
-	btst	#3,timeStones			; Draw time stone 4
+	btst	#3,time_stones			; Draw time stone 4
 	beq.s	.CheckStone5
 	moveq	#$2C,d5
 	bsr.w	DrawTilemaps
 
 .CheckStone5:
-	btst	#4,timeStones			; Draw time stone 5
+	btst	#4,time_stones			; Draw time stone 5
 	beq.s	.CheckStone6
 	moveq	#$2D,d5
 	bsr.w	DrawTilemaps
 
 .CheckStone6:
-	btst	#5,timeStones			; Draw time stone 6
+	btst	#5,time_stones			; Draw time stone 6
 	beq.s	.CheckStone7
 	moveq	#$2E,d5
 	bsr.w	DrawTilemaps
 
 .CheckStone7:
-	btst	#6,timeStones			; Draw time stone 7
+	btst	#6,time_stones			; Draw time stone 7
 	beq.s	.DrawSmallText
 	moveq	#$2F,d5
 	bsr.w	DrawTilemaps
@@ -554,9 +554,9 @@ DrawResultsBase:
 	jsr	DrawTilemaps
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Palettes
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Pal_Stage:
 	incbin	"Special Stage/Data/Palette.bin"
@@ -568,9 +568,9 @@ Pal_Results:
 Pal_Results_End:
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load time stone palette when the stage is beaten
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadTimeStonePal:
 	tst.b	ufoCount			; Are there any UFOs left?
@@ -589,20 +589,20 @@ LoadTimeStonePal:
 	move.l	(a1)+,(a2)+
 	move.w	(a1)+,(a2)+
 	
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 timeStonePalDelay:
 	dc.b	20				; Time stone palette load delay timer
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Time stone palettes
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 TimeStonePalettes:
 	dc.w	$040, $EEE, $0E8, $0A4, $062	; Stage 1
@@ -614,9 +614,9 @@ TimeStonePalettes:
 	dc.w	$040, $EEE, $00E, $008, $204	; Stage 7
 	dc.w	$040, $EEE, $0E8, $0A4, $062	; Stage 8
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load stage data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadStageData:
 	moveq	#0,d0				; Run routine
@@ -625,7 +625,7 @@ LoadStageData:
 	move.w	.Index(pc,d0.w),d0
 	jmp	.Index(pc,d0.w)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index:
 	dc.w	LoadSS1Data-.Index		; Stage 1
@@ -637,9 +637,9 @@ LoadStageData:
 	dc.w	LoadSS7Data-.Index		; Stage 7
 	dc.w	LoadSS8Data-.Index		; Stage 8
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 1 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS1Data:
 	move.w	#$8B03,VDPCTRL			; Enable line scrolling
@@ -663,9 +663,9 @@ LoadSS1Data:
 	lea	Pal_SS1,a0			; Load palette
 	bra.w	LoadStagePal
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 2 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS2Data:
 	VDPCMD	move.l,$6020,VRAM,WRITE,VDPCTRL	; Load background art
@@ -682,9 +682,9 @@ LoadSS2Data:
 	lea	Pal_SS2,a0			; Load palette
 	bra.w	LoadStagePal
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 3 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS3Data:
 	VDPCMD	move.l,$6020,VRAM,WRITE,VDPCTRL	; Load background art
@@ -701,9 +701,9 @@ LoadSS3Data:
 	lea	Pal_SS3,a0			; Load palette
 	bra.w	LoadStagePal
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 4 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS4Data:
 	VDPCMD	move.l,$6020,VRAM,WRITE,VDPCTRL	; Load background art
@@ -720,9 +720,9 @@ LoadSS4Data:
 	lea	Pal_SS4,a0			; Load palette
 	bra.w	LoadStagePal
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 5 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS5Data:
 	move.w	#$8B03,VDPCTRL			; Enable line scrolling
@@ -746,9 +746,9 @@ LoadSS5Data:
 	lea	Pal_SS5,a0			; Load palette
 	bra.w	LoadStagePal
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 6 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS6Data:
 	move.w	#$8B03,VDPCTRL			; Enable line scrolling
@@ -775,9 +775,9 @@ LoadSS6Data:
 	lea	Pal_SS6,a0			; Load palette
 	bra.w	LoadStagePal
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 7 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS7Data:
 	VDPCMD	move.l,$6020,VRAM,WRITE,VDPCTRL	; Load background art
@@ -794,9 +794,9 @@ LoadSS7Data:
 	lea	Pal_SS7,a0			; Load palette
 	bra.w	LoadStagePal
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load special stage 8 data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSS8Data:
 	VDPCMD	move.l,$6020,VRAM,WRITE,VDPCTRL	; Load background art
@@ -814,12 +814,12 @@ LoadSS8Data:
 	
 	lea	Pal_SS8,a0			; Load palette
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load stage palette
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to palette
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadStagePal:
 	lea	palette+($10*2).w,a1		; Load palette
@@ -830,9 +830,9 @@ LoadStagePal:
 	dbf	d7,.Copy
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw HUD base
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawHUDBase:
 	moveq	#$12,d5				; Draw regular HUD base
@@ -845,13 +845,13 @@ DrawHUDBase:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize background horizontal line scrolling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d1.l - Initial integer value
 ;	d2.l - Initial fraction value
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitBGLineHScroll:
 	rept	$200/$80			; Set integer values
@@ -864,9 +864,9 @@ InitBGLineHScroll:
 	endr
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Unused function to load the splash art when the flag is set
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSplashArt:
 	bclr	#0,splashArtLoad.w		; Clear load flag
@@ -878,15 +878,15 @@ LoadSplashArt:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; V-BLANK interrupt
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInterrupt:
 	movem.l	d0-a6,-(sp)			; Save registers
 
 	move.b	#1,GAIRQ2			; Trigger IRQ2 on Sub CPU
-	bclr	#0,ipxVSync			; Clear VSync flag
+	bclr	#0,ipx_vsync			; Clear VSync flag
 	beq.w	VInt_Lag			; If it wasn't set, branch
 	
 	lea	VDPCTRL,a1			; VDP control port
@@ -895,7 +895,7 @@ VInterrupt:
 
 	jsr	StopZ80(pc)			; Stop the Z80
 
-	bclr	#1,ipxVSync			; Clear CRAM update flag
+	bclr	#1,ipx_vsync			; Clear CRAM update flag
 	beq.s	.Update				; If it wasn't set, branch
 	DMA68K	palette,$0000,$80,CRAM		; Copy palette data
 
@@ -905,7 +905,7 @@ VInterrupt:
 	move.w	.Routines(pc,d0.w),d0
 	jmp	.Routines(pc,d0.w)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Routines:
 	dc.w	VInt_CopyStage1_1-.Routines	; Copy 1st half of rendered stage art to buffer 1
@@ -917,7 +917,7 @@ VInterrupt:
 	dc.w	VInt_StageOver-.Routines		; Stage over
 	dc.w	VInt_Paused-.Routines		; Paused
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyStage1_1:
 	bsr.w	ShowStageBuf2			; Show stage buffer 2
@@ -926,7 +926,7 @@ VInt_CopyStage1_1:
 	jsr	ReadController(pc)		; Read controller
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyStage1_2:
 	bsr.w	CopyHScrollSects		; Update horizontal scroll data
@@ -935,7 +935,7 @@ VInt_CopyStage1_2:
 	bsr.w	PaletteCycle			; Cycle palette
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyStage2_1:
 	bsr.w	ShowStageBuf1			; Show stage buffer 1
@@ -944,7 +944,7 @@ VInt_CopyStage2_1:
 	jsr	ReadController(pc)		; Read controller
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyStage2_2:
 	bsr.w	CopyHScrollSects		; Update horizontal scroll data
@@ -953,13 +953,13 @@ VInt_CopyStage2_2:
 	bsr.w	PaletteCycle			; Cycle palette
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_CopyStageDone:
 	bsr.w	CopyHScrollSects		; Update horizontal scroll data
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_Results:
 	bsr.w	DrawResultsScore		; Draw results score
@@ -969,18 +969,18 @@ VInt_Results:
 	jsr	ReadController(pc)		; Read controller
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_StageOver:
 	bra.w	VInt_Finish			; Finish
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_Paused:
 	jsr	ReadController(pc)		; Read controller
 	bra.w	*+4
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_Finish:
 	bsr.w	StartZ80			; Start the Z80
@@ -995,7 +995,7 @@ VInt_Finish:
 	movem.l	(sp)+,d0-a6			; Restore registers
 	rte
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VInt_Lag:
 	cmpi.l	#-1,lagCounter.w		; Is the lag counter disabled?
@@ -1007,18 +1007,18 @@ VInt_Lag:
 	movem.l	(sp)+,d0-a6			; Restore registers
 	rte
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Copy sprite data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopySprites:
 	DMA68K	sprites,$D400,$280,VRAM		; Copy sprite data
 	DMA68K	sonicArtBuf,$BC00,$300,VRAM	; Copy Sonic art
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Show stage buffer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowStageBuf1:
 	bsr.w	CheckLineScroll			; Is line scrolling enabled?
@@ -1028,7 +1028,7 @@ ShowStageBuf1:
 	moveq	#0,d0
 	bra.s	ShowStageBuffer
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowStageBuf2:
 	bsr.w	CheckLineScroll			; Is line scrolling enabled?
@@ -1037,14 +1037,14 @@ ShowStageBuf2:
 	VDPCMD	move.l,$D200,VRAM,WRITE,VDPCTRL	; Set scroll offsets
 	move.w	#$100,d0
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowStageBuffer:
 	bsr.w	Scroll12Rows			; Set stage buffer scroll offset
 	move.w	#$8F02,VDPCTRL			; Reset auto-increment
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowStageBuf1Line:
 	lea	VDPCTRL,a6			; VDP control port
@@ -1053,7 +1053,7 @@ ShowStageBuf1Line:
 	move.w	#$8F02,(a6)			; Reset auto-increment
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShowStageBuf2Line:
 	lea	VDPCTRL,a6			; VDP control port
@@ -1062,9 +1062,9 @@ ShowStageBuf2Line:
 	move.w	#$8F02,(a6)			; Reset auto-increment
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll background section 1
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll1:
 	btst	#0,GASUBFLAG			; Is the stage over?
@@ -1081,7 +1081,7 @@ BGScroll1:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS1Sect1:
 	move.l	#$80000,d0			; Update planets scroll offset
@@ -1119,7 +1119,7 @@ BGScroll_SS1Sect1:
 	move.w	#24-1,d7
 	bra.w	ApplyBGScroll_SS1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS5Sect1:
 	move.l	#$40000,d0			; Update buildings scroll offset
@@ -1162,7 +1162,7 @@ BGScroll_SS5Sect1:
 	move.w	#7-1,d7
 	bra.w	ApplyBGScroll_SS5
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS6Sect1:
 	move.l	#$40000,d0			; Update buildings scroll offset
@@ -1179,9 +1179,9 @@ BGScroll_SS6Sect1:
 	move.w	#24-1,d7
 	bra.w	ApplyBGScroll_SS6
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll background section 2
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll2:
 	btst	#0,GASUBFLAG			; Is the stage over?
@@ -1198,7 +1198,7 @@ BGScroll2:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS1Sect2:
 	lea	bgHScroll+(24*4).w,a0		; Apply scrolling to planets section
@@ -1210,7 +1210,7 @@ BGScroll_SS1Sect2:
 	move.w	#72-1,d7
 	bra.w	ApplyBGScroll_SS1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS5Sect2:
 	lea	bgHScroll+(24*4).w,a0		; Apply scrolling to buildings section (top)
@@ -1220,7 +1220,7 @@ BGScroll_SS5Sect2:
 	move.w	#56-1,d7
 	bra.w	ApplyBGScroll_SS5
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS6Sect2:
 	lea	bgHScroll+(24*4).w,a0		; Apply scrolling to buildings section (top)
@@ -1230,9 +1230,9 @@ BGScroll_SS6Sect2:
 	move.w	#56-1,d7
 	bra.w	ApplyBGScroll_SS6
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll background section 3
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll3:
 	btst	#0,GASUBFLAG			; Is the stage over?
@@ -1249,7 +1249,7 @@ BGScroll3:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS1Sect3:
 	lea	bgHScroll+(96*4).w,a0		; Apply scrolling to crystals section
@@ -1261,7 +1261,7 @@ BGScroll_SS1Sect3:
 	move.w	#32-1,d7
 	bra.w	ApplyBGScroll_SS1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS5Sect3:
 	lea	bgHScroll+(80*4).w,a0		; Apply scrolling to buildings section (bottom)
@@ -1271,7 +1271,7 @@ BGScroll_SS5Sect3:
 	move.w	#48-1,d7
 	bra.w	ApplyBGScroll_SS5
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGScroll_SS6Sect3:
 	lea	bgHScroll+(80*4).w,a0		; Apply scrolling to buildings section (bottom)
@@ -1281,7 +1281,7 @@ BGScroll_SS6Sect3:
 	move.w	#48-1,d7
 	bra.w	ApplyBGScroll_SS6
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ss1BGScrollShift:
 	dc.w	$100				; Stage 1 background scroll shift
@@ -1292,7 +1292,7 @@ bgScrollMode:
 	dc.b	0				; Background scroll mode
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 SS5BGScrollSpeeds:				; Stage 5 scroll speeds
 	dc.l	$3D000, $3E000, $3F000
@@ -1351,9 +1351,9 @@ SS6BGWave:					; Stage 6 wavy scroll pattern
 	dc.b	$7E, $7D, $7C, $7A, $78, $72, $6C, $66
 	dc.b	$60, $56, $4C, $42, $38, $2A, $1C, $0E
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Apply scrolling for stage 1
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - Initial shift value
 ;	d1.l - Shift value subtraction value
@@ -1362,7 +1362,7 @@ SS6BGWave:					; Stage 6 wavy scroll pattern
 ;	d7.w - Number of lines to scroll (minus 1)
 ;	a0.l - Background horizontal scroll buffer (integer)
 ;	a1.l - Background horizontal scroll buffer (fraction)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ApplyBGScroll_SS1:
 	tst.b	bgScrollMode			; Are we shifting left?
@@ -1400,16 +1400,16 @@ ApplyBGScroll_SS1:
 	dbf	d7,.ShiftLeft			; Loop until lines are set
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Apply scrolling for stage 5
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Plane A scroll offset
 ;	d7.w - Number of lines to scroll (minus 1)
 ;	a0.l - Background horizontal scroll buffer (integer)
 ;	a1.l - Background horizontal scroll buffer (fraction)
 ;	a2.l - Scroll speed table
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ApplyBGScroll_SS5:
 	cmpi.b	#2,bgScrollMode			; Are we reseting the scroll offsets?
@@ -1458,15 +1458,15 @@ ApplyBGScroll_SS5:
 .End:
 	rts
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Apply scrolling for stage 6
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Initial scroll pattern table offset
 ;	d7.w - Number of lines to scroll (minus 1)
 ;	a0.l - Background horizontal scroll buffer (integer)
 ;	a2.l - Scroll pattern table
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ApplyBGScroll_SS6:
 .Loop:
@@ -1483,9 +1483,9 @@ ApplyBGScroll_SS6:
 	move.w	d2,ss6BGWaveTableOff		; Update table offset
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Basic background scroll
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DefaultBGScroll:
 	move.l	#$40000,d0			; Offset 3 speed = 4
@@ -1497,16 +1497,16 @@ DefaultBGScroll:
 	add.l	d0,scrollOffset1.w
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Calculate scroll speed with regards to direction that is being scrolled
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - Base scroll speed value
 ;	d1.l - Base scroll speed accumulator value
 ; RETURNS:
 ;	d0.l - Calculated scroll speed
 ;	d1.l - Calculated scroll speed accumulator
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 GetScrollSpeed:
 	btst	#2,scrollFlags.w		; Are we scrolling left?
@@ -1521,10 +1521,10 @@ GetScrollSpeed:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Copy horizontal scroll data for line scrolled backgrounds
 ; (Line scrolled backgrounds should already have been updated)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScrollSects:
 	btst	#0,GASUBFLAG			; Is the stage over?
@@ -1537,9 +1537,9 @@ CopyHScrollSects:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Copy horizontal scroll data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScroll:
 	tst.b	scrollDisable			; Is scrolling disabled?
@@ -1556,7 +1556,7 @@ CopyHScroll:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index:
 	dc.w	CopyHScroll_Line-.Index		; Stage 1
@@ -1568,13 +1568,13 @@ CopyHScroll:
 	dc.w	CopyHScroll_SS7-.Index		; Stage 7
 	dc.w	CopyHScroll_SS8-.Index		; Stage 8
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScroll_Line:
 	DMA68K	bgHScroll,$D000,$200,VRAM	; Copy horizontal scroll data
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScroll_SS2:
 	bsr.w	DefaultBGScroll			; Use default scroll speeds
@@ -1591,7 +1591,7 @@ CopyHScroll_SS2:
 	move.w	#$8F02,VDPCTRL			; Reset auto-increment
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScroll_SS3:
 	move.l	#$80000,d0			; Get scroll speed
@@ -1634,7 +1634,7 @@ CopyHScroll_SS3:
 	move.w	#$8F02,VDPCTRL			; Reset auto-increment
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScroll_SS4:
 	bsr.w	DefaultBGScroll			; Use default scroll speeds
@@ -1654,7 +1654,7 @@ CopyHScroll_SS4:
 	move.w	#$8F02,VDPCTRL			; Reset auto-increment
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScroll_SS7:
 	move.l	#$80000,d0			; Get scroll speed
@@ -1688,18 +1688,18 @@ CopyHScroll_SS7:
 	move.w	#$8F02,VDPCTRL			; Reset auto-increment
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CopyHScroll_SS8:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll rows
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Scroll offset
 ;	a2.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Scroll16Rows:
 	move.w	d0,(a2)
@@ -1735,9 +1735,9 @@ Scroll1Row:
 	move.w	d0,(a2)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Cycle palette
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PaletteCycle:
 	lea	palette.w,a6			; Get palette
@@ -1748,7 +1748,7 @@ PaletteCycle:
 	move.w	.Index(pc,d0.w),d0
 	jmp	.Index(pc,d0.w)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index:
 	dc.w	PalCycle_SS1-.Index		; Stage 1
@@ -1760,7 +1760,7 @@ PaletteCycle:
 	dc.w	PalCycle_SS7-.Index		; Stage 7
 	dc.w	PalCycle_SS8-.Index		; Stage 8
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS1:
 	lea	.Index(pc),a1			; Get and increment cycle index
@@ -1785,10 +1785,10 @@ PalCycle_SS1:
 	move.w	d1,(a6)+			; Store color
 	dbf	d0,.Loop			; Loop until colors are set
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Cycle:
 	dc.b	$00, $20, $40, $60, $80, $A0, $C0, $E0, $00, $00, $00, $00, $00, $00, $00, $00
@@ -1858,7 +1858,7 @@ PalCycle_SS1:
 .Index:
 	dc.w	0				; Palette cycle index
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS2:
 	lea	.Index(pc),a5			; Cycle
@@ -1868,10 +1868,10 @@ PalCycle_SS2:
 	move.l	.Cycle(pc,d0.w),$1A*2(a6)
 	move.l	.Cycle+4(pc,d0.w),$1C*2(a6)
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Cycle:
 	dc.w	$E00, $E60, $EA6, $ECA
@@ -1880,7 +1880,7 @@ PalCycle_SS2:
 .Index:
 	dc.w	0				; Palette cycle index
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS3:
 	lea	.Index1(pc),a1			; Cycle 1
@@ -1908,10 +1908,10 @@ PalCycle_SS3:
 	move.w	.Cycle2(pc,d0.w),$21*2(a6)
 
 .End:
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Cycle1:
 	dc.w	$E00, $E42, $E84, $EC4
@@ -1932,7 +1932,7 @@ PalCycle_SS3:
 .Index2:
 	dc.w	0				; Palette cycle index 2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS4:
 	lea	.Index1(pc),a5			; Cycle 1
@@ -1956,10 +1956,10 @@ PalCycle_SS4:
 	move.w	.Cycle2(pc,d0.w),$28*2(a6)
 
 .End:
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Cycle1:
 	dc.w	$E20, $E42, $E84, $EC4
@@ -1978,7 +1978,7 @@ PalCycle_SS4:
 .Index2:
 	dc.w	0				; Palette cycle index 2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS5:
 	lea	.Index1(pc),a1			; Cycle 1
@@ -2012,10 +2012,10 @@ PalCycle_SS5:
 	lea	.Cycle4(pc),a5
 	move.w	(a5,d0.w),$2F*2(a6)
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index1:
 	dc.w	0				; Palette cycle index 1
@@ -2057,7 +2057,7 @@ PalCycle_SS5:
 	dc.w	$002, $000, $002, $004
 	dc.w	$006, $008, $00A, $00C
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS6:
 	lea	.Index1(pc),a1			; Cycle 1
@@ -2078,10 +2078,10 @@ PalCycle_SS6:
 	andi.w	#$FFFC,d0
 	move.l	.Cycle2(pc,d0.w),$1D*2(a6)
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index1:
 	dc.w	0				; Palette cycle index 1
@@ -2102,7 +2102,7 @@ PalCycle_SS6:
 	dc.w	$E42, $204, $E64, $002
 	dc.w	$E42, $000, $E20, $002
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS7:
 	lea	.Index(pc),a1			; Cycle
@@ -2113,10 +2113,10 @@ PalCycle_SS7:
 	andi.w	#$FFFE,d0
 	move.w	.Cycle(pc,d0.w),$1F*2(a6)
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index:
 	dc.w	0				; Palette cycle index
@@ -2126,14 +2126,14 @@ PalCycle_SS7:
 	dc.w	$E60, $E60, $E80, $E80
 	dc.w	$E60, $E60, $E40, $E40
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PalCycle_SS8:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Update the stage
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 UpdateStage:
 	btst	#0,GASUBFLAG			; Is the stage over?
@@ -2156,9 +2156,9 @@ UpdateStage:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Give Sub CPU Word RAM access
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 GiveWordRAMAccess:
 	btst	#0,GASUBFLAG			; Is the stage over?
@@ -2172,9 +2172,9 @@ GiveWordRAMAccess:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wait for Word RAM access
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 WaitWordRAMAccess:
 	btst	#0,GASUBFLAG			; Is the stage over?
@@ -2188,36 +2188,36 @@ WaitWordRAMAccess:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wait for the Sub CPU program to start
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 WaitSubCPUStart:
 	btst	#7,GASUBFLAG			; Has the Sub CPU program started?
 	beq.s	WaitSubCPUStart			; If not, wait
 	rts 
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wait for the Sub CPU program to finish initializing
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 WaitSubCPUInit:
 	btst	#7,GASUBFLAG			; Has the Sub CPU program initialized?
 	bne.s	WaitSubCPUInit			; If not, wait
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Delay a number of cycles
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Delay:
 	moveq	#$20-1,d0			; Delay
 	dbf	d0,*
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check if we are in a stage with line scrolling for the background
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CheckLineScroll:
 	cmpi.b	#1-1,specStageID		; Stage 1
@@ -2229,9 +2229,9 @@ CheckLineScroll:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Extra players text art
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	if REGION=USA
 Art_ExtraPlayersText:
@@ -2239,9 +2239,9 @@ Art_ExtraPlayersText:
 		even
 	endif
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade to black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToBlack:
 	move.b	#1,fadedOut.w			; Set faded out flag
@@ -2274,13 +2274,13 @@ FadeToBlack:
 	dbf	d6,.FadeBlue			; Loop until channel is faded
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade color channel to black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Fade intensity
 ;	d1.w - Color bit offset
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .FadeColorChannel:
 	lea	palette.w,a1			; Palette
@@ -2307,12 +2307,12 @@ FadeToBlack:
 	move.w	d2,(a1)+			; Update color data
 	dbf	d7,.ColorLoop			; Loop until all colors are updated
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	bra.w	VSync				; VSync
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Prepare fade from black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PrepFadeFromBlack:
 	lea	palette.w,a1			; Palette
@@ -2326,12 +2326,12 @@ PrepFadeFromBlack:
 	move.l	d1,(a1)+			; Fill palette with black
 	dbf	d7,.Transfer			; Loop until entire palette is processed
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade from black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromBlack:
 	move.w	#8-1,d6				; Blue channel
@@ -2364,13 +2364,13 @@ FadeFromBlack:
 	move.b	#0,fadedOut.w			; Clear faded out flag
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade color channel from black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Fade intensity
 ;	d1.w - Color bit offset
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .FadeColorChannel:
 	lea	palette.w,a1			; Palette
@@ -2400,12 +2400,12 @@ FadeFromBlack:
 	move.w	d2,(a1)+			; Update color data
 	dbf	d7,.ColorLoop			; Loop until all colors are updated
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	bra.w	VSync				; VSync
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade to white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToWhite:
 	move.b	#1,fadedOut.w			; Set faded out flag
@@ -2432,12 +2432,12 @@ FadeToWhite:
 	dbf	d6,.FadeBlue			; Loop until channel is faded
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade color channel to white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d1.w - Color bit offset
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .FadeColorChannel:
 	lea	palette.w,a1			; Palette
@@ -2465,12 +2465,12 @@ FadeToWhite:
 	move.w	d2,(a1)+			; Update color data
 	dbf	d7,.ColorLoop			; Loop until all colors are updated
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	bra.w	VSync				; VSync
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Prepare fade from white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PrepFadeFromWhite:
 	lea	palette.w,a1			; Palette
@@ -2484,12 +2484,12 @@ PrepFadeFromWhite:
 	move.l	d1,(a1)+			; Fill palette with bwhitelack
 	dbf	d7,.Transfer			; Loop until entire palette is processed
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade from white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromWhite:
 	moveq	#8-1,d6				; Red channel
@@ -2522,13 +2522,13 @@ FadeFromWhite:
 	move.b	#0,fadedOut.w			; Clear faded out flag
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade color channel from white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Fade intensity
 ;	d1.w - Color bit offset
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .FadeColorChannel:
 	lea	palette.w,a1			; Palette
@@ -2558,17 +2558,17 @@ FadeFromWhite:
 	move.w	d2,(a1)+			; Update color data
 	dbf	d7,.ColorLoop			; Loop until all colors are updated
 
-	bset	#1,ipxVSync			; Update CRAM
+	bset	#1,ipx_vsync			; Update CRAM
 	bra.w	VSync				; VSync
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get sine or cosine of a value
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d3.w - Value
 ; RETURNS:
 ;	d3.w - Sine/cosine of value
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 GetCosine:
 	addi.w	#$80,d3				; Offset value for cosine
@@ -2593,7 +2593,7 @@ GetSine:
 	move.w	d4,d3				; Set final value
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 SineTable:
 	dc.w	$0000, $0003, $0006, $0009, $000C, $000F, $0012, $0016
@@ -2613,25 +2613,25 @@ SineTable:
 	dc.w	$00FB, $00FB, $00FC, $00FC, $00FD, $00FD, $00FE, $00FE
 	dc.w	$00FE, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $0100
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; VSync
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VSync:
-	bset	#0,ipxVSync			; Set VSync flag
+	bset	#0,ipx_vsync			; Set VSync flag
 	move	#$2500,sr			; Enable interrupts
 
 .Wait:
-	btst	#0,ipxVSync			; Has the V-INT handler run?
+	btst	#0,ipx_vsync			; Has the V-INT handler run?
 	bne.s	.Wait				; If not, wait
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Send a command to the Sub CPU
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Command ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 SubCPUCmd:
 	move.w	d0,GACOMCMD0			; Set command ID
@@ -2651,12 +2651,12 @@ SubCPUCmd:
 	bne.s	.WaitSubCPUDone			; If not, wait
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Play an FM sound
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.b - Sound ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PlayFMSound:
 	bsr.w	StopZ80				; Stop the Z80
@@ -2680,9 +2680,9 @@ PlayFMSound:
 	bsr.w	StartZ80			; Start the Z80
 	rts
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Play Sub CPU FM sounds
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PlaySubFMSounds:
 	bsr.w	StopZ80				; Stop the Z80
@@ -2692,9 +2692,9 @@ PlaySubFMSounds:
 	bsr.w	StartZ80			; Start the Z80
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw extra player icons
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawExtraPlayers:
 	addq.w	#1,.AnimTimer			; Increment animation timer
@@ -2719,7 +2719,7 @@ DrawExtraPlayers:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .IconDraw:
 	dc.w	.Draw1Icon-.IconDraw		; 1 icon
@@ -2728,7 +2728,7 @@ DrawExtraPlayers:
 	dc.w	.Draw4Icons-.IconDraw		; 4 icons
 	dc.w	.Draw45cons-.IconDraw		; 5 icons
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Draw45cons:
 	moveq	#8,d0				; Icon 5
@@ -2749,7 +2749,7 @@ DrawExtraPlayers:
 .Draw1Icon:
 	moveq	#0,d0				; Icon 1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .DrawIcon:
 	moveq	#0,d5				; Draw icon frame
@@ -2757,7 +2757,7 @@ DrawExtraPlayers:
 	move.b	.IconMaps(pc,d0.w),d5
 	bra.w	DrawTilemaps
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .IconMaps:
 	dc.b	$39, $38			; Icon 1
@@ -2771,9 +2771,9 @@ DrawExtraPlayers:
 .AnimTimer:
 	dc.w	0				; Animation timer
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw results time bonus
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawResTimeBonus:
 	move.b	#0,gotLeadDigit			; Clear leading digit found flag
@@ -2785,9 +2785,9 @@ DrawResTimeBonus:
 	moveq	#8-1,d1
 	bra.s	DrawResultsNum
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw results ring bonus
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DarwResRingBonus:
 	move.b	#0,gotLeadDigit			; Clear leading digit found flag
@@ -2799,9 +2799,9 @@ DarwResRingBonus:
 	moveq	#8-1,d1
 	bra.s	DrawResultsNum
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw results score
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawResultsScore:
 	move.b	#0,gotLeadDigit			; Clear leading digit found flag
@@ -2812,16 +2812,16 @@ DrawResultsScore:
 	move.l	score,d0
 	moveq	#8-1,d1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw results number
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - Number to draw
 ;	d1.w - Number of digits to draw (minus 1)
 ;	d4.l - VDP command (top tiles)
 ;	d5.l - VDP command (bottom tiles)
 ;	a1.l - Pointer to digit counter list
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawResultsNum:
 	move.l	d0,d2				; Multiply number by 10
@@ -2874,7 +2874,7 @@ DrawResultsNum:
 	dbf	d1,.DigitLoop			; Loop until number is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .NumTilesUpper:
 	dc.w	$402D				; 0
@@ -2900,7 +2900,7 @@ DrawResultsNum:
 	dc.w	$402E				; 8
 	dc.w	$402E				; 9
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .DrawZero:
 	subq.w	#1,d1				; Number of blank spaces
@@ -2920,21 +2920,21 @@ DrawResultsNum:
 	move.w	#$402E,(a3)
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 gotLeadDigit:
 	dc.b	0				; Leading digit found flag
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decrease a value within a range
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d5.w - Decrement value
 ;	d6.w - Minimum value
 ;	d7.w - Maximum value
 ;	a1.l - Pointer to value
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DecValue:
 	move.w	(a1),d0				; Get value
@@ -2948,15 +2948,15 @@ DecValue:
 	move.w	d0,(a1)				; Update value
 	rts
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Increase a value within a range (word)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d5.w - Increment value
 ;	d6.w - Minimum value
 ;	d7.w - Maximum value
 ;	a1.l - Pointer to value
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 IncValue:
 	move.w	(a1),d0				; Get value
@@ -2970,9 +2970,9 @@ IncValue:
 	move.w	d0,(a1)				; Update value
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw timer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawTimer:
 	btst	#1,specStageFlags		; Are we in time attack mode?
@@ -2985,7 +2985,7 @@ DrawTimer:
 	moveq	#3-1,d1
 	bra.w	DrawNumber
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .TimeAttack:
 	lea	DrawNum_10(pc),a1		; Draw minute
@@ -3017,9 +3017,9 @@ DrawTimer:
 	moveq	#2-1,d1
 	bra.w	DrawNumber
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw ring count
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawRingCount:
 	lea	DrawNum_100(pc),a1		; Draw ring count
@@ -3029,9 +3029,9 @@ DrawRingCount:
 	moveq	#3-1,d1
 	bra.s	DrawNumber
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw UFO count
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawUFOCount:
 	lea	DrawNum_10(pc),a1		; Draw UDO count
@@ -3041,16 +3041,16 @@ DrawUFOCount:
 	move.b	ufoCount,d0
 	moveq	#2-1,d1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw number
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - Number to draw
 ;	d1.w - Number of digits to draw (minus 1)
 ;	d4.l - VDP command (top tiles)
 ;	d5.l - VDP command (bottom tiles)
 ;	a1.l - Pointer to digit counter list
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawNumber:
 	lea	VDPCTRL,a2			; VDP control port
@@ -3080,7 +3080,7 @@ DrawNumber:
 	dbf	d1,.DigitLoop			; Loop until number is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawNum_10000000:
 	dc.l	10000000
@@ -3127,13 +3127,13 @@ NumTilesLower:
 	dc.w	$0000				; '
 	dc.w	$0000				; "
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Mass fill
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d1.l - Value to fill with
 ;	a1.l - Pointer to destination buffer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Fill128:
 	move.l	d1,(a1)+
@@ -3201,9 +3201,9 @@ Fill4:
 	move.l	d1,(a1)+
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get Sub CPU data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 GetSubCPUData:
 	lea	WORDRAM2M+IMGBUFFER,a1		; Rendered image in Word RAM
@@ -3235,13 +3235,13 @@ GetSubCPUData:
 
 	bra.w	PlaySubFMSounds			; Play FM sounds played by Sub CPU
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Mass copy
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a1.l - Pointer to source data
 ;	a2.l - Pointer to destination buffer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Copy128:
 	move.l	(a1)+,(a2)+
@@ -3309,12 +3309,12 @@ Copy4:
 	move.l	(a1)+,(a2)+
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get a random number
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; RETURNS:
 ;	d0.l - Random number
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Random:
 	move.l	d1,-(sp)
@@ -3337,13 +3337,13 @@ Random:
 	move.l	(sp)+,d1
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Kosinski data into RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Kosinski data pointer
 ;	a1.l - Destination buffer pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec:
 	subq.l	#2,sp				; Allocate 2 bytes on the stack
@@ -3368,7 +3368,7 @@ KosDec_Loop:
 	move.b	(a0)+,(a1)+			; Copy byte as is
 	bra.s	KosDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_RLE:
 	moveq	#0,d3
@@ -3407,7 +3407,7 @@ KosDec_RLE:
 	move.b	(a0)+,d2			; Calculate offset
 	bra.s	KosDec_RLELoop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_SeparateRLE:
 	move.b	(a0)+,d0			; Get first byte
@@ -3427,7 +3427,7 @@ KosDec_RLELoop:
 	dbf	d3,KosDec_RLELoop
 	bra.s	KosDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_SeparateRLE2:
 	move.b	(a0)+,d1
@@ -3437,33 +3437,33 @@ KosDec_SeparateRLE2:
 	move.b	d1,d3				; Otherwise, copy repeat count
 	bra.s	KosDec_RLELoop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_Done:
 	addq.l	#2,sp				; Deallocate the 2 bytes
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize the Mega Drive hardware (results)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitMDResults:
 	lea	ResultsVDPRegs(pc),a0
 	bra.s	InitMD
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize the Mega Drive hardware (stage)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitMDStage:
 	lea	StageVDPRegs(pc),a0
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize the Mega Drive hardware
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to VDP register data table
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitMD:
 	move.w	#$8000,d0			; Set up VDP registers
@@ -3489,10 +3489,10 @@ InitMD:
 	move.l	#0,VDPDATA
 
 	bsr.w	StartZ80			; Start the Z80
-	move.w	#$8134,ipxVDPReg1		; Reset IPX VDP register 1 cache
+	move.w	#$8134,ipx_vdp_reg_81		; Reset IPX VDP register 1 cache
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 StageVDPRegs:
 	dc.b	%00000100			; No H-INT
@@ -3538,27 +3538,27 @@ ResultsVDPRegs:
 	dc.b	0				; Window vertical position 0
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Stop the Z80
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 StopZ80:
 	move	sr,savedSR.w			; Save status register
 	Z80STOP					; Stop the Z80
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Start the Z80
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 StartZ80:
 	Z80START				; Start the Z80
 	move	savedSR.w,sr			; Restore status register
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Read controller data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ReadController:
 	lea	ctrlData,a5			; Controller data buffer
@@ -3602,12 +3602,12 @@ ReadController:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Record demo
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Controller input data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 RecordDemo:
 	tst.b	demoActive.w			; Is the demo activated?
@@ -3627,14 +3627,14 @@ RecordDemo:
 	move.b	#0,demoActive.w			; Deactivate the demo
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Run demo
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Controller input data
 ; RETURNS:
 ;	d0.w - Demo controller input data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 RunDemo:
 	btst	#7,d0				; Has the start button been pressed?
@@ -3653,9 +3653,9 @@ RunDemo:
 	move.b	#0,demoActive.w
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw stage tilemap
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawStageMap:
 	move.w	#$2001,d6			; Buffer 1 base tile ID
@@ -3673,7 +3673,7 @@ DrawStageMap:
 	moveq	#IMGWTILE-1,d1
 	moveq	#IMGHTILE-1,d2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .DrawMap:
 	move.l	#$800000,d4			; Row delta
@@ -3698,12 +3698,12 @@ DrawStageMap:
 	dbf	d2,.DrawRow			; Loop until map is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw tilemaps
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d5.l - Tilemap IDs (each byte is an ID)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawTilemaps:
 	moveq	#4-1,d7				; Number of IDs in the queue
@@ -3740,7 +3740,7 @@ DrawTilemaps:
 	dbf	d7,.Loop			; Loop until tilemaps are drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Tilemaps:
 	dc.l	Map_SS2BGA1			; Stage 2 background chunk A1
@@ -4142,15 +4142,15 @@ DrawTilemaps:
 	dc.w	$20-1
 	dc.w	$C-1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw tilemap
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - VDP command
 ;	d1.w - Width
 ;	d2.w - Height
 ;	a0.l - Pointer to tilemap
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawTilemap:
 	lea	VDPCTRL,a2			; VDP control port
@@ -4169,13 +4169,13 @@ DrawTilemap:
 	dbf	d2,.DrawRow			; Loop until map is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Nemesis art into VRAM (Note: VDP write command must be
 ; set beforehand)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Nemesis art pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec:
 	movem.l	d0-a1/a3-a5,-(sp)
@@ -4183,19 +4183,19 @@ NemDec:
 	lea	VDPDATA,a4			; VDP data port
 	bra.s	NemDecMain
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Nemesis data into RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Nemesis data pointer
 ;	a4.l - Destination buffer pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDecToRAM:
 	movem.l	d0-a1/a3-a5,-(sp)
 	lea	NemPCD_WriteRowToRAM,a3		; Advance to the next location after each write
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDecMain:
 	lea	nemBuffer.w,a1			; Prepare decompression buffer
@@ -4219,7 +4219,7 @@ NemDecMain:
 	movem.l	(sp)+,d0-a1/a3-a5
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec_ProcessCompressedData:
 	move.w	d6,d7
@@ -4255,7 +4255,7 @@ NemDec_RunLoop:
 	bne.s	NemPCD_WritePixel_Loop		; If not, loop
 	jmp	(a3)				; Otherwise, write the row to its destination
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_NewRow:
 	moveq	#0,d4				; Reset row
@@ -4265,7 +4265,7 @@ NemPCD_WritePixel_Loop:
 	dbf	d0,NemDec_RunLoop
 	bra.s	NemDec_ProcessCompressedData
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_InlineData:
 	subq.w	#6,d6				; 6 bits needed to signal inline data
@@ -4289,7 +4289,7 @@ NemPCD_InlineData:
 	move.b	(a0)+,d5
 	bra.s	NemDec_GetRunLength
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToVDP:
 	move.l	d4,(a4)				; Write 8-pixel row
@@ -4298,7 +4298,7 @@ NemPCD_WriteRowToVDP:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToVDP_XOR:
 	eor.l	d4,d2				; XOR the previous row with the current row
@@ -4308,7 +4308,7 @@ NemPCD_WriteRowToVDP_XOR:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToRAM:
 	move.l	d4,(a4)+			; Write 8-pixel row
@@ -4317,7 +4317,7 @@ NemPCD_WriteRowToRAM:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToRAM_XOR:
 	eor.l	d4,d2				; XOR the previous row with the current row
@@ -4327,7 +4327,7 @@ NemPCD_WriteRowToRAM_XOR:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec_BuildCodeTable:
 	move.b	(a0)+,d0			; Read first byte
@@ -4377,14 +4377,14 @@ NemBCT_ShortCode_Loop:
 
 	bra.s	NemBCT_Loop			; Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Enigma tilemap data into RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Pointer to Enigma data
 ;	a1.l - Pointer to destination buffer
 ;	d0.w - Base tile attributes
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec:
 	movem.l	d0-d7/a1-a5,-(sp)
@@ -4423,7 +4423,7 @@ EniDec_Loop:
 	add.w	d1,d1
 	jmp	EniDec_JmpTable(pc,d1.w)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Sub0:
 	move.w	a2,(a1)+			; Copy incremental copy word
@@ -4431,14 +4431,14 @@ EniDec_Sub0:
 	dbf	d2,EniDec_Sub0			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Sub4:
 	move.w	a4,(a1)+			; Copy literal copy word
 	dbf	d2,EniDec_Sub4			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Sub8:
 	bsr.w	EniDec_GetInlineCopyVal
@@ -4448,7 +4448,7 @@ EniDec_Sub8:
 	dbf	d2,.Loop			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_SubA:
 	bsr.w	EniDec_GetInlineCopyVal
@@ -4459,7 +4459,7 @@ EniDec_SubA:
 	dbf	d2,.Loop			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_SubC:
 	bsr.w	EniDec_GetInlineCopyVal
@@ -4470,7 +4470,7 @@ EniDec_SubC:
 	dbf	d2,.Loop			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_SubE:
 	cmpi.w	#$F,d2
@@ -4482,7 +4482,7 @@ EniDec_SubE:
 	dbf	d2,.Loop4			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_JmpTable:
 	bra.s	EniDec_Sub0
@@ -4494,7 +4494,7 @@ EniDec_JmpTable:
 	bra.s	EniDec_SubC
 	bra.s	EniDec_SubE
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_End:
 	subq.w	#1,a0				; Go back by one byte
@@ -4512,7 +4512,7 @@ EniDec_End:
 	movem.l	(sp)+,d0-d7/a1-a5
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_GetInlineCopyVal:
 	move.w	a3,d3				; Copy base tile
@@ -4595,7 +4595,7 @@ EniDec_GetInlineCopyVal:
 	moveq	#16,d6				; Reset shift value
 	bra.s	.AddBits
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Masks:
 	dc.w	1,     3,     7,     $F
@@ -4603,7 +4603,7 @@ EniDec_Masks:
 	dc.w	$1FF,  $3FF,  $7FF,  $FFF
 	dc.w	$1FFF, $3FFF, $7FFF, $FFFF
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_ChkGetNextByte:
 	sub.w	d0,d6				; Subtract length of current entry from shift value so that next entry is read next time around
@@ -4616,9 +4616,9 @@ EniDec_ChkGetNextByte:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Map_TimeStone3:
 	dc.w	0				; Uncompressed
@@ -4798,11 +4798,11 @@ Map_SS6BGB2:
 	incbin	"Special Stage/Data/Stage 6/Background Chunk B2.kos"
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Pad up to stage data in Word RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-	align	(WORKRAMFILE-$100)+SpecStgDataCopy, $FF
+	align	(work_ram_file-$100)+SpecStgDataCopy, $FF
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 

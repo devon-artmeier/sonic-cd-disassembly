@@ -1,63 +1,63 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Collapsing platform object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjCollapsePlatform:
 	moveq	#0,d0
-	move.b	oRoutine(a0),d0
+	move.b	obj.routine(a0),d0
 	move.w	ObjCollapsePlatform_Index(pc,d0.w),d0
 	jsr	ObjCollapsePlatform_Index(pc,d0.w)
 	jsr	DrawObject
-	cmpi.b	#4,oRoutine(a0)
+	cmpi.b	#4,obj.routine(a0)
 	bge.s	.End
 	jmp	CheckObjDespawn
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .End:
 	rts
 ; End of function ObjCollapsePlatform
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ObjCollapsePlatform_Index:
 	dc.w	ObjCollapsePlatform_Init-ObjCollapsePlatform_Index
 	dc.w	ObjCollapsePlatform_Main-ObjCollapsePlatform_Index
 	dc.w	ObjCollapsePlatform_Delay-ObjCollapsePlatform_Index
 	dc.w	ObjCollapsePlatform_Fall-ObjCollapsePlatform_Index
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjCollapsePlatform_Init:
-	addq.b	#2,oRoutine(a0)
-	ori.b	#4,oSprFlags(a0)
-	move.b	#3,oPriority(a0)
-	move.w	#$44BE,oTile(a0)
+	addq.b	#2,obj.routine(a0)
+	ori.b	#4,obj.sprite_flags(a0)
+	move.b	#3,obj.sprite_layer(a0)
+	move.w	#$44BE,obj.sprite_tile(a0)
 	lea	MapSpr_CollapsePlatform1(pc),a1
 	lea	ObjCollapsePlatform_Sizes1(pc),a2
-	move.b	oSubtype(a0),d0
+	move.b	obj.subtype(a0),d0
 	bpl.s	.SetMaps
 	lea	MapSpr_CollapsePlatform2(pc),a1
 	lea	ObjCollapsePlatform_Sizes2(pc),a2
 
 .SetMaps:
-	move.l	a1,oMap(a0)
+	move.l	a1,obj.sprites(a0)
 	btst	#4,d0
 	beq.s	.NoFlip
-	bset	#0,oSprFlags(a0)
-	bset	#0,oFlags(a0)
+	bset	#0,obj.sprite_flags(a0)
+	bset	#0,obj.flags(a0)
 
 .NoFlip:
 	andi.w	#$F,d0
-	move.b	d0,oMapFrame(a0)
+	move.b	d0,obj.sprite_frame(a0)
 	add.w	d0,d0
 	move.w	(a2,d0.w),d0
 	move.b	(a2,d0.w),d1
 	addq.b	#1,d1
 	asl.b	#3,d1
-	move.b	d1,oXRadius(a0)
-	move.b	d1,oWidth(a0)
+	move.b	d1,obj.collide_width(a0)
+	move.b	d1,obj.width(a0)
 	move.b	1(a2,d0.w),d1
 	bpl.s	.AbsDY
 	neg.b	d1
@@ -66,43 +66,43 @@ ObjCollapsePlatform_Init:
 	addq.b	#1,d1
 	asl.b	#3,d1
 	addq.b	#2,d1
-	move.b	d1,oYRadius(a0)
+	move.b	d1,obj.collide_height(a0)
 ; End of function ObjCollapsePlatform_Init
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjCollapsePlatform_Main:
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	TopSolidObject
 	bne.s	.StandOn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .StandOn:
 	jsr	GetOffObject
 	move.w	#FM_A3,d0
 	jsr	PlayFMSound
-	addq.b	#2,oRoutine(a0)
-	move.b	oSubtype(a0),d0
+	addq.b	#2,obj.routine(a0)
+	move.b	obj.subtype(a0),d0
 	bpl.w	ObjCollapsePlatform_BreakUp_MultiRow
 	bra.w	ObjCollapsePlatform_BreakUp_SingleRow
 ; End of function ObjCollapsePlatform_Main
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjCollapsePlatform_Delay:
-	addi.w	#-1,oVar2A(a0)
+	addi.w	#-1,obj.var_2A(a0)
 	bne.s	.KeepOn
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 
 .KeepOn:
-	move.b	oVar3E(a0),d0
+	move.b	obj.var_3E(a0),d0
 	beq.s	.End
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	TopSolidObject
 	beq.s	.End
-	tst.w	oVar2A(a0)
+	tst.w	obj.var_2A(a0)
 	bne.s	.End
 	jsr	GetOffObject
 
@@ -110,30 +110,30 @@ ObjCollapsePlatform_Delay:
 	rts
 ; End of function ObjCollapsePlatform_Delay
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjCollapsePlatform_Fall:
-	move.l	oVar2C(a0),d0
-	add.l	d0,oY(a0)
-	addi.l	#$4000,oVar2C(a0)
-	move.w	oY(a0),d0
-	lea	objPlayerSlot.w,a1
-	sub.w	oY(a1),d0
+	move.l	obj.var_2C(a0),d0
+	add.l	d0,obj.y(a0)
+	addi.l	#$4000,obj.var_2C(a0)
+	move.w	obj.y(a0),d0
+	lea	player_object,a1
+	sub.w	obj.y(a1),d0
 	cmpi.w	#$200,d0
 	bgt.w	.Delete
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Delete:
 	jmp	DeleteObject
 ; End of function ObjCollapsePlatform_Fall
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; START	OF FUNCTION CHUNK FOR ObjCollapsePlatform_Main
 
 ObjCollapsePlatform_BreakUp_MultiRow:
-	move.b	oSubtype(a0),d0
+	move.b	obj.subtype(a0),d0
 	suba.l	a4,a4
 	btst	#4,d0
 	beq.s	.SkipThis
@@ -156,16 +156,16 @@ ObjCollapsePlatform_BreakUp_MultiRow:
 	neg.w	d1
 
 .SkipThis2:
-	add.w	oX(a0),d0
+	add.w	obj.x(a0),d0
 	movea.w	d0,a2
 	movea.w	d1,a3
 	moveq	#0,d6
 	move.b	(a6)+,d6
 	move.w	d6,d4
 	asl.w	#3,d4
-	add.w	oY(a0),d4
+	add.w	obj.y(a0),d4
 	move.w	#9,d2
-	move.b	oID(a0),oVar3F(a0)
+	move.b	obj.id(a0),obj.var_3F(a0)
 
 .Loop:
 	move.w	a5,d5
@@ -177,31 +177,31 @@ ObjCollapsePlatform_BreakUp_MultiRow:
 	bne.w	.Solid
 	move.b	(a6)+,d0
 	bmi.w	.Endxt
-	move.b	d0,oMapFrame(a1)
-	ori.b	#4,oSprFlags(a1)
-	move.b	#3,oPriority(a1)
-	move.w	#$44BE,oTile(a1)
-	move.l	#MapSpr_CollapsePlatform3,oMap(a1)
-	move.l	#$20000,oVar2C(a1)
-	move.b	oVar3F(a0),oID(a1)
-	move.b	oRoutine(a0),oRoutine(a1)
+	move.b	d0,obj.sprite_frame(a1)
+	ori.b	#4,obj.sprite_flags(a1)
+	move.b	#3,obj.sprite_layer(a1)
+	move.w	#$44BE,obj.sprite_tile(a1)
+	move.l	#MapSpr_CollapsePlatform3,obj.sprites(a1)
+	move.l	#$20000,obj.var_2C(a1)
+	move.b	obj.var_3F(a0),obj.id(a1)
+	move.b	obj.routine(a0),obj.routine(a1)
 	cmpa.w	#0,a4
 	beq.s	.SkipThis3
-	bset	#0,oSprFlags(a1)
-	bset	#0,oFlags(a1)
+	bset	#0,obj.sprite_flags(a1)
+	bset	#0,obj.flags(a1)
 
 .SkipThis3:
 	tst.w	d6
 	bne.s	.NotLast
-	st	oVar3E(a1)
-	move.b	#8,oXRadius(a1)
-	move.b	#8,oWidth(a1)
-	move.b	#9,oYRadius(a1)
+	st	obj.var_3E(a1)
+	move.b	#8,obj.collide_width(a1)
+	move.b	#8,obj.width(a1)
+	move.b	#9,obj.collide_height(a1)
 
 .NotLast:
-	move.w	d4,oY(a1)
-	move.w	d3,oX(a1)
-	move.w	d1,oVar2A(a1)
+	move.w	d4,obj.y(a1)
+	move.w	d3,obj.x(a1)
+	move.w	d1,obj.var_2A(a1)
 
 .Endxt:
 	add.w	a3,d3
@@ -212,10 +212,10 @@ ObjCollapsePlatform_BreakUp_MultiRow:
 	dbf	d6,.Loop
 	bra.s	.Delete
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Solid:
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	TopSolidObject
 	beq.s	.Delete
 	jsr	GetOffObject
@@ -223,10 +223,10 @@ ObjCollapsePlatform_BreakUp_MultiRow:
 .Delete:
 	jmp	DeleteObject
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjCollapsePlatform_BreakUp_SingleRow:
-	move.b	oSubtype(a0),d2
+	move.b	obj.subtype(a0),d2
 	lea	ObjCollapsePlatform_Sizes2(pc),a6
 	move.b	d2,d0
 	andi.w	#$1F,d0
@@ -249,11 +249,11 @@ ObjCollapsePlatform_BreakUp_SingleRow:
 	lsl.b	#2,d2
 	bra.s	.SkipSpeed
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .GetSpeed:
-	lea	objPlayerSlot.w,a1
-	move.w	oXVel(a1),d0
+	lea	player_object,a1
+	move.w	obj.x_speed(a1),d0
 	btst	#5,d2
 	beq.s	.GotSpeed
 	neg.w	d0
@@ -269,38 +269,38 @@ ObjCollapsePlatform_BreakUp_SingleRow:
 	neg.w	d6
 
 .InitX:
-	add.w	oX(a0),d4
+	add.w	obj.x(a0),d4
 	move.w	#9,d2
-	move.b	oID(a0),oVar3F(a0)
+	move.b	obj.id(a0),obj.var_3F(a0)
 
 .Loop3:
 	jsr	FindObjSlot
 	bne.w	.Solid2
-	move.b	#3,oPriority(a1)
-	move.w	#$44BE,oTile(a1)
-	ori.b	#4,oSprFlags(a1)
-	move.l	#MapSpr_CollapsePlatform4,oMap(a1)
-	move.l	#$20000,oVar2C(a1)
-	move.b	oVar3F(a0),oID(a1)
-	move.b	oRoutine(a0),oRoutine(a1)
-	move.w	oY(a0),oY(a1)
-	st	oVar3E(a1)
-	move.b	#8,oXRadius(a1)
-	move.b	#8,oWidth(a1)
-	move.b	d1,oYRadius(a1)
-	move.b	(a6),oMapFrame(a1)
+	move.b	#3,obj.sprite_layer(a1)
+	move.w	#$44BE,obj.sprite_tile(a1)
+	ori.b	#4,obj.sprite_flags(a1)
+	move.l	#MapSpr_CollapsePlatform4,obj.sprites(a1)
+	move.l	#$20000,obj.var_2C(a1)
+	move.b	obj.var_3F(a0),obj.id(a1)
+	move.b	obj.routine(a0),obj.routine(a1)
+	move.w	obj.y(a0),obj.y(a1)
+	st	obj.var_3E(a1)
+	move.b	#8,obj.collide_width(a1)
+	move.b	#8,obj.width(a1)
+	move.b	d1,obj.collide_height(a1)
+	move.b	(a6),obj.sprite_frame(a1)
 	lea	(a6,d6.w),a6
-	move.w	d4,oX(a1)
+	move.w	d4,obj.x(a1)
 	add.w	d3,d4
-	move.w	d2,oVar2A(a1)
+	move.w	d2,obj.var_2A(a1)
 	addi.w	#$C,d2
 	dbf	d5,.Loop3
 	bra.s	.Delete2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Solid2:
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	TopSolidObject
 	beq.s	.Delete2
 	jsr	GetOffObject
@@ -308,4 +308,4 @@ ObjCollapsePlatform_BreakUp_SingleRow:
 .Delete2:
 	jmp	DeleteObject
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

@@ -1,20 +1,20 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; General level functions
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get a random number
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; RETURNS:
 ;	d0.l - Random number
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Random:
 	move.l	d1,-(sp)
-	move.l	rngSeed.w,d1			; Get RNG seed
+	move.l	rng_seed,d1			; Get RNG seed
 	bne.s	.GotSeed			; If it's set, branch
 	move.l	#$2A6D365A,d1			; Reset RNG seed otherwise
 
@@ -29,13 +29,13 @@ Random:
 	add.w	d1,d0
 	move.w	d0,d1
 	swap	d1
-	move.l	d1,rngSeed.w			; Update RNG seed
+	move.l	d1,rng_seed			; Update RNG seed
 	move.l	(sp)+,d1
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize joypads
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitControllers:
 	bsr.w	StopZ80				; Stop the Z80
@@ -47,21 +47,21 @@ InitControllers:
 
 	bra.w	StartZ80			; Start the Z80
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Read joypad data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ReadControllers:
-	lea	p1CtrlData.w,a0			; Read player 1 controller
+	lea	p1_ctrl,a0			; Read player 1 controller
 	lea	IODATA1,a1
 	bsr.s	ReadController
 	
 	if DEMO<>0
-		movea.l	demoDataPtr.w,a2	; Get demo data
-		tst.w	demoMode		; Are we in a demo?
+		movea.l	demo_data,a2		; Get demo data
+		tst.w	demo_mode		; Are we in a demo?
 		beq.s	.NotDemo		; If not, branch
 		
-		move.w	demoDataIndex.w,d0	; Get data index
+		move.w	demo_data_cursor,d0	; Get data index
 		cmpi.w	#$800,d0		; Has the demo run out?
 		bcc.s	.NotDemo		; If so, branch
 		move.w	d0,d1
@@ -73,16 +73,16 @@ ReadControllers:
 		or.w	d2,-2(a0)
 		
 		addq.w	#1,d1			; Advance demo
-		move.w	d1,demoDataIndex.w
+		move.w	d1,demo_data_cursor
 		
 .NotDemo:
 	endif
 	
-	addq.w	#p2CtrlData-p1CtrlData,a1	; Read player 2 controller
+	addq.w	#p2_ctrl-p1_ctrl,a1		; Read player 2 controller
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Read a joypad's data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ReadController:
 	move.b	#0,(a1)				; Pull TH low
@@ -105,9 +105,9 @@ ReadController:
 	move.b	d1,(a0)+
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize the VDP
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitVDP:
 	lea	VDPCTRL,a0			; Get VDP ports
@@ -121,8 +121,8 @@ InitVDP:
 	dbf	d7,.InitRegs			; Loop until finished
 
 	move.w	VDPInitReg1,d0			; Set VDP register 1
-	move.w	d0,vdpReg01.w
-	move.w	#$8ADF,vdpReg0A.w		; Set H-INT counter
+	move.w	d0,vdp_reg_81
+	move.w	#$8ADF,vdp_reg_8a		; Set H-INT counter
 
 	moveq	#0,d0				; Clear CRAM
 	move.l	#$C0000000,VDPCTRL
@@ -132,8 +132,8 @@ InitVDP:
 	move.w	d0,(a1)
 	dbf	d7,.ClearCRAM			; Loop until finished
 
-	clr.l	vscrollScreen.w			; Clear scroll values
-	clr.l	hscrollScreen.w
+	clr.l	vscroll_screen			; Clear scroll values
+	clr.l	hscroll_screen
 
 	move.l	d1,-(sp)			; Clear VRAM via DMA fill
 	lea	VDPCTRL,a5
@@ -152,7 +152,7 @@ InitVDP:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 VDPInitRegs:
 	dc.w	$8004				; H-INT disabled
@@ -176,9 +176,9 @@ VDPInitReg1:
 	dc.w	$9100				; Window X at 0
 	dc.w	$9200				; Window Y at 0
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Clear the screen
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ClearScreen:
 	lea	VDPCTRL,a5			; Clear plane A
@@ -207,10 +207,10 @@ ClearScreen:
 	bne.s	.WaitPlane2Clear
 	move.w	#$8F02,(a5)
 
-	clr.l	vscrollScreen.w			; Reset scroll values
-	clr.l	hscrollScreen.w
+	clr.l	vscroll_screen			; Reset scroll values
+	clr.l	hscroll_screen
 
-	lea	sprites.w,a1			; Clear sprite buffer
+	lea	sprites,a1			; Clear sprite buffer
 	moveq	#0,d0
 	move.w	#$280/4,d1			; Should be $280/4-1
 
@@ -218,7 +218,7 @@ ClearScreen:
 	move.l	d0,(a1)+
 	dbf	d1,.ClearSprites
 
-	lea	hscroll.w,a1			; Clear horizontal scroll buffer
+	lea	hscroll,a1			; Clear horizontal scroll buffer
 	moveq	#0,d0
 	move.w	#$400/4,d1			; Should be $400/4-1
 
@@ -228,12 +228,12 @@ ClearScreen:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Stop the Z80
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 StopZ80:
-	move	sr,savedSR.w			; Save SR
+	move	sr,saved_sr			; Save SR
 	move	#$2700,sr			; Disable interrupts
 	move.w	#$100,Z80BUS			; Stop the Z80
 
@@ -242,18 +242,18 @@ StopZ80:
 	bne.s	.Wait
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Start the Z80
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 StartZ80:
 	move.w	#0,Z80BUS			; Start the Z80
-	move	savedSR.w,sr			; Restore SR
+	move	saved_sr,sr			; Restore SR
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Dead code to initialize the Z80 with dummy code
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitZ80Dummy:
 	move.w	#$100,Z80RESET			; Stop Z80 reset
@@ -272,81 +272,81 @@ InitZ80Dummy:
 	jmp	StartZ80(pc)			; Start the Z80
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Play an FM sound
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.b - Sound ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 PlayFMSound:
 	if (REGION=USA)|((REGION<>USA)&(DEMO=0))
-		tst.b	fmSndQueue1.w		; Is queue 1 full?
+		tst.b	fm_sound_queue_1	; Is queue 1 full?
 		bne.s	.CheckQueue2		; If so, branch
-		move.b	d0,fmSndQueue1.w	; Set ID in queue 1
+		move.b	d0,fm_sound_queue_1	; Set ID in queue 1
 		rts
 
 .CheckQueue2:
 	endif
-	tst.b	fmSndQueue2.w			; Is queue 2 full?
+	tst.b	fm_sound_queue_2		; Is queue 2 full?
 	bne.s	.CheckQueue3			; If so, branch
-	move.b	d0,fmSndQueue2.w		; Set ID in queue 2
+	move.b	d0,fm_sound_queue_2		; Set ID in queue 2
 	rts
 
 .CheckQueue3:
 	if (REGION=USA)|((REGION<>USA)&(DEMO=0))
-		tst.b	fmSndQueue3.w		; Is queue 3 full?
+		tst.b	fm_sound_queue_3	; Is queue 3 full?
 		bne.s	.End			; If so, branch
 	endif
-	move.b	d0,fmSndQueue3.w		; Set ID in queue 3
+	move.b	d0,fm_sound_queue_3		; Set ID in queue 3
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Update FM driver queues
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 UpdateFMQueues:
 	jsr	StopZ80				; Stop the Z80
 
 	if (REGION=USA)|((REGION<>USA)&(DEMO=0))
-		tst.b	fmSndQueue1.w		; Update queue 1
+		tst.b	fm_sound_queue_1		; Update queue 1
 		beq.s	.CheckQueue2
-		move.b	fmSndQueue1.w,FMDrvQueue1
-		move.b	#0,fmSndQueue1.w
+		move.b	fm_sound_queue_1,FMDrvQueue1
+		move.b	#0,fm_sound_queue_1
 
 .CheckQueue2:
-		tst.b	fmSndQueue2.w		; Update queue 2
+		tst.b	fm_sound_queue_2		; Update queue 2
 		beq.s	.CheckQueue3
-		move.b	fmSndQueue2.w,FMDrvQueue2
-		move.b	#0,fmSndQueue2.w
+		move.b	fm_sound_queue_2,FMDrvQueue2
+		move.b	#0,fm_sound_queue_2
 
 .CheckQueue3:
-		tst.b	fmSndQueue3.w		; Update queue 3
+		tst.b	fm_sound_queue_3		; Update queue 3
 		beq.s	.End
-		move.b	fmSndQueue3.w,FMDrvQueue3
-		move.b	#0,fmSndQueue3.w
+		move.b	fm_sound_queue_3,FMDrvQueue3
+		move.b	#0,fm_sound_queue_3
 		
 .End:
 	else
-		tst.b	fmSndQueue2.w		; Update queues
+		tst.b	fm_sound_queue_2		; Update queues
 		beq.w	StartZ80
-		move.b	fmSndQueue2.w,FMDrvQueue1
-		move.b	fmSndQueue3.w,fmSndQueue2.w
-		move.b	#0,fmSndQueue3.w
+		move.b	fm_sound_queue_2,FMDrvQueue1
+		move.b	fm_sound_queue_3,fm_sound_queue_2
+		move.b	#0,fm_sound_queue_3
 	endif
 	bra.w	StartZ80			; Start the Z80
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw a tilemap
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.l - Base VDP command
 ;	d1.w - Tilemap width (minus 1)
 ;	d2.w - Tilemap height (minus 1)
 ;	a1.l - Tilemap data pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawTilemap:
 	lea	VDPDATA,a6			; Prepare VDP data
@@ -364,13 +364,13 @@ DrawTilemap:
 	dbf	d2,.RowLoop			; Loop until tilemap is drawn
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Nemesis art into VRAM (Note: VDP write command must be
 ; set beforehand)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Nemesis art pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec:
 	movem.l	d0-a1/a3-a5,-(sp)
@@ -378,22 +378,22 @@ NemDec:
 	lea	VDPDATA,a4			; VDP data port
 	bra.s	NemDecMain
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Nemesis data into RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Nemesis data pointer
 ;	a4.l - Destination buffer pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDecToRAM:
 	movem.l	d0-a1/a3-a5,-(sp)
 	lea	NemPCD_WriteRowToRAM,a3		; Advance to the next location after each write
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDecMain:
-	lea	nemBuffer.w,a1			; Prepare decompression buffer
+	lea	nem_code_table,a1		; Prepare decompression buffer
 	move.w	(a0)+,d2			; Get number of patterns
 	lsl.w	#1,d2
 	bcc.s	.NormalMode			; Branch if not in XOR mode
@@ -414,7 +414,7 @@ NemDecMain:
 	movem.l	(sp)+,d0-a1/a3-a5
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec_ProcessCompressedData:
 	move.w	d6,d7
@@ -450,7 +450,7 @@ NemDec_RunLoop:
 	bne.s	NemPCD_WritePixel_Loop		; If not, loop
 	jmp	(a3)				; Otherwise, write the row to its destination
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_NewRow:
 	moveq	#0,d4				; Reset row
@@ -460,7 +460,7 @@ NemPCD_WritePixel_Loop:
 	dbf	d0,NemDec_RunLoop
 	bra.s	NemDec_ProcessCompressedData
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_InlineData:
 	subq.w	#6,d6				; 6 bits needed to signal inline data
@@ -484,7 +484,7 @@ NemPCD_InlineData:
 	move.b	(a0)+,d5
 	bra.s	NemDec_GetRunLength
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToVDP:
 	move.l	d4,(a4)				; Write 8-pixel row
@@ -493,7 +493,7 @@ NemPCD_WriteRowToVDP:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToVDP_XOR:
 	eor.l	d4,d2				; XOR the previous row with the current row
@@ -503,7 +503,7 @@ NemPCD_WriteRowToVDP_XOR:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToRAM:
 	move.l	d4,(a4)+			; Write 8-pixel row
@@ -512,7 +512,7 @@ NemPCD_WriteRowToRAM:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemPCD_WriteRowToRAM_XOR:
 	eor.l	d4,d2				; XOR the previous row with the current row
@@ -522,7 +522,7 @@ NemPCD_WriteRowToRAM_XOR:
 	bne.s	NemPCD_NewRow			; If not, branch
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 NemDec_BuildCodeTable:
 	move.b	(a0)+,d0			; Read first byte
@@ -572,12 +572,12 @@ NemBCT_ShortCode_Loop:
 
 	bra.s	NemBCT_Loop			; Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load a PLC list
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - PLC list ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadPLC:
 	movem.l	a1-a2,-(sp)			; Save registers
@@ -586,7 +586,7 @@ LoadPLC:
 	add.w	d0,d0				; Get pointer to PLC list
 	move.w	(a1,d0.w),d0
 	lea	(a1,d0.w),a1
-	lea	plcBuffer.w,a2			; Prepare PLC buffer
+	lea	nem_art_queue,a2		; Prepare PLC buffer
 
 .Loop:
 	tst.l	(a2)				; Is this PLC entry free?
@@ -607,12 +607,12 @@ LoadPLC:
 	movem.l	(sp)+,a1-a2			; Restore registers
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Clear PLCs and load a PLC list
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - PLC list ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitPLC:
 	movem.l	a1-a2,-(sp)			; Save registers
@@ -624,7 +624,7 @@ InitPLC:
 
 	bsr.s	ClearPLCs			; Clear PLCs
 
-	lea	plcBuffer.w,a2			; Prepare PLC buffer
+	lea	nem_art_queue,a2		; Prepare PLC buffer
 
 	move.w	(a1)+,d0			; Get number of PLC entries
 	bmi.s	.End				; If it's 0 (or less), branch
@@ -638,12 +638,12 @@ InitPLC:
 	movem.l	(sp)+,a1-a2			; Restore registers
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Clear PLCs
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ClearPLCs:
-	lea	plcBuffer.w,a2			; Clear PLC buffer
+	lea	nem_art_queue,a2		; Clear PLC buffer
 	moveq	#$80/4-1,d0
 
 .Clear:
@@ -651,26 +651,26 @@ ClearPLCs:
 	dbf	d0,.Clear			; Loop until finished
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Process PLC queue in RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ProcessPLCs:
-	tst.l	plcBuffer.w			; Is the PLC queue empty?
+	tst.l	nem_art_queue			; Is the PLC queue empty?
 	beq.s	.End				; If so, branch
-	tst.w	plcTileCount.w			; Is there a decompression in process already?
+	tst.w	nem_art_tile_count		; Is there a decompression in process already?
 	bne.s	.End				; If so, branch
 
-	movea.l	plcBuffer.w,a0			; Get art pointer
+	movea.l	nem_art_queue,a0		; Get art pointer
 	lea	NemPCD_WriteRowToVDP,a3		; Write to VRAM
-	lea	nemBuffer.w,a1			; Prepare Nemesis buffer
+	lea	nem_code_table,a1			; Prepare Nemesis buffer
 	move.w	(a0)+,d2
 	bpl.s	.NotXOR				; Branch if not in XOR mode
 	adda.w	#NemPCD_WriteRowToVDP_XOR-NemPCD_WriteRowToVDP,a3
 
 .NotXOR:
 	andi.w	#$7FFF,d2			; Store number of tiles to decompress
-	move.w	d2,plcTileCount.w
+	move.w	d2,nem_art_tile_count
 
 	bsr.w	NemDec_BuildCodeTable		; Build code table for this art
 
@@ -680,50 +680,50 @@ ProcessPLCs:
 	moveq	#$10,d6				; Set initial shift value
 
 	moveq	#0,d0				; Prepare decompression registers
-	move.l	a0,plcBuffer.w
-	move.l	a3,plcNemWrite.w
-	move.l	d0,plcRepeat.w
-	move.l	d0,plcPixel.w
-	move.l	d0,plcRow.w
-	move.l	d5,plcRead.w
-	move.l	d6,plcShift.w
+	move.l	a0,nem_art_queue
+	move.l	a3,nem_art_write
+	move.l	d0,nem_art_repeat
+	move.l	d0,nem_art_pixel
+	move.l	d0,nem_art_row
+	move.l	d5,nem_art_read
+	move.l	d6,nem_art_shift
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Process PLC decompression (fast)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DecompPLCFast:
-	tst.w	plcTileCount.w			; Is there anything to decompress?
+	tst.w	nem_art_tile_count		; Is there anything to decompress?
 	beq.w	DecompPLC_Done			; If not, branch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DecompPLCFast_Large:
-	move.w	#18,plcProcTileCnt.w		; Decompress 18 tiles in this batch
+	move.w	#18,nem_art_proc_tile_count	; Decompress 18 tiles in this batch
 	moveq	#0,d0				; Get VRAM address
-	move.w	plcBuffer+4.w,d0
-	addi.w	#18*$20,plcBuffer+4.w		; Advance VRAM address
+	move.w	nem_art_queue+4,d0
+	addi.w	#18*$20,nem_art_queue+4		; Advance VRAM address
 	bra.s	DecompPLC_Main
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Process PLC decompression (slow)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DecompPLCSlow:
-	tst.w	plcTileCount.w			; Is there anything to decompress?
+	tst.w	nem_art_tile_count		; Is there anything to decompress?
 	beq.s	DecompPLC_Done			; If not, branch
-	tst.b	scrollLock.w			; Is scrolling locked?
+	tst.b	scroll_lock			; Is scrolling locked?
 	bne.s	DecompPLCFast_Large		; If so, go with the large batch instead
 
-	move.w	#3,plcProcTileCnt.w		; Decompress 3 tiles in this batch
+	move.w	#3,nem_art_proc_tile_count	; Decompress 3 tiles in this batch
 	moveq	#0,d0				; Get VRAM address
-	move.w	plcBuffer+4.w,d0
-	addi.w	#3*$20,plcBuffer+4.w		; Advance VRAM address
+	move.w	nem_art_queue+4,d0
+	addi.w	#3*$20,nem_art_queue+4		; Advance VRAM address
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DecompPLC_Main:
 	lea	VDPCTRL,a4			; Set VDP write command
@@ -734,35 +734,35 @@ DecompPLC_Main:
 	move.l	d0,(a4)
 	subq.w	#4,a4				; Prepare data port
 
-	movea.l	plcBuffer.w,a0			; Get decompression registers
-	movea.l	plcNemWrite.w,a3
-	move.l	plcRepeat.w,d0
-	move.l	plcPixel.w,d1
-	move.l	plcRow.w,d2
-	move.l	plcRead.w,d5
-	move.l	plcShift.w,d6
-	lea	nemBuffer.w,a1
+	movea.l	nem_art_queue,a0		; Get decompression registers
+	movea.l	nem_art_write,a3
+	move.l	nem_art_repeat,d0
+	move.l	nem_art_pixel,d1
+	move.l	nem_art_row,d2
+	move.l	nem_art_read,d5
+	move.l	nem_art_shift,d6
+	lea	nem_code_table,a1
 
 .Decomp:
 	movea.w	#8,a5				; Store decompressed tile in VRAM
 	bsr.w	NemPCD_NewRow
-	subq.w	#1,plcTileCount.w		; Decrement total tile count
+	subq.w	#1,nem_art_tile_count		; Decrement total tile count
 	beq.s	DecompPLC_Pop			; If this art is finished being decompressed, branch
-	subq.w	#1,plcProcTileCnt.w		; Decrement number of tiles left to decompress in this batch
+	subq.w	#1,nem_art_proc_tile_count	; Decrement number of tiles left to decompress in this batch
 	bne.s	.Decomp				; If we are not done, branch
 
-	move.l	a0,plcBuffer.w			; Update decompression registers
-	move.l	a3,plcNemWrite.w
-	move.l	d0,plcRepeat.w
-	move.l	d1,plcPixel.w
-	move.l	d2,plcRow.w
-	move.l	d5,plcRead.w
-	move.l	d6,plcShift.w
+	move.l	a0,nem_art_queue		; Update decompression registers
+	move.l	a3,nem_art_write
+	move.l	d0,nem_art_repeat
+	move.l	d1,nem_art_pixel
+	move.l	d2,nem_art_row
+	move.l	d5,nem_art_read
+	move.l	d6,nem_art_shift
 
 DecompPLC_Done:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DecompPLC_Pop:
 	; This code is bugged. Due to the fact that 15 PLC queue entries = $5A bytes,
@@ -770,7 +770,7 @@ DecompPLC_Pop:
 	; the last VRAM address in the queue is left out. It also doesn't properly
 	; clear out the popped entry, so if the queue is full, then it'll constantly
 	; queue the last entry over and over again.
-	lea	plcBuffer.w,a0			; Pop a PLC queue entry out
+	lea	nem_art_queue,a0			; Pop a PLC queue entry out
 	moveq	#($60-6)/4-1,d0			; Copy $58 bytes (instead of the proper $5A)
 
 .Pop:
@@ -778,12 +778,12 @@ DecompPLC_Pop:
 	dbf	d0,.Pop
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load and decompress a PLC list immediately
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - PLC list ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadPLCImm:
 	lea	PLCLists,a1			; Prepare PLC list index
@@ -809,14 +809,14 @@ LoadPLCImm:
 	dbf	d1,.Load
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Enigma tilemap data into RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Enigma data pointer
 ;	a1.l - Destination buffer pointer
 ;	d0.w - Base tile
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec:
 	movem.l	d0-d7/a1-a5,-(sp)
@@ -855,7 +855,7 @@ EniDec_Loop:
 	add.w	d1,d1
 	jmp	EniDec_JmpTable(pc,d1.w)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Sub0:
 	move.w	a2,(a1)+			; Copy incremental copy word
@@ -863,14 +863,14 @@ EniDec_Sub0:
 	dbf	d2,EniDec_Sub0			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Sub4:
 	move.w	a4,(a1)+			; Copy literal copy word
 	dbf	d2,EniDec_Sub4			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Sub8:
 	bsr.w	EniDec_GetInlineCopyVal
@@ -880,7 +880,7 @@ EniDec_Sub8:
 	dbf	d2,.Loop			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_SubA:
 	bsr.w	EniDec_GetInlineCopyVal
@@ -891,7 +891,7 @@ EniDec_SubA:
 	dbf	d2,.Loop			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_SubC:
 	bsr.w	EniDec_GetInlineCopyVal
@@ -902,7 +902,7 @@ EniDec_SubC:
 	dbf	d2,.Loop			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_SubE:
 	cmpi.w	#$F,d2
@@ -914,7 +914,7 @@ EniDec_SubE:
 	dbf	d2,.Loop4			; Repeat
 	bra.s	EniDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_JmpTable:
 	bra.s	EniDec_Sub0
@@ -926,7 +926,7 @@ EniDec_JmpTable:
 	bra.s	EniDec_SubC
 	bra.s	EniDec_SubE
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_End:
 	subq.w	#1,a0				; Go back by one byte
@@ -944,7 +944,7 @@ EniDec_End:
 	movem.l	(sp)+,d0-d7/a1-a5
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_GetInlineCopyVal:
 	move.w	a3,d3				; Copy base tile
@@ -1027,7 +1027,7 @@ EniDec_GetInlineCopyVal:
 	moveq	#16,d6				; Reset shift value
 	bra.s	.AddBits
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_Masks:
 	dc.w	1,     3,     7,     $F
@@ -1035,7 +1035,7 @@ EniDec_Masks:
 	dc.w	$1FF,  $3FF,  $7FF,  $FFF
 	dc.w	$1FFF, $3FFF, $7FFF, $FFFF
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EniDec_ChkGetNextByte:
 	sub.w	d0,d6				; Subtract length of current entry from shift value so that next entry is read next time around
@@ -1048,13 +1048,13 @@ EniDec_ChkGetNextByte:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Decompress Kosinski data into RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Kosinski data pointer
 ;	a1.l - Destination buffer pointer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec:
 	subq.l	#2,sp				; Allocate 2 bytes on the stack
@@ -1079,7 +1079,7 @@ KosDec_Loop:
 	move.b	(a0)+,(a1)+			; Copy byte as is
 	bra.s	KosDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_RLE:
 	moveq	#0,d3
@@ -1118,7 +1118,7 @@ KosDec_RLE:
 	move.b	(a0)+,d2			; Calculate offset
 	bra.s	KosDec_RLELoop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_SeparateRLE:
 	move.b	(a0)+,d0			; Get first byte
@@ -1138,7 +1138,7 @@ KosDec_RLELoop:
 	dbf	d3,KosDec_RLELoop
 	bra.s	KosDec_Loop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_SeparateRLE2:
 	move.b	(a0)+,d1
@@ -1148,26 +1148,26 @@ KosDec_SeparateRLE2:
 	move.b	d1,d3				; Otherwise, copy repeat count
 	bra.s	KosDec_RLELoop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 KosDec_Done:
 	addq.l	#2,sp				; Deallocate the 2 bytes
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get player object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; RETURNS:
 ;	a6.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 GetPlayerObject:
-	lea	objPlayerSlot.w,a6		; Player 1
-	tst.b	usePlayer2			; Are we using player 2?
+	lea	player_object,a6		; Player 1
+	tst.b	use_player_2			; Are we using player 2?
 	beq.s	.Done				; If not, branch
-	lea	objPlayerSlot2.w,a6		; Player 2
+	lea	player_2_object,a6		; Player 2
 
 .Done:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

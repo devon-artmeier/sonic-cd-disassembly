@@ -1,18 +1,18 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic object (Wacky Workbench)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check to see if Sonic should give up from boredom
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_ChkBoredom:
-	lea	boredTimer.w,a1			; Get boredom timer
+	lea	bored_timer,a1			; Get boredom timer
 
-	cmpi.b	#5,oAnim(a0)			; Is the player idle?
+	cmpi.b	#5,obj.anim_id(a0)		; Is the player idle?
 	beq.s	.WaitAnim			; If so, branch
 
 	move.w	#0,(a1)				; Reset the boredom timer
@@ -29,17 +29,17 @@ ObjSonic_ChkBoredom:
 
 	move.w	#0,(a1)				; Stop the timer
 
-	move.b	#$2B,oAnim(a0)			; Set the player's animation accordingly
-	ori.b	#$80,oTile(a0)
-	move.b	#0,oPriority(a0)
+	move.b	#$2B,obj.anim_id(a0)		; Set the player's animation accordingly
+	ori.b	#$80,obj.sprite_tile(a0)
+	move.b	#0,obj.sprite_layer(a0)
 
 	move.b	#1,lives			; Make it so a game over happens
 
-	move.w	#-$500,oYVel(a0)		; Make the player jump
-	move.w	#$100,oXVel(a0)
-	btst	#0,oFlags(a0)
+	move.w	#-$500,obj.y_speed(a0)		; Make the player jump
+	move.w	#$100,obj.x_speed(a0)
+	btst	#0,obj.flags(a0)
 	beq.s	.GotXVel
-	neg.w	oXVel(a0)
+	neg.w	obj.x_speed(a0)
 
 .GotXVel:
 	move.w	#0,oPlayerGVel(a0)
@@ -50,24 +50,24 @@ ObjSonic_ChkBoredom:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Main Sonic object code
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic:
 	if (REGION<>USA)|((REGION=USA)&(DEMO=0))
-		tst.b	timeAttackMode		; Are we in time attack mode?
+		tst.b	time_attack_mode	; Are we in time attack mode?
 		bne.s	.NormalMode		; If so, branch
-		cmpa.w	#objPlayerSlot2,a0	; Are we the second player?
+		cmpa.w	#player_2_object,a0	; Are we the second player?
 		beq.s	.NormalMode		; If so, branch
 		if DEMO<>0
-			btst	#7,p2CtrlTap.w	; Did player 2 press the start button?
+			btst	#7,p2_ctrl_tap	; Did player 2 press the start button?
 			beq.s	.CheckDebug	; If not, branch
-			eori.b	#1,debugCheat	; Swap debug cheat flag
+			eori.b	#1,debug_cheat	; Swap debug cheat flag
 			
 .CheckDebug:
 		endif
-		tst.b	debugMode		; Are we in debug mode?
+		tst.b	debug_mode		; Are we in debug mode?
 		beq.s	.NormalMode		; If not, branch
 		jmp	UpdateDebugMode		; Handle debug mode
 
@@ -76,7 +76,7 @@ ObjSonic:
 	move.b	oPlayerCharge(a0),d0		; Get charge time
 	beq.s	.RunRoutines			; If it's 0, branch
 	addq.b	#1,d0				; Increment the charge time
-	btst	#2,oFlags(a0)			; Are we spindashing?
+	btst	#2,obj.flags(a0)			; Are we spindashing?
 	beq.s	.Peelout			; If not, branch
 	cmpi.b	#45,d0				; Is the spindash fully charged?
 	bcs.s	.SetChargeTimer			; If not, branch
@@ -93,11 +93,11 @@ ObjSonic:
 
 .RunRoutines:
 	moveq	#0,d0				; Run object routine
-	move.b	oRoutine(a0),d0
+	move.b	obj.routine(a0),d0
 	move.w	.Index(pc,d0.w),d1
 	jmp	.Index(pc,d1.w)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index:
 	dc.w	ObjSonic_Init-.Index		; Initialization
@@ -106,94 +106,94 @@ ObjSonic:
 	dc.w	ObjSonic_Dead-.Index		; Death
 	dc.w	ObjSonic_Restart-.Index		; Death delay and level restart
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Create time warp stars
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MakeTimeWarpStars:
-	tst.b	objTimeStar1Slot.w		; Are they already loaded?
+	tst.b	time_star_1_object		; Are they already loaded?
 	bne.s	.End				; If so, branch
 
-	move.b	#1,timeWarp			; Set time warp flag
+	move.b	#1,time_warp			; Set time warp flag
 
-	move.b	#3,objTimeStar1Slot.w		; Load time warp stars
-	move.b	#5,objTimeStar1Slot+oAnim.w
-	move.b	#3,objTimeStar2Slot.w
-	move.b	#6,objTimeStar2Slot+oAnim.w
-	move.b	#3,objTimeStar3Slot.w
-	move.b	#7,objTimeStar3Slot+oAnim.w
-	move.b	#3,objTimeStar4Slot.w
-	move.b	#8,objTimeStar4Slot+oAnim.w
+	move.b	#3,time_star_1_object		; Load time warp stars
+	move.b	#5,time_star_1_object+obj.anim_id
+	move.b	#3,time_star_2_object
+	move.b	#6,time_star_2_object+obj.anim_id
+	move.b	#3,time_star_3_object
+	move.b	#7,time_star_3_object+obj.anim_id
+	move.b	#3,time_star_4_object
+	move.b	#8,time_star_4_object+obj.anim_id
 
 .End:
 	rts
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's initialization routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Init:
-	addq.b	#2,oRoutine(a0)			; Advance routine
+	addq.b	#2,obj.routine(a0)			; Advance routine
 
-	move.b	#$13,oYRadius(a0)		; Default hitbox size
-	move.b	#9,oXRadius(a0)
-	tst.b	miniSonic			; Are we miniature?
-	beq.s	.NotMini			; If not, branch
-	move.b	#$A,oYRadius(a0)		; Mini hitbox size
-	move.b	#5,oXRadius(a0)
+	move.b	#$13,obj.collide_height(a0)		; Default hitbox size
+	move.b	#9,obj.collide_width(a0)
+	tst.b	mini_player				; Are we miniature?
+	beq.s	.NotMini				; If not, branch
+	move.b	#$A,obj.collide_height(a0)		; Mini hitbox size
+	move.b	#5,obj.collide_width(a0)
 
 .NotMini:
-	move.l	#MapSpr_Sonic,oMap(a0)		; Set mappings
-	move.w	#$780,oTile(a0)			; Set base tile
-	move.b	#2,oPriority(a0)		; Set priority
-	move.b	#$18,oWidth(a0)			; Set width
-	move.b	#%00000100,oSprFlags(a0)	; Set sprite flags
+	move.l	#MapSpr_Sonic,obj.sprites(a0)		; Set mappings
+	move.w	#$780,obj.sprite_tile(a0)		; Set base tile
+	move.b	#2,obj.sprite_layer(a0)			; Set priority
+	move.b	#$18,obj.width(a0)			; Set width
+	move.b	#%00000100,obj.sprite_flags(a0)		; Set sprite flags
 
-	move.w	#$600,sonicTopSpeed.w		; Set physics values
-	move.w	#$C,sonicAcceleration.w
-	move.w	#$80,sonicDeceleration.w
+	move.w	#$600,player_top_speed			; Set physics values
+	move.w	#$C,player_acceleration
+	move.w	#$80,player_deceleration
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Create waterfall splashes
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MakeWaterfallSplash:
-	tst.b	zone				; Are we in Palmtree Panic zone?
-	bne.s	ObjSonic_SplashEnd		; If not, branch
+	tst.b	zone					; Are we in Palmtree Panic zone?
+	bne.s	ObjSonic_SplashEnd			; If not, branch
 
-	move.b	levelFrames+1,d0		; Only spawn a splash every 4 frames
+	move.b	stage_frames+1,d0			; Only spawn a splash every 4 frames
 	andi.b	#3,d0
 	bne.s	ObjSonic_SplashEnd
 
-	move.b	oYRadius(a0),d2			; Are we behind a waterfall?
+	move.b	obj.collide_height(a0),d2		; Are we behind a waterfall?
 	ext.w	d2
-	add.w	oY(a0),d2
-	move.w	oX(a0),d3
+	add.w	obj.y(a0),d2
+	move.w	obj.x(a0),d3
 	bsr.w	ObjSonic_GetChunkAtPos
 	cmpi.b	#$2F,d1
-	bne.s	ObjSonic_SplashEnd2		; If not, branch
+	bne.s	ObjSonic_SplashEnd2			; If not, branch
 
-	cmpi.w	#$15C0,oX(a0)			; Are we too far into the level?
-	bcc.s	ObjSonic_SplashEnd		; If so, branch
-	tst.b	oPlayerCtrl(a0)			; Are we in a spin tunnel?
-	beq.s	ObjSonic_SplashEnd		; If not, branch
+	cmpi.w	#$15C0,obj.x(a0)			; Are we too far into the level?
+	bcc.s	ObjSonic_SplashEnd			; If so, branch
+	tst.b	oPlayerCtrl(a0)				; Are we in a spin tunnel?
+	beq.s	ObjSonic_SplashEnd			; If not, branch
 
-	jsr	FindObjSlot			; Create a waterfall splash at our position
+	jsr	FindObjSlot				; Create a waterfall splash at our position
 	bne.s	ObjSonic_SplashEnd
-	move.b	#$E,oID(a1)
-	move.w	oX(a0),oX(a1)
-	move.w	oY(a0),oY(a1)
+	move.b	#$E,obj.id(a1)
+	move.w	obj.x(a0),obj.x(a1)
+	move.w	obj.y(a0),obj.y(a1)
 
-	moveq	#1,d0				; Set splash direction
-	tst.w	oXVel(a0)
+	moveq	#1,d0					; Set splash direction
+	tst.w	obj.x_speed(a0)
 	bmi.s	.SetFlip
 	moveq	#0,d0
 
 .SetFlip:
-	move.b	d0,oSprFlags(a1)
-	move.b	d0,oFlags(a1)
+	move.b	d0,obj.sprite_flags(a1)
+	move.b	d0,obj.flags(a1)
 
 ObjSonic_SplashEnd:
 	rts
@@ -201,66 +201,66 @@ ObjSonic_SplashEnd:
 ObjSonic_SplashEnd2:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MakeSplash:
-	move.b	oYRadius(a0),d2			; Get bottom sensor
+	move.b	obj.collide_height(a0),d2		; Get bottom sensor
 	ext.w	d2
-	add.w	oY(a0),d2
+	add.w	obj.y(a0),d2
 
-	cmpi.b	#$10,d1				; Are we in horizontal range $1000-$10FF?
-	bne.s	.CheckOther			; If not, branch
-	cmpi.w	#$210,d2			; Are we in vertical range $208-$210?
-	bcc.s	ObjSonic_SplashEnd		; If not, branch
+	cmpi.b	#$10,d1					; Are we in horizontal range $1000-$10FF?
+	bne.s	.CheckOther				; If not, branch
+	cmpi.w	#$210,d2				; Are we in vertical range $208-$210?
+	bcc.s	ObjSonic_SplashEnd			; If not, branch
 	cmpi.w	#$208,d2
-	bcs.s	ObjSonic_SplashEnd		; If not, branch
-	bra.s	.MakeSplash			; If so, make a splash
+	bcs.s	ObjSonic_SplashEnd			; If not, branch
+	bra.s	.MakeSplash				; If so, make a splash
 
 .CheckOther:
-	cmpi.b	#$21,d1				; Are we in horizontal range $2100-$21FF?
-	bne.s	ObjSonic_SplashEnd		; If not, branch
-	cmpi.w	#$2A0,d2			; Are we in vertical range $298-$2A0?
-	bcc.s	ObjSonic_SplashEnd		; If not, branch
+	cmpi.b	#$21,d1					; Are we in horizontal range $2100-$21FF?
+	bne.s	ObjSonic_SplashEnd			; If not, branch
+	cmpi.w	#$2A0,d2				; Are we in vertical range $298-$2A0?
+	bcc.s	ObjSonic_SplashEnd			; If not, branch
 	cmpi.w	#$298,d2
-	bcs.s	ObjSonic_SplashEnd		; If not, branch
+	bcs.s	ObjSonic_SplashEnd			; If not, branch
 
 .MakeSplash:
-	tst.w	oPlayerGVel(a0)			; Are we moving?
-	beq.s	ObjSonic_SplashEnd		; If not, branch
+	tst.w	oPlayerGVel(a0)				; Are we moving?
+	beq.s	ObjSonic_SplashEnd			; If not, branch
 	
-	jsr	FindObjSlot			; Make a splash
+	jsr	FindObjSlot				; Make a splash
 	bne.s	ObjSonic_SplashEnd
-	move.b	#$B,oID(a1)
-	move.w	oX(a0),oX(a1)
+	move.b	#$B,obj.id(a1)
+	move.w	obj.x(a0),obj.x(a1)
 	andi.w	#$FFF8,d2
-	move.w	d2,oY(a1)
-	move.b	#1,oSubtype(a1)
+	move.w	d2,obj.y(a1)
+	move.b	#1,obj.subtype(a1)
 
-	move.w	oPlayerGVel(a0),d0		; Get speed
+	move.w	oPlayerGVel(a0),d0			; Get speed
 	bpl.s	.CheckSpeed
 	neg.w	d0
 
 .CheckSpeed:
-	cmpi.w	#$600,d0			; Were we going fast?
-	bcc.s	.Sound				; If so, branch
-	move.b	#2,oSubtype(a1)			; If not, use smaller splash
+	cmpi.w	#$600,d0				; Were we going fast?
+	bcc.s	.Sound					; If so, branch
+	move.b	#2,obj.subtype(a1)			; If not, use smaller splash
 
 .Sound:
-	move.w	#FM_A1,d0			; Play sound
+	move.w	#FM_A1,d0				; Play sound
 	jmp	PlayFMSound
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get the chunk at a specific position
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Y position
 ;	d3.w - X position
 ; RETURNS:
 ;	d1.b - Chunk ID
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_GetChunkAtPos:
-	move.w	d2,d0				; Get the chunk at the given position
+	move.w	d2,d0					; Get the chunk at the given position
 	lsr.w	#1,d0
 	andi.w	#$380,d0
 	move.w	d3,d1
@@ -268,64 +268,64 @@ ObjSonic_GetChunkAtPos:
 	andi.w	#$7F,d1
 	add.w	d1,d0
 	move.l	#LevelChunks,d1
-	lea	levelLayout.w,a1
+	lea	map_layout,a1
 	move.b	(a1,d0.w),d1
 	andi.b	#$7F,d1
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check rotating pole collision
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckRotPole:
-	cmpi.b	#$2B,oAnim(a0)			; Are we giving up from boredom?
-	beq.s	.End				; If so, branch
-	cmpi.b	#4,oRoutine(a0)			; Are we hurt or dead?
-	bcc.s	.End				; If so, branch
-	btst	#3,oPlayerCtrl(a0)		; Are we already on a pole?
-	bne.s	.End				; If so, branch
+	cmpi.b	#$2B,obj.anim_id(a0)			; Are we giving up from boredom?
+	beq.s	.End					; If so, branch
+	cmpi.b	#4,obj.routine(a0)			; Are we hurt or dead?
+	bcc.s	.End					; If so, branch
+	btst	#3,oPlayerCtrl(a0)			; Are we already on a pole?
+	bne.s	.End					; If so, branch
 
-	move.w	oX(a0),d3			; Get block we are in
-	move.w	oY(a0),d2
+	move.w	obj.x(a0),d3				; Get block we are in
+	move.w	obj.y(a0),d2
 	jsr	GetLevelBlock
 	move.w	(a1),d0
 	andi.w	#$7FF,d0
-	cmpi.w	#$103,d0			; Are we on a pole?
-	bne.s	.End				; If not, branch
+	cmpi.w	#$103,d0				; Are we on a pole?
+	bne.s	.End					; If not, branch
 
-	bset	#3,oPlayerCtrl(a0)		; Mark as on pole
-	move.w	#0,oXVel(a0)			; Stop horizontal movement
-	move.w	#-$200,d0			; Set vertical speed
-	tst.w	oYVel(a0)
+	bset	#3,oPlayerCtrl(a0)			; Mark as on pole
+	move.w	#0,obj.x_speed(a0)			; Stop horizontal movement
+	move.w	#-$200,d0				; Set vertical speed
+	tst.w	obj.y_speed(a0)
 	bmi.s	.SetYVel
 	neg.w	d0
 
 .SetYVel:
-	move.w	d0,oYVel(a0)
-	move.b	#$40,oPlayerRotAngle(a0)	; Set rotation angle
+	move.w	d0,obj.y_speed(a0)
+	move.b	#$40,oPlayerRotAngle(a0)		; Set rotation angle
 
-	move.w	oX(a0),d0			; Clip to pole
+	move.w	obj.x(a0),d0				; Clip to pole
 	andi.w	#$FFF0,d0
 	addq.w	#8,d0
-	move.w	d0,oX(a0)
+	move.w	d0,obj.x(a0)
 	move.w	d0,oPlayerRotCenter(a0)
 
-	move.b	#2,oAnim(a0)			; Start rolling
-	bset	#2,oFlags(a0)
-	move.b	#$E,oYRadius(a0)
-	move.b	#7,oXRadius(a0)
+	move.b	#2,obj.anim_id(a0)			; Start rolling
+	bset	#2,obj.flags(a0)
+	move.b	#$E,obj.collide_height(a0)
+	move.b	#7,obj.collide_width(a0)
 
 .End:
 	rts
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check hanging bar collision
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckHangBar:
-	cmpi.b	#$2B,oAnim(a0)			; Are we giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)		; Are we giving up from boredom?
 	beq.w	.End				; If so, branch
-	cmpi.b	#2,spawnMode			; Are we time warping?
+	cmpi.b	#2,spawn_mode			; Are we time warping?
 	beq.w	.End				; If so, branch
 	
 	btst	#0,oPlayerCtrl(a0)		; Are we being controlled by another object?
@@ -333,8 +333,8 @@ ObjSonic_CheckHangBar:
 	btst	#2,oPlayerCtrl(a0)		; Are we already hanging onto a bar?
 	bne.s	.End				; If so, branch
 
-	move.w	oX(a0),d3			; Get block we are in
-	move.w	oY(a0),d2
+	move.w	obj.x(a0),d3			; Get block we are in
+	move.w	obj.y(a0),d2
 	subi.w	#24,d2
 	jsr	GetLevelBlock
 	move.w	(a1),d0
@@ -342,42 +342,42 @@ ObjSonic_CheckHangBar:
 	cmpi.w	#$159,d0			; Are we on a bar?
 	bne.s	.End				; If not, branch
 
-	move.w	timeWarpTimer.w,d0		; Get time warp timer
+	move.w	time_warp_timer,d0		; Get time warp timer
 	beq.s	.NoTimeWarp			; If we weren't time warping, branch
-	clr.w	timeWarpTimer.w			; Stop time warp
-	clr.b	timeWarp
+	clr.w	time_warp_timer			; Stop time warp
+	clr.b	time_warp
 	cmpi.w	#90,d0				; Were we just about to warp?
 	bcs.s	.NoTimeWarp			; If not, branch
-	clr.b	timeWarpDir.w			; If so, disable time warping until the next time post is touched
+	clr.b	time_warp_direction		; If so, disable time warping until the next time post is touched
 
 .NoTimeWarp:
-	bclr	#2,oFlags(a0)			; Force out of ball
-	move.w	#0,oXVel(a0)			; Stop movement
-	move.w	#0,oYVel(a0)
+	bclr	#2,obj.flags(a0)		; Force out of ball
+	move.w	#0,obj.x_speed(a0)		; Stop movement
+	move.w	#0,obj.y_speed(a0)
 	move.w	#0,oPlayerGVel(a0)
-	move.b	#$2C,oAnim(a0)			; Set hanging animation
+	move.b	#$2C,obj.anim_id(a0)		; Set hanging animation
 	bset	#2,oPlayerCtrl(a0)		; Mark as hanging on a bar
 	move.b	#7,oPlayerHangAni(a0)		; Set animation timer
 
-	move.w	oY(a0),d0			; Clip onto bar
+	move.w	obj.y(a0),d0			; Clip onto bar
 	subi.w	#24,d0
 	andi.w	#$FFF0,d0
 	addi.w	#24,d0
-	move.w	d0,oY(a0)
+	move.w	d0,obj.y(a0)
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check electric beam collision
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckElecBeam:
-	cmpi.b	#$2B,oAnim(a0)			; Are we giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)			; Are we giving up from boredom?
 	beq.w	.End				; If so, branch
-	cmpi.b	#4,oRoutine(a0)			; Are we hurt or dead?
+	cmpi.b	#4,obj.routine(a0)			; Are we hurt or dead?
 	bcc.s	.End				; If so, branch
-	tst.b	timeWarp			; Are we time warping?
+	tst.b	time_warp			; Are we time warping?
 	bne.s	.End				; If so, branch
 	tst.b	invincible			; Are we invincible?
 	bne.s	.End				; If so, branch
@@ -385,15 +385,15 @@ ObjSonic_CheckElecBeam:
 	bne.s	.End				; If so, branch
 
 	moveq	#0,d0				; Get beam blocks to check
-	move.b	wwzBeamMode,d0
+	move.b	wwz_beam_mode,d0
 	beq.s	.End
 	subq.b	#1,d0
 	add.w	d0,d0
 	move.w	.BeamModes(pc,d0.w),d0
 	lea	.BeamModes(pc,d0.w),a3
 
-	move.w	oX(a0),d3			; Get block we are in
-	move.w	oY(a0),d2
+	move.w	obj.x(a0),d3			; Get block we are in
+	move.w	obj.y(a0),d2
 	jsr	GetLevelBlock
 	move.w	(a1),d0
 	andi.w	#$7FF,d0
@@ -408,7 +408,7 @@ ObjSonic_CheckElecBeam:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .BeamModes:
 	dc.w	.Blue-.BeamModes
@@ -434,61 +434,61 @@ ObjSonic_CheckElecBeam:
 	dc.w	$1A2
 	dc.w	-1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check electric spark collision
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckSparks:
-	cmpi.b	#$2B,oAnim(a0)			; Are we giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)			; Are we giving up from boredom?
 	beq.w	.End				; If so, branch
-	tst.b	timeWarp			; Are we time warping?
+	tst.b	time_warp			; Are we time warping?
 	bne.w	.End				; If so, branch
 	tst.b	invincible			; Are we invincible?
 	bne.w	.End				; If so, branch
 	
-	cmpi.w	#$980,oX(a0)			; Are in the boss arena entrance?
+	cmpi.w	#$980,obj.x(a0)			; Are in the boss arena entrance?
 	bcs.s	.CheckBoss			; If not, branch
-	cmpi.w	#$A20,oX(a0)
+	cmpi.w	#$A20,obj.x(a0)
 	bcs.w	.End				; If so, branch
 
 .CheckBoss:
-	btst	#7,bossFlags.w			; Is the boss defeated?
+	btst	#7,boss_flags			; Is the boss defeated?
 	bne.w	.End				; If so, branch
 	tst.w	oPlayerHurt(a0)			; Are we invulnerable after getting hurt?
 	bne.s	.End				; If so, branch
 	
 	cmpi.b	#2,act				; Are we in act 3?
 	bne.s	.NotAct3
-	cmpi.w	#$A10,oX(a0)			; Are we in the boss arena?
+	cmpi.w	#$A10,obj.x(a0)			; Are we in the boss arena?
 	bcs.s	.CheckCol			; If not, branch
-	tst.b	bossMusic			; Is the boss active?
+	tst.b	boss_music			; Is the boss active?
 	beq.s	.End				; If not, branch
-	tst.b	goodFuture			; Are we in the good future?
+	tst.b	good_future			; Are we in the good future?
 	bne.s	.CheckAnim			; If so, branch
 	bra.s	.CheckCol			; If not, disregard animation
 
 .NotAct3:
-	cmpi.b	#2,timeZone			; Are we in the future?
+	cmpi.b	#2,time_zone			; Are we in the future?
 	bne.s	.CheckCol			; If not, branch
-	tst.b	goodFuture			; Are we in the bad future?
+	tst.b	good_future			; Are we in the bad future?
 	beq.s	.CheckCol			; If so, branch
 
 .CheckAnim:
-	tst.b	aniArtFrames+2.w		; Are the sparks active?
+	tst.b	anim_art_frames+2		; Are the sparks active?
 	beq.s	.End				; If not, branch
 
 .CheckCol:
-	move.w	oX(a0),d3			; Get block we are in
-	move.w	oY(a0),d2
+	move.w	obj.x(a0),d3			; Get block we are in
+	move.w	obj.y(a0),d2
 	jsr	GetLevelBlock
 	move.w	(a1),d0
 	andi.w	#$7FF,d0
 
 	moveq	#3-1,d6				; Get which blocks to check
 	lea	.SparkBlocksNormal,a1
-	cmpi.b	#2,timeZone			; Are we in the future?
+	cmpi.b	#2,time_zone			; Are we in the future?
 	bne.s	.Check				; If not, branch
-	tst.b	goodFuture			; Are we in the good future?
+	tst.b	good_future			; Are we in the good future?
 	bne.s	.Check				; If so, branch
 	lea	.SparkBlocksBadFuture,a1	; Bad future uses different block IDs
 
@@ -500,7 +500,7 @@ ObjSonic_CheckSparks:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .SparkBlocksNormal:
 	dc.w	$243
@@ -512,36 +512,36 @@ ObjSonic_CheckSparks:
 	dc.w	$288
 	dc.w	$289
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check bouncy floor collision
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckBouncyFloor:
-	cmpi.b	#$2B,oAnim(a0)			; Are we giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)		; Are we giving up from boredom?
 	beq.w	.End				; If so, branch
 	
-	tst.b	bossFlags.w			; Is the boss active?
+	tst.b	boss_flags			; Is the boss active?
 	bne.w	.End				; If so, branch
-	cmpi.b	#2,timeZone			; Are we in the future?
+	cmpi.b	#2,time_zone			; Are we in the future?
 	bcc.s	.CheckCol			; If so, branch
 
 	move.b	#$3C,d0				; Get palette cycle frame where the bouncy floors are inactive
-	tst.b	timeZone
+	tst.b	time_zone
 	beq.s	.CheckActive
 	addi.b	#$1E,d0
 
 .CheckActive:
-	cmp.b	palCycleSteps+3.w,d0		; Are the bouncy floors active?
+	cmp.b	palette_cycle_steps+3,d0	; Are the bouncy floors active?
 	beq.w	.End				; If not, branch
 
 .CheckCol:
-	move.w	oX(a0),d3			; Get block we are on (left sensor)
-	move.w	oY(a0),d2
-	move.b	oYRadius(a0),d0
+	move.w	obj.x(a0),d3			; Get block we are on (left sensor)
+	move.w	obj.y(a0),d2
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	add.w	d0,d2
 	addq.w	#2,d2
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	sub.w	d0,d3
 	jsr	GetLevelBlock
@@ -550,13 +550,13 @@ ObjSonic_CheckBouncyFloor:
 	cmpi.w	#$21F,d0			; Are we on a bouncy floor?
 	beq.s	.Bounce				; If so, branch
 	
-	move.w	oX(a0),d3			; Get block we are on (right sensor)
-	move.w	oY(a0),d2
-	move.b	oYRadius(a0),d0
+	move.w	obj.x(a0),d3			; Get block we are on (right sensor)
+	move.w	obj.y(a0),d2
+	move.b	obj.collide_height(a0),d0
 	ext.w	d0
 	add.w	d0,d2
 	addq.w	#2,d2
-	move.b	oXRadius(a0),d0
+	move.b	obj.collide_width(a0),d0
 	ext.w	d0
 	add.w	d0,d3
 	jsr	GetLevelBlock
@@ -566,18 +566,18 @@ ObjSonic_CheckBouncyFloor:
 	bne.s	.End				; If not, branch
 
 .Bounce:
-	move.w	#-$1600,oYVel(a0)		; Bounce up
-	bset	#1,oFlags(a0)			; Mark as in the air
-	bclr	#4,oFlags(a0)			; Clear roll-jump flag
-	bclr	#5,oFlags(a0)			; Clear push flag
+	move.w	#-$1600,obj.y_speed(a0)		; Bounce up
+	bset	#1,obj.flags(a0)		; Mark as in the air
+	bclr	#4,obj.flags(a0)		; Clear roll-jump flag
+	bclr	#5,obj.flags(a0)		; Clear push flag
 	clr.b	oPlayerJump(a0)			; Clear jump flag
 	
-	bset	#2,oFlags(a0)			; Mark as rolling
+	bset	#2,obj.flags(a0)		; Mark as rolling
 	bne.s	.End				; If it was already marked, branch
-	move.b	#$E,oYRadius(a0)		; Set rolling hitbox size
-	move.b	#7,oXRadius(a0)
-	addq.w	#5,oY(a0)
-	move.b	#2,oAnim(a0)			; Set animation to rolling animation
+	move.b	#$E,obj.collide_height(a0)	; Set rolling hitbox size
+	move.b	#7,obj.collide_width(a0)
+	addq.w	#5,obj.y(a0)
+	move.b	#2,obj.anim_id(a0)		; Set animation to rolling animation
 
 	move.w	#FM_DA,d0			; Play bounce sound
 	jsr	PlayFMSound
@@ -585,14 +585,14 @@ ObjSonic_CheckBouncyFloor:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle the extended camera
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_ExtCamera:
 	rts					; Extended camera is disabled in Wacky Workbench
 
-	move.w	camXCenter.w,d1			; Get camera X center position
+	move.w	camera_x_center,d1			; Get camera X center position
 
 	move.w	oPlayerGVel(a0),d0		; Get how fast we are moving
 	bpl.s	.PosInertia
@@ -634,28 +634,28 @@ ObjSonic_ExtCamera:
 	subq.w	#2,d1				; Pan back to the left
 
 .SetPanVal:
-	move.w	d1,camXCenter.w			; Update camera X center position
+	move.w	d1,camera_x_center			; Update camera X center position
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's main routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Main:
 	bsr.s	ObjSonic_ExtCamera		; Handle extended camera
 	bsr.w	ObjSonic_MakeWaterfallSplash	; Handle waterfall splash creation
 
-	tst.w	debugCheat			; Is debug mode enabled?
+	tst.w	debug_cheat			; Is debug mode enabled?
 	beq.s	.NoDebug			; If not, branch
-	btst	#4,p1CtrlTap.w			; Was the B button pressed?
+	btst	#4,p1_ctrl_tap			; Was the B button pressed?
 	beq.s	.NoDebug			; If not, branch
-	move.b	#1,debugMode			; Enter debug mode
+	move.b	#1,debug_mode			; Enter debug mode
 	rts
 
 .NoDebug:
-	tst.b	ctrlLocked.w			; Are controls locked?
+	tst.b	ctrl_locked			; Are controls locked?
 	bne.s	.CtrlLock			; If so, branch
-	move.w	p1CtrlData.w,playerCtrl.w	; Copy controller data
+	move.w	p1_ctrl,player_ctrl		; Copy controller data
 
 .CtrlLock:
 	btst	#0,oPlayerCtrl(a0)		; Are we being controlled by another object?
@@ -666,7 +666,7 @@ ObjSonic_Main:
 
 .NormalCtrl:
 	moveq	#0,d0				; Run player mode routine
-	move.b	oFlags(a0),d0
+	move.b	obj.flags(a0),d0
 	andi.w	#6,d0
 	move.w	ObjSonic_ModeIndex(pc,d0.w),d1
 	jsr	ObjSonic_ModeIndex(pc,d1.w)
@@ -682,14 +682,14 @@ ObjSonic_Main:
 	bsr.w	ObjSonic_RecordPos		; Save current position into the position buffer
 
 						; Update our angle buffers
-	move.b	primaryAngle.w,oPlayerPriAngle(a0)
-	move.b	secondaryAngle.w,oPlayerSecAngle(a0)
+	move.b	angle_buffer_1,oPlayerPriAngle(a0)
+	move.b	angle_buffer_2,oPlayerSecAngle(a0)
 
 	bsr.w	ObjSonic_Animate		; Animate sprite
 
 	tst.b	oPlayerCtrl(a0)			; Has object collision been disabled?
 	bmi.s	.NoObjCol			; If so, branch
-	cmpi.b	#$2B,oAnim(a0)			; Are we giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)			; Are we giving up from boredom?
 	beq.s	.NoObjCol			; If so, branch
 
 	jsr	Player_ObjCollide		; Handle object collision
@@ -698,7 +698,7 @@ ObjSonic_Main:
 	bsr.w	ObjSonic_SpecialChunks		; Handle special chunks
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_ModeIndex:
 	dc.w	ObjSonic_MdGround-ObjSonic_ModeIndex
@@ -706,20 +706,20 @@ ObjSonic_ModeIndex:
 	dc.w	ObjSonic_MdRoll-ObjSonic_ModeIndex
 	dc.w	ObjSonic_MdJump-ObjSonic_ModeIndex
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Leftover music ID list from Sonic 1
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LevelMusicIDs2_S1:
 	dc.b	$81, $82, $83, $84, $85, $86
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Display Sonic's sprite and update timers
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Display:
-	cmpi.w	#210,timeWarpTimer.w		; Are we about to time warp?
+	cmpi.w	#210,time_warp_timer		; Are we about to time warp?
 	bcc.s	.SkipDisplay			; If so, branch
 
 	move.w	oPlayerHurt(a0),d0		; Get current hurt time
@@ -742,11 +742,11 @@ ObjSonic_Display:
 	subq.w	#1,oPlayerInvinc(a0)		; Decrement invincibility time
 	bne.s	.NotInvincible			; If it hasn't run out, branch
 
-	tst.b	speedShoes			; Is the speed shoes music playing?
+	tst.b	speed_shoes			; Is the speed shoes music playing?
 	bne.s	.StopInvinc			; If so, branch
-	tst.b	bossMusic			; Is the boss music playing?
+	tst.b	boss_music			; Is the boss music playing?
 	bne.s	.StopInvinc			; If so, branch
-	tst.b	timeZone			; Are we in the past?
+	tst.b	time_zone			; Are we in the past?
 	bne.s	.NotPast			; If not, branch
 	move.w	#SCMD_FADECDA,d0		; Fade out music
 	jsr	SubCPUCmd
@@ -758,7 +758,7 @@ ObjSonic_Display:
 	move.b	#0,invincible			; Stop invincibility
 
 .NotInvincible:
-	tst.b	speedShoes			; Do we have speed shoes?
+	tst.b	speed_shoes			; Do we have speed shoes?
 	beq.s	.End				; If not, branch
 	tst.w	oPlayerShoes(a0)		; Is the speed shoes timer active?
 	beq.s	.End				; If not, branch
@@ -766,15 +766,15 @@ ObjSonic_Display:
 	subq.w	#1,oPlayerShoes(a0)		; Decrement speed shoes time
 	bne.s	.End				; If it hasn't run out, branch
 
-	move.w	#$600,sonicTopSpeed.w		; Return physics back to normal
-	move.w	#$C,sonicAcceleration.w
-	move.w	#$80,sonicDeceleration.w
+	move.w	#$600,player_top_speed		; Return physics back to normal
+	move.w	#$C,player_acceleration
+	move.w	#$80,player_deceleration
 
 	tst.b	invincible			; Is the invincibility music playing?
 	bne.s	.StopSpeedShoes			; If so, branch
-	tst.b	bossMusic			; Is the boss music playing?
+	tst.b	boss_music			; Is the boss music playing?
 	bne.s	.StopSpeedShoes			; If so, branch
-	tst.b	timeZone			; Are we in the past?
+	tst.b	time_zone			; Are we in the past?
 	bne.s	.NotPast2			; If not, branch
 	move.w	#SCMD_FADECDA,d0		; Fade out music
 	jsr	SubCPUCmd
@@ -783,61 +783,61 @@ ObjSonic_Display:
 	jsr	PlayLevelMusic			; Play level music
 
 .StopSpeedShoes:
-	move.b	#0,speedShoes			; Stop speed shoes
+	move.b	#0,speed_shoes			; Stop speed shoes
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Save Sonic's current position into the position buffer
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_RecordPos:
-	move.w	sonicRecordIndex.w,d0		; Get pointer to current position buffer index
-	lea	sonicRecordBuf.w,a1
+	move.w	player_positions_index,d0	; Get pointer to current position buffer index
+	lea	player_positions,a1
 	lea	(a1,d0.w),a1
 
-	move.w	oX(a0),(a1)+			; Save our position
-	move.w	oY(a0),(a1)+
+	move.w	obj.x(a0),(a1)+			; Save our position
+	move.w	obj.y(a0),(a1)+
 
-	addq.b	#4,sonicRecordIndex+1.w		; Advance position buffer index
+	addq.b	#4,player_positions_index+1	; Advance position buffer index
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle Sonic underwater
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Water:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Save time warp data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 SaveTimeWarpData:
-	move.b	spawnMode,warpSpawnMode		; Save some values
-	move.w	oX(a0),warpX
-	move.w	oY(a0),warpY
-	move.w	oPlayerGVel(a0),warpGVel
-	move.w	oXVel(a0),warpXVel
-	move.w	oYVel(a0),warpYVel
-	move.b	oFlags(a0),warpPlayerFlags
-	bclr	#3,warpPlayerFlags		; Not standing on an object
-	move.b	waterRoutine.w,warpWaterRoutine
-	move.w	bottomBound.w,warpBtmBound
-	move.w	cameraX.w,warpCamX
-	move.w	cameraY.w,warpCamY
-	move.w	cameraBgX.w,warpCamBgX
-	move.w	cameraBgY.w,warpCamBgY
-	move.w	cameraBg2X.w,warpCamBg2X
-	move.w	cameraBg2Y.w,warpCamBg2Y
-	move.w	cameraBg3X.w,warpCamBg3X
-	move.w	cameraBg3Y.w,warpCamBg3Y
-	move.w	waterHeight2.w,warpWaterHeight
-	move.b	waterRoutine.w,warpWaterRoutine
-	move.b	waterFullscreen.w,warpWaterFull
-	move.w	rings,warpRings
-	move.b	livesFlags,warpLivesFlags
+	move.b	spawn_mode,warp_spawn_mode	; Save some values
+	move.w	obj.x(a0),warp_x
+	move.w	obj.y(a0),warp_y
+	move.w	oPlayerGVel(a0),warp_ground_speed
+	move.w	obj.x_speed(a0),warp_x_speed
+	move.w	obj.y_speed(a0),warp_y_speed
+	move.b	obj.flags(a0),warp_player_flags
+	bclr	#3,warp_player_flags		; Not standing on an object
+	move.b	water_routine,warp_water_routine
+	move.w	bottom_bound,warp_bottom_bound
+	move.w	camera_fg_x,warp_camera_fg_x
+	move.w	camera_fg_y,warp_camera_fg_y
+	move.w	camera_bg_x,warp_camera_bg_x
+	move.w	camera_bg_y,warp_camera_bg_y
+	move.w	camera_bg2_x,warp_camera_bg2_x
+	move.w	camera_bg2_y,warp_camera_bg2_y
+	move.w	camera_bg3_x,warp_camera_bg3_x
+	move.w	camera_bg3_y,warp_camera_bg3_y
+	move.w	water_height_logical,warp_water_height
+	move.b	water_routine,warp_water_routine
+	move.b	water_fullscreen,warp_water_fullscreen
+	move.w	rings,warp_rings
+	move.b	lives_flags,warp_lives_flags
 
 	move.l	time,d0				; Move the time to 5:00 if we are past that
 	cmpi.l	#(5<<16)|(0<<8)|0,d0
@@ -845,17 +845,17 @@ SaveTimeWarpData:
 	move.l	#(5<<16)|(0<<8)|0,d0
 
 .CapTime:
-	move.l	d0,warpTime
+	move.l	d0,warp_time
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle time warping for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_TimeWarp:
 	tst.b	oPlayerCharge(a0)		; Are we charging a peelout or spindash?
 	bne.w	.End2				; If so, branch
-	tst.b	timeWarpDir.w			; Have we touched a time post?
+	tst.b	time_warp_direction		; Have we touched a time post?
 	beq.w	.End2				; If not, branch
 
 	move.w	#$600,d2			; Minimum speed in which to keep the time warp going
@@ -866,28 +866,28 @@ ObjSonic_TimeWarp:
 	neg.w	d0
 
 .PosInertia:
-	tst.w	timeWarpTimer.w			; Is the time warp timer active?
+	tst.w	time_warp_timer			; Is the time warp timer active?
 	bne.s	.TimerGoing			; If so, branch
-	move.w	#1,timeWarpTimer.w		; Make the time warp timer active
+	move.w	#1,time_warp_timer		; Make the time warp timer active
 
 .TimerGoing:
-	move.w	timeWarpTimer.w,d1		; Get current time warp time
+	move.w	time_warp_timer,d1		; Get current time warp time
 	cmpi.w	#230,d1				; Should we time warp now?
 	bcs.s	.KeepGoing			; If not, branch
 
-	move.b	#1,levelRestart			; Set to go to the time warp cutscene
+	move.b	#1,stage_restart		; Set to go to the time warp cutscene
 	bra.w	FadeOutMusic
 
 .KeepGoing:
 	cmpi.w	#210,d1				; Are we about to time warp soon?
 	bcs.s	.CheckStars			; If not, branch
 
-	cmpi.b	#2,spawnMode			; Are we time warping?
+	cmpi.b	#2,spawn_mode			; Are we time warping?
 	beq.s	.End				; If so, branch
 
-	move.b	#1,scrollLock.w			; Lock the screen in place
+	move.b	#1,scroll_lock			; Lock the screen in place
 
-	move.b	timeZone,d0			; Get current time zone
+	move.b	time_zone,d0			; Get current time zone
 	bne.s	.GetNewTime			; If we are not in the past, branch
 
 	move.w	#SCMD_FADEPCM,d0		; Fade out PCM music
@@ -896,7 +896,7 @@ ObjSonic_TimeWarp:
 	moveq	#0,d0				; We are currently in the past
 
 .GetNewTime:
-	add.b	timeWarpDir.w,d0		; Set the new time period
+	add.b	time_warp_direction,d0		; Set the new time period
 	bpl.s	.NoUnderflow			; If we aren't trying to go past the past, branch
 	moveq	#0,d0				; Stay in this game's "past" time period
 	bra.s	.GotNewTime
@@ -908,10 +908,10 @@ ObjSonic_TimeWarp:
 
 .GotNewTime:
 	bset	#7,d0				; Mark time warp as active
-	move.b	d0,timeZone
+	move.b	d0,time_zone
 
 	bsr.w	SaveTimeWarpData		; Save time warp data
-	move.b	#2,spawnMode			; Spawn from time warp position
+	move.b	#2,spawn_mode			; Spawn from time warp position
 
 .End:
 	rts
@@ -922,8 +922,8 @@ ObjSonic_TimeWarp:
 
 	cmp.w	d2,d0				; Are we going fast enough?
 	bcc.w	ObjSonic_MakeTimeWarpStars	; If so, branch
-	clr.w	timeWarpTimer.w			; If not, reset time warping until we go fast again
-	clr.b	timeWarp
+	clr.w	time_warp_timer			; If not, reset time warping until we go fast again
+	clr.b	time_warp
 	rts
 
 .CheckStop:
@@ -931,37 +931,37 @@ ObjSonic_TimeWarp:
 	bcc.s	.End2				; If so, branch
 
 .StopTimeWarp:
-	clr.w	timeWarpTimer.w			; Disable time warping until the next time post is touched
-	clr.b	timeWarpDir.w
-	clr.b	timeWarp
+	clr.w	time_warp_timer			; Disable time warping until the next time post is touched
+	clr.b	time_warp_direction
+	clr.b	time_warp
 
 .End2:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's ground mode routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MdGround:
-	tst.b	sneezeFlag.w			; Is Sonic sneezing?
+	tst.b	sneeze_flag			; Is Sonic sneezing?
 	beq.s	.NoSneeze			; If not, branch
-	cmpi.b	#5,oAnim(a0)			; Has Sonic stopped sneezing?
+	cmpi.b	#5,obj.anim_id(a0)		; Has Sonic stopped sneezing?
 	bne.s	.End				; If not, branch
-	clr.b	sneezeFlag.w			; Clear sneeze flag
+	clr.b	sneeze_flag			; Clear sneeze flag
 
 .NoSneeze:
 	bsr.w	ObjSonic_ChkBoredom		; Check boredom timer
 
-	cmpi.b	#$2B,oAnim(a0)			; Are we giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)		; Are we giving up from boredom?
 	bne.s	.NotGivingUp			; If not, branch
-	tst.b	miniSonic			; Are we miniature?
+	tst.b	mini_player			; Are we miniature?
 	beq.s	.NotMini			; If not, branch
-	cmpi.b	#$79,oMapFrame(a0)		; Are we jumping?
+	cmpi.b	#$79,obj.sprite_frame(a0)	; Are we jumping?
 	bne.s	.End				; If not, branch
 	bra.s	.GivingUp
 
 .NotMini:
-	cmpi.b	#$17,oMapFrame(a0)		; Are we jumping?
+	cmpi.b	#$17,obj.sprite_frame(a0)	; Are we jumping?
 	bcs.s	.End				; If not, branch
 
 .GivingUp:
@@ -983,16 +983,16 @@ ObjSonic_MdGround:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's air mode routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MdAir:
-	tst.w	oYVel(a0)			; Are we moving upwards?
+	tst.w	obj.y_speed(a0)			; Are we moving upwards?
 	bmi.s	.CheckHangBar			; If so, branch
-	cmpi.b	#$2C,oAnim(a0)			; Are we in the hanging animation?
+	cmpi.b	#$2C,obj.anim_id(a0)		; Are we in the hanging animation?
 	beq.s	.CheckHangBar			; If so, branch
-	move.b	#0,oAnim(a0)			; Reset animation to walking animation
+	move.b	#0,obj.anim_id(a0)		; Reset animation to walking animation
 
 .CheckHangBar:
 	btst	#2,oPlayerCtrl(a0)		; Are we hanging on a bar?
@@ -1007,9 +1007,9 @@ ObjSonic_MdAir:
 	bsr.w	ObjSonic_MoveAir		; Handle movement
 	bsr.w	ObjSonic_LevelBound		; Handle level boundary collision
 	jsr	ObjMoveGrv			; Apply velocity
-	btst	#6,oFlags(a0)			; Are we underwater?
+	btst	#6,obj.flags(a0)		; Are we underwater?
 	beq.s	.NoWater			; If not, branch
-	subi.w	#$28,oYVel(a0)			; Apply water gravity resistance
+	subi.w	#$28,obj.y_speed(a0)		; Apply water gravity resistance
 
 .NoWater:
 	bsr.w	ObjSonic_JumpAngle		; Reset angle
@@ -1018,9 +1018,9 @@ ObjSonic_MdAir:
 	bsr.w	Player_LevelColInAir		; Handle level collision
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's roll mode routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MdRoll:
 	bsr.w	ObjSonic_Handle3DRamp		; Check for  3D ramp
@@ -1038,9 +1038,9 @@ ObjSonic_MdRoll:
 	bsr.w	ObjSonic_CheckFallOff		; Check for falling off a steep slope or ceiling
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's jump mode routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MdJump:
 	btst	#3,oPlayerCtrl(a0)		; Are we on a rotating pole?
@@ -1063,9 +1063,9 @@ ObjSonic_MdJump:
 	bsr.w	ObjSonic_MoveAir		; Handle movement
 	bsr.w	ObjSonic_LevelBound		; Handle level boundary collision
 	jsr	ObjMoveGrv			; Apply velocity
-	btst	#6,oFlags(a0)			; Are we underwater?
+	btst	#6,obj.flags(a0)		; Are we underwater?
 	beq.s	.NoWater			; If not, branch
-	subi.w	#$28,oYVel(a0)			; Apply water gravity resistance
+	subi.w	#$28,obj.y_speed(a0)		; Apply water gravity resistance
 
 .NoWater:
 	bsr.w	ObjSonic_JumpAngle		; Reset angle
@@ -1074,9 +1074,9 @@ ObjSonic_MdJump:
 	bsr.w	Player_LevelColInAir		; Handle level collision
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle rotating pole movement
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_RotPole:
 	btst	#4,oPlayerCtrl(a0)		; Are we jumping off the pole?
@@ -1086,61 +1086,61 @@ ObjSonic_RotPole:
 	andi.b	#$7F,d0
 	bne.s	.Rotate				; If we aren't on a far end, branch
 	
-	move.w	#-$C00,oXVel(a0)		; Jump off
+	move.w	#-$C00,obj.x_speed(a0)		; Jump off
 	tst.b	oPlayerRotAngle(a0)		; Were we facing left?
 	bmi.s	.JumpOff			; If so, branch
-	neg.w	oXVel(a0)			; If not, jump the other way
+	neg.w	obj.x_speed(a0)			; If not, jump the other way
 
 .JumpOff:
-	andi.b	#$7F,oTile(a0)			; Set to low plane
+	andi.b	#$7F,obj.sprite_tile(a0)	; Set to low plane
 	andi.b	#%11100111,oPlayerCtrl(a0)	; Clear pole flags
 	clr.w	oPlayerRotCenter(a0)		; Clear center position
 	rts
 
 .CheckJump:
-	move.b	playerCtrlTap.w,d0		; Are we jumping off?
+	move.b	player_ctrl_tap,d0		; Are we jumping off?
 	andi.b	#$70,d0
 	beq.s	.Rotate				; If not, branch
 	bset	#4,oPlayerCtrl(a0)		; Mark as jumping off pole
 
 .Rotate:
 	addq.b	#8,oPlayerRotAngle(a0)		; Rotate around pole
-	ori.w	#$8000,oTile(a0)		; Set perspective around pole
+	ori.w	#$8000,obj.sprite_tile(a0)	; Set perspective around pole
 	move.b	oPlayerRotAngle(a0),d0
 	bpl.s	.SetPos
-	andi.w	#$7FFF,oTile(a0)
+	andi.w	#$7FFF,obj.sprite_tile(a0)
 
 .SetPos:
 	jsr	CalcSine			; Set horizontal position on pole
 	muls.w	#23,d1
 	asr.l	#8,d1
-	move.w	oPlayerRotCenter(a0),oX(a0)
-	add.w	d1,oX(a0)
+	move.w	oPlayerRotCenter(a0),obj.x(a0)
+	add.w	d1,obj.x(a0)
 
-	move.w	oYVel(a0),d0			; Move vertically on pole
+	move.w	obj.y_speed(a0),d0		; Move vertically on pole
 	ext.l	d0
 	lsl.l	#8,d0
-	add.l	d0,oY(a0)
+	add.l	d0,obj.y(a0)
 
 	move.w	oPlayerRotCenter(a0),d3		; Get block we are in
-	move.w	oY(a0),d2
+	move.w	obj.y(a0),d2
 	jsr	GetLevelBlock
 	move.w	(a1),d0
 	andi.w	#$7FF,d0
 	cmpi.w	#$103,d0			; Did we touch a pole end?
 	beq.s	.End				; If not, branch
-	neg.w	oYVel(a0)			; If so, move in the other direction
+	neg.w	obj.y_speed(a0)			; If so, move in the other direction
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle hanging bar movement
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_HangBar:
-	move.w	oX(a0),d3			; Get block we are in
-	move.w	oY(a0),d2
+	move.w	obj.x(a0),d3			; Get block we are in
+	move.w	obj.y(a0),d2
 	subi.w	#24,d2
 	jsr	GetLevelBlock
 	move.w	(a1),d0
@@ -1148,62 +1148,62 @@ ObjSonic_HangBar:
 	cmpi.w	#$159,d0			; Are we on the bar?
 	bne.s	.FallOff			; If not, branch
 	
-	move.b	playerCtrlTap.w,d0		; Are we jumping off?
+	move.b	player_ctrl_tap,d0		; Are we jumping off?
 	andi.b	#$70,d0
 	beq.s	.MoveX				; If not, branch
 
 .FallOff:
 	bclr	#2,oPlayerCtrl(a0)		; Stop hanging
-	addi.w	#$10,oY(a0)			; Fall off
-	move.b	#$13,oYRadius(a0)		; Reset collision hitbox
-	move.b	#9,oXRadius(a0)
+	addi.w	#$10,obj.y(a0)			; Fall off
+	move.b	#$13,obj.collide_height(a0)	; Reset collision hitbox
+	move.b	#9,obj.collide_width(a0)
 	rts
 
 .MoveX
 	moveq	#2,d0				; X speed
-	btst	#2,playerCtrlHold.w		; Are we going left?
+	btst	#2,player_ctrl_hold		; Are we going left?
 	beq.s	.ChkRight			; If not, branch
 	neg.w	d0				; Go the other way
-	bset	#0,oFlags(a0)			; Face to the left
-	bset	#0,oSprFlags(a0)
+	bset	#0,obj.flags(a0)		; Face to the left
+	bset	#0,obj.sprite_flags(a0)
 	bra.s	.DoMove
 
 .ChkRight:
-	btst	#3,playerCtrlHold.w		; Are we going left?
+	btst	#3,player_ctrl_hold		; Are we going left?
 	beq.s	.End				; If not, branch
-	bclr	#0,oFlags(a0)			; Face to the right
-	bclr	#0,oSprFlags(a0)
+	bclr	#0,obj.flags(a0)		; Face to the right
+	bclr	#0,obj.sprite_flags(a0)
 
 .DoMove:
-	add.w	d0,oX(a0)			; Update X position
+	add.w	d0,obj.x(a0)			; Update X position
 	subq.b	#1,oPlayerHangAni(a0)		; Decrement animation timer
 	bpl.s	.End				; If it hasn't run out, branch
 	move.b	#7,oPlayerHangAni(a0)		; Reset timer
-	addq.b	#1,oAnimFrame(a0)		; Increment animation frame
-	cmpi.b	#4,oAnimFrame(a0)		; Have we reached the last one?
+	addq.b	#1,obj.anim_frame(a0)		; Increment animation frame
+	cmpi.b	#4,obj.anim_frame(a0)		; Have we reached the last one?
 	bcs.s	.End				; If not, branch
-	move.b	#0,oAnimFrame(a0)		; Reset animation frame
+	move.b	#0,obj.anim_frame(a0)		; Reset animation frame
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check for a 3D ramp for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Handle3DRamp:
-	cmpi.b	#1,timeZone			; Are we in the present?
+	cmpi.b	#1,time_zone			; Are we in the present?
 	bne.s	.End				; If not, branch
-	tst.w	zoneAct				; Are we in Palmtree Panic act 1?
+	tst.w	zone_act			; Are we in Palmtree Panic act 1?
 	bne.s	.End				; If not, branch
 
-	move.w	oY(a0),d0			; Get current chunk that we are in
+	move.w	obj.y(a0),d0			; Get current chunk that we are in
 	lsr.w	#1,d0
 	andi.w	#$380,d0
-	move.b	oX(a0),d1
+	move.b	obj.x(a0),d1
 	andi.w	#$7F,d1
 	add.w	d1,d0
-	lea	levelLayout.w,a1
+	lea	map_layout,a1
 	move.b	(a1,d0.w),d1
 
 	lea	.ChunkList,a2			; Get list of 3D ramp chunks
@@ -1219,20 +1219,20 @@ ObjSonic_Handle3DRamp:
 .NotFound:
 	bclr	#1,oPlayerCtrl(a0)		; Mark as not on a 3D ramp
 	beq.s	.End				; If we weren't on one to begin with, branch
-	tst.w	oYVel(a0)			; Are we moving upwards?
+	tst.w	obj.y_speed(a0)			; Are we moving upwards?
 	bpl.s	.End				; If not, branch
-	cmpi.w	#-$800,oYVel(a0)		; Are we launching off the 3D ramp?
+	cmpi.w	#-$800,obj.y_speed(a0)		; Are we launching off the 3D ramp?
 	bcc.s	.End				; If not, branch
 
-	move.w	#$600,oXVel(a0)			; Gain a horizontal boost off the 3D ramp
-	btst	#0,oFlags(a0)
+	move.w	#$600,obj.x_speed(a0)			; Gain a horizontal boost off the 3D ramp
+	btst	#0,obj.flags(a0)
 	beq.s	.End
-	neg.w	oXVel(a0)
+	neg.w	obj.x_speed(a0)
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .ChunkList:
 	dc.b	6
@@ -1244,31 +1244,31 @@ ObjSonic_Handle3DRamp:
 	dc.b	$49
 	dc.b	-1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle Sonic's movement on the ground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MoveGround:
-	move.w	sonicTopSpeed.w,d6		; Get top speed
-	move.w	sonicAcceleration.w,d5		; Get acceleration
-	move.w	sonicDeceleration.w,d4		; Get deceleration
+	move.w	player_top_speed,d6		; Get top speed
+	move.w	player_acceleration,d5		; Get acceleration
+	move.w	player_deceleration,d4		; Get deceleration
 
-	tst.b	waterSlideFlag.w		; Are we on a water slide?
+	tst.b	water_slide_flag		; Are we on a water slide?
 	bne.w	.CalcXYVels			; If so, branch
 	tst.w	oPlayerMoveLock(a0)		; Is our movement locked temporarily?
 	bne.w	.ResetScreen			; If so, branch
 
-	btst	#2,playerCtrlHold.w		; Are we holding left?
+	btst	#2,player_ctrl_hold		; Are we holding left?
 	beq.s	.NotLeft			; If not, branch
 	bsr.w	ObjSonic_MoveGndLeft		; Move left
 
 .NotLeft:
-	btst	#3,playerCtrlHold.w		; Are we holding right
+	btst	#3,player_ctrl_hold		; Are we holding right
 	beq.s	.NotRight			; If not, branch
 	bsr.w	ObjSonic_MoveGndRight		; Move right
 
 .NotRight:
-	move.b	oAngle(a0),d0			; Are we on firm on the ground?
+	move.b	obj.angle(a0),d0		; Are we on firm on the ground?
 	addi.b	#$20,d0
 	andi.b	#$C0,d0
 	bne.w	.ResetScreen			; If not, branch
@@ -1279,13 +1279,13 @@ ObjSonic_MoveGround:
 	bra.s	.CheckBalance			; Check for balancing
 
 .Stand:
-	bclr	#5,oFlags(a0)			; Stop pushing
-	move.b	#5,oAnim(a0)			; Set animation to idle animation
+	bclr	#5,obj.flags(a0)		; Stop pushing
+	move.b	#5,obj.anim_id(a0)		; Set animation to idle animation
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CheckBalance:
-	btst	#3,oFlags(a0)			; Are we standing on an object?
+	btst	#3,obj.flags(a0)		; Are we standing on an object?
 	beq.s	.BalanceGround			; If not, branch
 
 	moveq	#0,d0				; Get the object we are standing on
@@ -1293,21 +1293,21 @@ ObjSonic_MoveGround:
 	lsl.w	#6,d0
 	lea	objects.w,a1
 	lea	(a1,d0.w),a1
-	tst.b	oFlags(a1)			; Is it a special hazardous object?
+	tst.b	obj.flags(a1)			; Is it a special hazardous object?
 	bmi.s	.CheckCharge			; If so, branch
-	cmpi.b	#$1E,oID(a1)			; Is it a pinball flipper from CCZ?
+	cmpi.b	#$1E,obj.id(a1)			; Is it a pinball flipper from CCZ?
 	bne.s	.CheckObjBalance		; If not, branch
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
+	move.b	#0,obj.anim_id(a0)			; Set animation to walking animation
 	bra.w	.ResetScreen			; Reset screen position
 
 .CheckObjBalance:
 	moveq	#0,d1				; Get distance from an edge of the object
-	move.b	oWidth(a1),d1
+	move.b	obj.width(a1),d1
 	move.w	d1,d2
 	add.w	d2,d2
 	subq.w	#4,d2
-	add.w	oX(a0),d1
-	sub.w	oX(a1),d1
+	add.w	obj.x(a0),d1
+	sub.w	obj.x(a1),d1
 	cmpi.w	#4,d1				; Are we at least 4 pixels away from the left edge?
 	blt.s	.BalanceLeft			; If so, branch
 	cmp.w	d2,d1				; Are we at least 4 pixels away from the right edge?
@@ -1322,7 +1322,7 @@ ObjSonic_MoveGround:
 	bne.s	.CheckLeft			; If not, branch
 
 .BalanceRight:
-	btst	#0,oFlags(a0)			; Are we facing left?
+	btst	#0,obj.flags(a0)			; Are we facing left?
 	bne.s	.BalanceAniBackwards		; If so, use the backwards animation
 	bra.s	.BalanceAniForwards		; Use the forwards animation
 
@@ -1331,72 +1331,72 @@ ObjSonic_MoveGround:
 	bne.s	.CheckCharge			; If not, branch
 
 .BalanceLeft:
-	btst	#0,oFlags(a0)			; Are we facing left?
+	btst	#0,obj.flags(a0)			; Are we facing left?
 	bne.s	.BalanceAniForwards		; If so, use the forwards animation
 
 .BalanceAniBackwards:
-	move.b	#$32,oAnim(a0)			; Set animation to balancing backwards animation
+	move.b	#$32,obj.anim_id(a0)			; Set animation to balancing backwards animation
 	bra.w	.ResetScreen			; Reset screen position
 
 .BalanceAniForwards:
-	move.b	#6,oAnim(a0)			; Set animation to balancing forwards animation
+	move.b	#6,obj.anim_id(a0)			; Set animation to balancing forwards animation
 	bra.w	.ResetScreen			; Reset screen position
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CheckCharge:
-	move.b	lookMode.w,d0			; Get double tap timer
+	move.b	look_mode,d0			; Get double tap timer
 	andi.b	#$F,d0
 	beq.s	.DblTapNotInit			; If it's not active, branch
-	addq.b	#1,lookMode.w			; Increment timer
-	andi.b	#$CF,lookMode.w			; Cap the timer properly
+	addq.b	#1,look_mode			; Increment timer
+	andi.b	#$CF,look_mode			; Cap the timer properly
 
 .DblTapNotInit:
-	btst	#7,lookMode.w			; Is the look up flag set?
+	btst	#7,look_mode			; Is the look up flag set?
 	bne.w	.LookUp				; If so, branch
-	btst	#6,lookMode.w			; Is the look down flag set?
+	btst	#6,look_mode			; Is the look down flag set?
 	bne.w	.CheckForSpindash		; If so, branch
 
-	btst	#1,playerCtrlHold.w		; Is down being held?
+	btst	#1,player_ctrl_hold		; Is down being held?
 	bne.w	.CheckForSpindash		; If so, branch
-	andi.b	#$F,lookMode.w			; Clear out look flags
+	andi.b	#$F,look_mode			; Clear out look flags
 	beq.s	.CheckUpPress			; If the double tap timer wasn't set, branch
 
-	btst	#0,playerCtrlTap.w		; Have we double tapped up?
+	btst	#0,player_ctrl_tap		; Have we double tapped up?
 	beq.s	.CheckUpHeld			; If not, branch
-	bset	#7,lookMode.w			; Set the look up flag
+	bset	#7,look_mode			; Set the look up flag
 	bra.w	.Settle				; Settle movement
 
 .CheckUpPress:
-	btst	#0,playerCtrlTap.w		; Have we just pressed up?
+	btst	#0,player_ctrl_tap		; Have we just pressed up?
 	beq.w	.CheckUpHeld			; If not, branch
-	move.b	#1,lookMode.w			; Set the double tap timer to be active
+	move.b	#1,look_mode			; Set the double tap timer to be active
 	bra.w	.Settle				; Settle movement
 
 .CheckUpHeld:
-	btst	#0,playerCtrlHold.w		; Are we holding up?
+	btst	#0,player_ctrl_hold		; Are we holding up?
 	beq.s	.CheckUnleashPeelout		; If not, branch
 
-	move.b	#7,oAnim(a0)			; Set animation to looking up animation
+	move.b	#7,obj.anim_id(a0)			; Set animation to looking up animation
 	tst.b	oPlayerCharge(a0)		; Are we charging a peelout?
 	beq.s	.CheckStartCharge		; If not, branch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Peelout:
-	move.b	#0,oAnim(a0)			; Set animation to charging peelout animation
+	move.b	#0,obj.anim_id(a0)			; Set animation to charging peelout animation
 
 	moveq	#100,d0				; Get charge speed increment value
-	move.w	sonicTopSpeed.w,d1		; Get max charge speed (top speed * 2)
+	move.w	player_top_speed,d1		; Get max charge speed (top speed * 2)
 	move.w	d1,d2
 	asl.w	#1,d1
-	tst.b	speedShoes			; Do we have speed shoes?
+	tst.b	speed_shoes			; Do we have speed shoes?
 	beq.s	.NoSpeedShoes			; If not, branch
 	asr.w	#1,d2				; Get max charge speed for speed shoes ((top speed * 2) - (top speed / 2))
 	sub.w	d2,d1
 
 .NoSpeedShoes:
-	btst	#0,oFlags(a0)			; Are we facing left?
+	btst	#0,obj.flags(a0)			; Are we facing left?
 	beq.s	.IncPeeloutCharge		; If not, branch
 	neg.w	d0				; Negate the charge speed increment value
 	neg.w	d1				; Negate the max charge speed
@@ -1405,7 +1405,7 @@ ObjSonic_MoveGround:
 	add.w	d0,oPlayerGVel(a0)		; Increment charge speed
 
 	move.w	oPlayerGVel(a0),d0		; Get current charge speed
-	btst	#0,oFlags(a0)			; Are we facing left?
+	btst	#0,obj.flags(a0)			; Are we facing left?
 	beq.s	.CheckMaxRight			; If not, branch
 	cmp.w	d0,d1				; Have we reached the max charge speed?
 	ble.s	.SetChargeSpeed			; If not, branch
@@ -1423,7 +1423,7 @@ ObjSonic_MoveGround:
 	rts
 
 .CheckStartCharge:
-	move.b	playerCtrlTap.w,d0		; Did we press A, B, or C while we were holding up?
+	move.b	player_ctrl_tap,d0		; Did we press A, B, or C while we were holding up?
 	andi.b	#$70,d0
 	beq.s	.DontCharge			; If not, branch
 
@@ -1450,57 +1450,57 @@ ObjSonic_MoveGround:
 	jsr	PlayFMSound
 	bra.w	.ResetScreen			; Reset screen position
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	bsr.w	ObjSonic_MoveGndLeft		; Move left
 	bra.w	.ResetScreen			; Reset screen position
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .LookUp:
-	btst	#0,playerCtrlHold.w		; Are we holding up?
+	btst	#0,player_ctrl_hold		; Are we holding up?
 	beq.s	.CheckForSpindash		; If not, branch
 
-	move.b	#7,oAnim(a0)			; Set animation to looking up animation
-	cmpi.w	#$C8,camYCenter.w		; Has the screen scrolled up all the way?
+	move.b	#7,obj.anim_id(a0)			; Set animation to looking up animation
+	cmpi.w	#$C8,camera_y_center		; Has the screen scrolled up all the way?
 	beq.w	.Settle				; If so, branch
-	addq.w	#2,camYCenter.w			; Move the screen up
+	addq.w	#2,camera_y_center			; Move the screen up
 	bra.w	.Settle				; Settle movement
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CheckForSpindash:
-	btst	#6,lookMode.w			; Is the look down flag set?
+	btst	#6,look_mode			; Is the look down flag set?
 	bne.w	.Duck				; If so, branch
-	andi.b	#$F,lookMode.w			; Clear out the look flags
+	andi.b	#$F,look_mode			; Clear out the look flags
 	beq.s	.CheckDownPress			; If the double tap timer wasn't set, branch
 
-	btst	#1,playerCtrlTap.w		; Have we double tapped down?
+	btst	#1,player_ctrl_tap		; Have we double tapped down?
 	beq.s	.CheckSpindash			; If not, branch
-	bset	#6,lookMode.w			; Set the look down flag
+	bset	#6,look_mode			; Set the look down flag
 	bra.w	.Settle				; Settle movement
 
 .CheckDownPress:
-	btst	#1,playerCtrlTap.w		; Have we just pressed down?
+	btst	#1,player_ctrl_tap		; Have we just pressed down?
 	beq.s	.CheckSpindash			; If not, branch
-	move.b	#1,lookMode.w			; Set the double tap timer to be active
+	move.b	#1,look_mode			; Set the double tap timer to be active
 	bra.w	.Settle				; Settle movement
 
 .CheckSpindash:
-	btst	#1,playerCtrlHold.w		; Are we holding down?
+	btst	#1,player_ctrl_hold		; Are we holding down?
 	beq.s	.ResetScreen			; If not, branch
 
-	move.b	#8,oAnim(a0)			; Set animation to ducking animation
+	move.b	#8,obj.anim_id(a0)			; Set animation to ducking animation
 	tst.b	oPlayerCharge(a0)		; Are we charging a spindash?
 	bne.s	.DoSettle			; If so, branch
 
-	move.b	playerCtrlTap.w,d0		; Did we press A, B, or C while we were holding down?
+	move.b	player_ctrl_tap,d0		; Did we press A, B, or C while we were holding down?
 	andi.b	#$70,d0
 	beq.s	.DoSettle			; If not, branch
 
 	move.b	#1,oPlayerCharge(a0)		; Set the look double tap timer to be active
 	move.w	#$16,oPlayerGVel(a0)		; Set initial spindash charge speed
-	btst	#0,oFlags(a0)
+	btst	#0,obj.flags(a0)
 	beq.s	.PlaySpindashSound
 	neg.w	oPlayerGVel(a0)
 
@@ -1512,41 +1512,41 @@ ObjSonic_MoveGround:
 .DoSettle:
 	bra.s	.Settle				; Settle movement
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Duck:
-	btst	#1,playerCtrlHold.w		; Are we holding down?
+	btst	#1,player_ctrl_hold		; Are we holding down?
 	beq.s	.ResetScreen			; If not, branch
 
-	move.b	#8,oAnim(a0)			; Set animation to ducking animation
-	cmpi.w	#8,camYCenter.w			; Has the screen scrolled dowm all the way?
+	move.b	#8,obj.anim_id(a0)		; Set animation to ducking animation
+	cmpi.w	#8,camera_y_center		; Has the screen scrolled dowm all the way?
 	beq.s	.Settle				; If so, branch
-	subq.w	#2,camYCenter.w			; Move the screen down
+	subq.w	#2,camera_y_center		; Move the screen down
 	bra.s	.Settle				; Settle movement
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .ResetScreen:
-	cmpi.w	#$60,camYCenter.w		; Is the screen centered?
+	cmpi.w	#$60,camera_y_center		; Is the screen centered?
 	bne.s	.CheckIncShift			; If not, branch
 
-	move.b	lookMode.w,d0			; Get look double tap timer
+	move.b	look_mode,d0			; Get look double tap timer
 	andi.b	#$F,d0
 	bne.s	.Settle				; If it's active, branch
-	move.b	#0,lookMode.w			; Reset double tap timer and charge lock flags
+	move.b	#0,look_mode			; Reset double tap timer and charge lock flags
 	bra.s	.Settle				; Settle movement
 
 .CheckIncShift:
 	bcc.s	.DecShift			; If the screen needs to move back down, branch
-	addq.w	#4,camYCenter.w			; Move the screen back up
+	addq.w	#4,camera_y_center		; Move the screen back up
 
 .DecShift:
-	subq.w	#2,camYCenter.w			; Move the screen back down
+	subq.w	#2,camera_y_center		; Move the screen back down
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Settle:
-	move.b	playerCtrlHold.w,d0		; Are we holding left or right?
+	move.b	player_ctrl_hold,d0		; Are we holding left or right?
 	andi.b	#$C,d0
 	bne.s	.CalcXYVels			; If so, branch
 
@@ -1571,21 +1571,21 @@ ObjSonic_MoveGround:
 	move.w	d0,oPlayerGVel(a0)		; Update ground velocity
 
 .CalcXYVels:
-	move.b	oAngle(a0),d0			; Get sine and cosine of our current angle
+	move.b	obj.angle(a0),d0		; Get sine and cosine of our current angle
 	jsr	CalcSine
 	muls.w	oPlayerGVel(a0),d1		; Get X velocity (ground velocity * cos(angle))
 	asr.l	#8,d1
-	move.w	d1,oXVel(a0)
+	move.w	d1,obj.x_speed(a0)
 	muls.w	oPlayerGVel(a0),d0		; Get Y velocity (ground velocity * sin(angle))
 	asr.l	#8,d0
-	move.w	d0,oYVel(a0)
+	move.w	d0,obj.y_speed(a0)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle wall collision for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckWallCol:
-	move.b	oAngle(a0),d0			; Are we moving on a ceiling?
+	move.b	obj.angle(a0),d0		; Are we moving on a ceiling?
 	addi.b	#$40,d0
 	bmi.s	.End				; If so, branch
 
@@ -1596,7 +1596,7 @@ ObjSonic_CheckWallCol:
 	neg.w	d1
 
 .RotAngle:
-	move.b	oAngle(a0),d0
+	move.b	obj.angle(a0),d0
 	add.b	d1,d0
 
 	move.w	d0,-(sp)			; Get distance from wall
@@ -1615,30 +1615,30 @@ ObjSonic_CheckWallCol:
 	beq.s	.ZipDown			; If so, branch
 
 .ZipLeft:
-	add.w	d1,oXVel(a0)			; Zip to the left
-	bset	#5,oFlags(a0)			; Mark as pushing
+	add.w	d1,obj.x_speed(a0)		; Zip to the left
+	bset	#5,obj.flags(a0)		; Mark as pushing
 	move.w	#0,oPlayerGVel(a0)		; Stop moving
 	rts
 
 .ZipDown:
-	sub.w	d1,oYVel(a0)			; Zip downwards
+	sub.w	d1,obj.y_speed(a0)		; Zip downwards
 	rts
 
 .ZipRight:
-	sub.w	d1,oXVel(a0)			; Zip to the right
-	bset	#5,oFlags(a0)			; Mark as pushing
+	sub.w	d1,obj.x_speed(a0)		; Zip to the right
+	bset	#5,obj.flags(a0)		; Mark as pushing
 	move.w	#0,oPlayerGVel(a0)		; Stop moving
 	rts
 
 .ZipUp:
-	add.w	d1,oYVel(a0)			; Zip upwards
+	add.w	d1,obj.y_speed(a0)		; Zip upwards
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move Sonic left on the ground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MoveGndLeft:
 	tst.b	oPlayerCharge(a0)		; Are we charging a peelout or spindash?
@@ -1649,10 +1649,10 @@ ObjSonic_MoveGndLeft:
 	bpl.s	.Skid				; If we are moving right, branch
 
 .Normal:
-	bset	#0,oFlags(a0)			; Face left
+	bset	#0,obj.flags(a0)		; Face left
 	bne.s	.Accelerate			; If we were already facing left, branch
-	bclr	#5,oFlags(a0)			; Stop pushing
-	move.b	#1,oPrevAnim(a0)		; Reset animation
+	bclr	#5,obj.flags(a0)		; Stop pushing
+	move.b	#1,obj.prev_anim_id(a0)		; Reset animation
 
 .Accelerate:
 	move.w	d6,d1				; Get top speed
@@ -1666,7 +1666,7 @@ ObjSonic_MoveGndLeft:
 
 .SetGVel:
 	move.w	d0,oPlayerGVel(a0)		; Update ground velocity
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
+	move.b	#0,obj.anim_id(a0)		; Set animation to walking animation
 	rts
 
 .Skid:
@@ -1677,24 +1677,24 @@ ObjSonic_MoveGndLeft:
 .SetGVel2:
 	move.w	d0,oPlayerGVel(a0)		; Update ground velocity
 
-	move.b	oAngle(a0),d0			; Are we on a floor?
+	move.b	obj.angle(a0),d0		; Are we on a floor?
 	addi.b	#$20,d0
 	andi.b	#$C0,d0
 	bne.s	.End				; If not, branch
 	cmpi.w	#$400,d0			; Is our ground velocity at least 4?
 	blt.s	.End				; If not, branch
 
-	move.b	#$D,oAnim(a0)			; Set animation to skidding animation
-	bclr	#0,oFlags(a0)			; Face right
+	move.b	#$D,obj.anim_id(a0)		; Set animation to skidding animation
+	bclr	#0,obj.flags(a0)		; Face right
 	move.w	#FM_SKID,d0			; Play skidding sound
 	jsr	PlayFMSound
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move Sonic right on the ground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MoveGndRight:
 	tst.b	oPlayerCharge(a0)		; Are we charging a peelout or spindash?
@@ -1704,10 +1704,10 @@ ObjSonic_MoveGndRight:
 	bmi.s	.Skid
 
 .Normal:
-	bclr	#0,oFlags(a0)			; Face right
+	bclr	#0,obj.flags(a0)		; Face right
 	beq.s	.Accelerate			; If we were already facing right, branch
-	bclr	#5,oFlags(a0)			; Stop pushing
-	move.b	#1,oPrevAnim(a0)		; Reset animation
+	bclr	#5,obj.flags(a0)		; Stop pushing
+	move.b	#1,obj.prev_anim_id(a0)		; Reset animation
 
 .Accelerate:
 	cmp.w	d6,d0				; Have we already reached top speed?
@@ -1719,7 +1719,7 @@ ObjSonic_MoveGndRight:
 
 .SetGVel:
 	move.w	d0,oPlayerGVel(a0)		; Update ground velocity
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
+	move.b	#0,obj.anim_id(a0)		; Set animation to walking animation
 	rts
 
 .Skid:
@@ -1730,44 +1730,44 @@ ObjSonic_MoveGndRight:
 .SetGVel2:
 	move.w	d0,oPlayerGVel(a0)		; Update ground velocity
 
-	move.b	oAngle(a0),d0			; Are we on a floor?
+	move.b	obj.angle(a0),d0		; Are we on a floor?
 	addi.b	#$20,d0
 	andi.b	#$C0,d0
 	bne.s	.End				; If not, branch
 	cmpi.w	#-$400,d0			; Is our ground velocity at least -4?
 	bgt.s	.End				; If not, branch
 
-	move.b	#$D,oAnim(a0)			; Set animation to skidding animation
-	bset	#0,oFlags(a0)			; Face left
+	move.b	#$D,obj.anim_id(a0)		; Set animation to skidding animation
+	bset	#0,obj.flags(a0)		; Face left
 	move.w	#FM_SKID,d0			; Play skidding sound
 	jsr	PlayFMSound
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle Sonic's movement while rolling on the ground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MoveRoll:
-	move.w	sonicTopSpeed.w,d6		; Get top speed (multiplied by 2)
+	move.w	player_top_speed,d6		; Get top speed (multiplied by 2)
 	asl.w	#1,d6
-	move.w	sonicAcceleration.w,d5		; Get acceleration (divided by 2)
+	move.w	player_acceleration,d5		; Get acceleration (divided by 2)
 	asr.w	#1,d5
-	move.w	sonicDeceleration.w,d4		; Get deceleration (divided by 4)
+	move.w	player_deceleration,d4		; Get deceleration (divided by 4)
 	asr.w	#2,d4
 
-	tst.b	waterSlideFlag.w		; Are we on a water slide?
+	tst.b	water_slide_flag		; Are we on a water slide?
 	bne.w	.CalcXYVels			; If so, branch
 	tst.w	oPlayerMoveLock(a0)		; Is our movement locked temporarily?
 	bne.s	.NotRight			; If so, branch
 
-	btst	#2,playerCtrlHold.w		; Are we holding left?
+	btst	#2,player_ctrl_hold		; Are we holding left?
 	beq.s	.NotLeft			; If not, branch
 	bsr.w	ObjSonic_MoveRollLeft		; Move left
 
 .NotLeft:
-	btst	#3,playerCtrlHold.w		; Are we holding right
+	btst	#3,player_ctrl_hold		; Are we holding right
 	beq.s	.NotRight			; If not, branch
 	bsr.w	ObjSonic_MoveRollRight		; Move right
 
@@ -1775,20 +1775,20 @@ ObjSonic_MoveRoll:
 	tst.b	oPlayerCharge(a0)		; Are we charging a spindash?
 	beq.w	.Settle				; If not, branch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Spindash:
 	move.w	#50,d0				; Get charge speed increment value
-	move.w	sonicTopSpeed.w,d1		; Get max charge speed (top speed * 2)
+	move.w	player_top_speed,d1		; Get max charge speed (top speed * 2)
 	move.w	d1,d2
 	asl.w	#1,d1
-	tst.b	speedShoes			; Do we have speed shoes?
+	tst.b	speed_shoes			; Do we have speed shoes?
 	beq.s	.NoSpeedShoes			; If not, branch
 	asr.w	#1,d2				; Get max charge speed for speed shoes ((top speed * 2) - (top speed / 2))
 	sub.w	d2,d1
 
 .NoSpeedShoes:
-	btst	#0,oFlags(a0)			; Are we facing left?
+	btst	#0,obj.flags(a0)			; Are we facing left?
 	beq.s	.IncSpindashCharge		; If not, branch
 	neg.w	d0				; Negate the charge speed increment value
 	neg.w	d1				; Negate the max charge speed
@@ -1797,7 +1797,7 @@ ObjSonic_MoveRoll:
 	add.w	d0,oPlayerGVel(a0)		; Increment charge speed
 
 	move.w	oPlayerGVel(a0),d0		; Get current charge speed
-	btst	#0,oFlags(a0)			; Are we facing left?
+	btst	#0,obj.flags(a0)			; Are we facing left?
 	beq.s	.CheckMaxRight			; If not, branch
 	cmp.w	d0,d1				; Have we reached the max charge speed?
 	ble.s	.SetChargeSpeed			; If not, branch
@@ -1813,7 +1813,7 @@ ObjSonic_MoveRoll:
 .SetChargeSpeed:
 	move.w	d0,oPlayerGVel(a0)		; Update the charge speed
 
-	btst	#1,playerCtrlHold.w		; Are we holding down?
+	btst	#1,player_ctrl_hold		; Are we holding down?
 	beq.s	.NotDown			; If not, branch
 	rts
 
@@ -1823,8 +1823,8 @@ ObjSonic_MoveRoll:
 
 	move.b	#0,oPlayerCharge(a0)		; Stop charging
 	move.w	#0,oPlayerGVel(a0)
-	move.w	#0,oXVel(a0)
-	move.w	#0,oYVel(a0)
+	move.w	#0,obj.x_speed(a0)
+	move.w	#0,obj.y_speed(a0)
 
 	bra.w	.StopRolling			; Stop rolling
 
@@ -1836,7 +1836,7 @@ ObjSonic_MoveRoll:
 	move.w	#FM_91,d0			; Play charge release sound
 	jsr	PlayFMSound
 
-	btst	#0,oFlags(a0)			; Are we facing left?
+	btst	#0,obj.flags(a0)			; Are we facing left?
 	bne.s	.ChargeLeft			; If so, branch
 	bsr.w	ObjSonic_MoveRollRight		; Charge towards the right
 	bra.s	.Settle				; Settle movement
@@ -1846,7 +1846,7 @@ ObjSonic_MoveRoll:
 	bra.s	.Settle				; Settle movement
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Settle:
 	move.w	oPlayerGVel(a0),d0		; Get current ground velocity
@@ -1874,28 +1874,28 @@ ObjSonic_MoveRoll:
 	bne.s	.CalcXYVels			; If so, branch
 
 .StopRolling:
-	bclr	#2,oFlags(a0)			; Stop rolling
+	bclr	#2,obj.flags(a0)			; Stop rolling
 
-	tst.b	miniSonic			; Are we miniature?
+	tst.b	mini_player			; Are we miniature?
 	beq.s	.NotMini			; If not, branch
-	move.b	#$A,oYRadius(a0)		; Restore miniature hitbox size
-	move.b	#5,oXRadius(a0)
+	move.b	#$A,obj.collide_height(a0)		; Restore miniature hitbox size
+	move.b	#5,obj.collide_width(a0)
 	bra.s	.ResetAnim
 
 .NotMini:
-	move.b	#$13,oYRadius(a0)		; Restore hitbox size
-	move.b	#9,oXRadius(a0)
-	subq.w	#5,oY(a0)
+	move.b	#$13,obj.collide_height(a0)		; Restore hitbox size
+	move.b	#9,obj.collide_width(a0)
+	subq.w	#5,obj.y(a0)
 
 .ResetAnim:
-	move.b	#5,oAnim(a0)			; Set animation to idle animation
+	move.b	#5,obj.anim_id(a0)			; Set animation to idle animation
 
 .CalcXYVels:
-	move.b	oAngle(a0),d0			; Get sine and cosine of our current angle
+	move.b	obj.angle(a0),d0			; Get sine and cosine of our current angle
 	jsr	CalcSine
 	muls.w	oPlayerGVel(a0),d0		; Get Y velocity (ground velocity * sin(angle))
 	asr.l	#8,d0
-	move.w	d0,oYVel(a0)
+	move.w	d0,obj.y_speed(a0)
 	muls.w	oPlayerGVel(a0),d1		; Get X velocity (ground velocity * cos(angle))
 	asr.l	#8,d1
 	cmpi.w	#$1000,d1			; Is the X velocity greater than 16?
@@ -1908,13 +1908,13 @@ ObjSonic_MoveRoll:
 	move.w	#-$1000,d1			; Cap the X velocity at -16
 
 .SetXVel:
-	move.w	d1,oXVel(a0)			; Set X velocity
+	move.w	d1,obj.x_speed(a0)			; Set X velocity
 
 	bra.w	ObjSonic_CheckWallCol		; Handle wall collision
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move Sonic left on the ground while rolling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MoveRollLeft:
 	move.w	oPlayerGVel(a0),d0		; Get current ground velocity
@@ -1922,8 +1922,8 @@ ObjSonic_MoveRollLeft:
 	bpl.s	.DecelRoll			; If we are moving right, branch
 
 .StartRoll:
-	bset	#0,oFlags(a0)			; Face left
-	move.b	#2,oAnim(a0)			; Set animation to rolling animation
+	bset	#0,obj.flags(a0)			; Face left
+	move.b	#2,obj.anim_id(a0)			; Set animation to rolling animation
 	rts
 
 .DecelRoll:
@@ -1935,17 +1935,17 @@ ObjSonic_MoveRollLeft:
 	move.w	d0,oPlayerGVel(a0)		; Update ground velocity
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Move Sonic right on the ground while rolling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MoveRollRight:
 	move.w	oPlayerGVel(a0),d0		; Get current ground velocity
 	bmi.s	.DecelRoll			; If we are moving left, branch
 
 .StartRoll:
-	bclr	#0,oFlags(a0)			; Face right
-	move.b	#2,oAnim(a0)			; Set animation to rolling animation
+	bclr	#0,obj.flags(a0)			; Face right
+	move.b	#2,obj.anim_id(a0)			; Set animation to rolling animation
 	rts
 
 .DecelRoll:
@@ -1957,23 +1957,23 @@ ObjSonic_MoveRollRight:
 	move.w	d0,oPlayerGVel(a0)		; Update ground velocity
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle Sonic's movement in the air
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_MoveAir:
-	move.w	sonicTopSpeed.w,d6		; Get top speed
-	move.w	sonicAcceleration.w,d5		; Get acceleration (multiplied by 2)
+	move.w	player_top_speed,d6		; Get top speed
+	move.w	player_acceleration,d5		; Get acceleration (multiplied by 2)
 	asl.w	#1,d5
 
-	move.w	oXVel(a0),d0			; Get current X velocity
+	move.w	obj.x_speed(a0),d0			; Get current X velocity
 
-	tst.w	zoneAct				; Are we in Palmtree Panic?
+	tst.w	zone_act				; Are we in Palmtree Panic?
 	bne.s	.CheckLeft			; If not, branch
 
-	cmpi.w	#$6C8,oX(a0)			; Are we left of the first 3D ramp launch area?
+	cmpi.w	#$6C8,obj.x(a0)			; Are we left of the first 3D ramp launch area?
 	bcs.s	.Check3DRamp			; If so, branch
-	cmpi.w	#$840,oX(a0)			; Are we right of the first 3D ramp launch area?
+	cmpi.w	#$840,obj.x(a0)			; Are we right of the first 3D ramp launch area?
 	bcs.s	.SetXVel			; If not, branch
 
 .Check3DRamp:
@@ -1981,9 +1981,9 @@ ObjSonic_MoveAir:
 	bne.s	.SetXVel			; If so, branch
 
 .CheckLeft:
-	btst	#2,playerCtrlHold.w		; Are we holding left?
+	btst	#2,player_ctrl_hold		; Are we holding left?
 	beq.s	.CheckRight			; If not, branch
-	bset	#0,oFlags(a0)			; Face left
+	bset	#0,obj.flags(a0)			; Face left
 	sub.w	d5,d0				; Apply acceleration
 	move.w	d6,d1				; Get top speed
 	neg.w	d1
@@ -1992,35 +1992,35 @@ ObjSonic_MoveAir:
 	move.w	d1,d0				; Cap at top speed
 
 .CheckRight:
-	btst	#3,playerCtrlHold.w		; Are we holding right?
+	btst	#3,player_ctrl_hold		; Are we holding right?
 	beq.s	.SetXVel			; If not, branch
-	bclr	#0,oFlags(a0)			; Face right
+	bclr	#0,obj.flags(a0)			; Face right
 	add.w	d5,d0				; Apply acceleration
 	cmp.w	d6,d0				; Have we reached top speed?
 	blt.s	.SetXVel			; If not, branch
 	move.w	d6,d0				; Cap at top speed
 
 .SetXVel:
-	move.w	d0,oXVel(a0)			; Update X velocity
+	move.w	d0,obj.x_speed(a0)			; Update X velocity
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .ResetScreen:
-	cmpi.w	#$60,camYCenter.w		; Is the screen centered?
+	cmpi.w	#$60,camera_y_center		; Is the screen centered?
 	beq.s	.CheckDrag			; If not, branch
 	bcc.s	.DecShift			; If the screen needs to move back down, branch
-	addq.w	#4,camYCenter.w			; Move the screen back up
+	addq.w	#4,camera_y_center			; Move the screen back up
 
 .DecShift:
-	subq.w	#2,camYCenter.w			; Move the screen back down
+	subq.w	#2,camera_y_center			; Move the screen back down
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CheckDrag:
-	cmpi.w	#-$400,oYVel(a0)		; Are we moving upwards at a velocity greater than -4?
+	cmpi.w	#-$400,obj.y_speed(a0)		; Are we moving upwards at a velocity greater than -4?
 	bcs.s	.End				; If not, branch
 
-	move.w	oXVel(a0),d0			; Get air drag value (X velocity / $20)
+	move.w	obj.x_speed(a0),d0			; Get air drag value (X velocity / $20)
 	move.w	d0,d1
 	asr.w	#5,d1
 	beq.s	.End				; If there is no air drag to apply, branch
@@ -2032,7 +2032,7 @@ ObjSonic_MoveAir:
 	move.w	#0,d0				; Stop our horizontal movement
 
 .SetRAirDrag:
-	move.w	d0,oXVel(a0)			; Update X velocity
+	move.w	d0,obj.x_speed(a0)			; Update X velocity
 	rts
 
 .DecLXVel:
@@ -2041,17 +2041,17 @@ ObjSonic_MoveAir:
 	move.w	#0,d0				; Stop our horizontal movement
 
 .SetLAirDrag:
-	move.w	d0,oXVel(a0)			; Update X velocity
+	move.w	d0,obj.x_speed(a0)			; Update X velocity
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Leftover unused function from Sonic 1 that handles squashing Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckSquash:
-	move.b	oAngle(a0),d0			; Are we on the floor?
+	move.b	obj.angle(a0),d0		; Are we on the floor?
 	addi.b	#$20,d0
 	andi.b	#$C0,d0
 	bne.s	.End				; If not, branch
@@ -2061,33 +2061,33 @@ ObjSonic_CheckSquash:
 	bpl.s	.End				; If not, branch
 
 	move.w	#0,oPlayerGVel(a0)		; Stop movement
-	move.w	#0,oXVel(a0)
-	move.w	#0,oYVel(a0)
-	move.b	#$B,oAnim(a0)			; Set animation to squished/warping animation (leftover from Sonic 1)
+	move.w	#0,obj.x_speed(a0)
+	move.w	#0,obj.y_speed(a0)
+	move.b	#$B,obj.anim_id(a0)		; Set animation to squished/warping animation (leftover from Sonic 1)
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle level boundaries for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_LevelBound:
-	move.l	oX(a0),d1			; Get X position for horizontal boundary checking (X position + X velocity)
-	move.w	oXVel(a0),d0
+	move.l	obj.x(a0),d1			; Get X position for horizontal boundary checking (X position + X velocity)
+	move.w	obj.x_speed(a0),d0
 	ext.l	d0
 	asl.l	#8,d0
 	add.l	d0,d1
 	swap	d1
 
-	move.w	leftBound.w,d0			; Have we crossed the left boundary?
+	move.w	left_bound,d0			; Have we crossed the left boundary?
 	addi.w	#16,d0
 	cmp.w	d1,d0
 	bhi.s	.Sides				; If so, branch
 
-	move.w	rightBound.w,d0			; Get right boundary
+	move.w	right_bound,d0			; Get right boundary
 	addi.w	#320-16,d0
-	tst.b	bossFight.w			; Are we in a boss fight?
+	tst.b	boss_fight			; Are we in a boss fight?
 	bne.s	.ScreenLocked			; If so, branch
 	addi.w	#56,d0				; If not, extend the boundary beyond the screen
 
@@ -2096,31 +2096,31 @@ ObjSonic_LevelBound:
 	bls.s	.Sides				; If so, branch
 
 .CheckBottom:
-	move.w	bottomBound.w,d0		; Have we crossed the bottom boundary?
+	move.w	bottom_bound,d0			; Have we crossed the bottom boundary?
 	addi.w	#224,d0
-	cmp.w	oY(a0),d0
+	cmp.w	obj.y(a0),d0
 	blt.s	.Bottom				; If so, branch
 	rts
 
 .Bottom:
-	cmpi.b	#$2B,oAnim(a0)			; Is the player giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)		; Is the player giving up from boredom?
 	bne.w	KillPlayer			; If not, kill Sonic as normal
-	move.b	#6,oRoutine(a0)			; If so, just set the routine to death
+	move.b	#6,obj.routine(a0)		; If so, just set the routine to death
 	rts
 
 .Sides:
-	move.w	d0,oX(a0)			; Stop at the boundary
-	move.w	#0,oXSub(a0)
-	move.w	#0,oXVel(a0)
+	move.w	d0,obj.x(a0)			; Stop at the boundary
+	move.w	#0,obj.x+2(a0)
+	move.w	#0,obj.x_speed(a0)
 	move.w	#0,oPlayerGVel(a0)
 	bra.s	.CheckBottom			; Continue checking for bottom boundary collision
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check for rolling for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckRoll:
-	tst.b	waterSlideFlag.w		; Are we on a water slide?
+	tst.b	water_slide_flag		; Are we on a water slide?
 	bne.s	.End				; If so, branch
 
 	move.w	oPlayerGVel(a0),d0		; Get absolute value of our ground velocity
@@ -2130,39 +2130,39 @@ ObjSonic_CheckRoll:
 .PosInertia:
 	cmpi.w	#$80,d0				; Is it at least 0.5?
 	bcs.s	.End				; If not, branch
-	move.b	playerCtrlHold.w,d0		; Are we holding left or right?
+	move.b	player_ctrl_hold,d0		; Are we holding left or right?
 	andi.b	#$C,d0
 	bne.s	.End				; If not, branch
-	btst	#1,playerCtrlHold.w		; Are we holding down?
+	btst	#1,player_ctrl_hold		; Are we holding down?
 	bne.s	ObjSonic_StartRoll		; If so, branch
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Make Sonic start rolling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_StartRoll:
-	btst	#2,oFlags(a0)			; Are we already rolling?
+	btst	#2,obj.flags(a0)		; Are we already rolling?
 	beq.s	.DoRoll				; If not, branch
 	rts
 
 .DoRoll:
-	bset	#2,oFlags(a0)			; Mark as rolling
-	tst.b	miniSonic			; Are we miniature?
+	bset	#2,obj.flags(a0)		; Mark as rolling
+	tst.b	mini_player			; Are we miniature?
 	beq.s	.NotMini			; If not, branch
-	move.b	#$A,oYRadius(a0)		; Set miniature rolling hitbox size
-	move.b	#5,oXRadius(a0)
+	move.b	#$A,obj.collide_height(a0)	; Set miniature rolling hitbox size
+	move.b	#5,obj.collide_width(a0)
 	bra.s	.SetRollAnim			; Set animatiion
 
 .NotMini:
-	move.b	#$E,oYRadius(a0)		; Set rolling hitbox size
-	move.b	#7,oXRadius(a0)
-	addq.w	#5,oY(a0)
+	move.b	#$E,obj.collide_height(a0)	; Set rolling hitbox size
+	move.b	#7,obj.collide_width(a0)
+	addq.w	#5,obj.y(a0)
 
 .SetRollAnim:
-	move.b	#2,oAnim(a0)			; Set animation to rolling animation
+	move.b	#2,obj.anim_id(a0)		; Set animation to rolling animation
 
 	tst.w	oPlayerGVel(a0)			; Are we moving?
 	bne.s	.End				; If so, branch
@@ -2171,9 +2171,9 @@ ObjSonic_StartRoll:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check for jumping for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckJump:
 	tst.b	oPlayerCharge(a0)		; Are we charging a peelout or spindash?
@@ -2181,105 +2181,105 @@ ObjSonic_CheckJump:
 	rts
 
 .CanJump:
-	move.b	playerCtrlHold.w,d0		; Are we holding up or down?
+	move.b	player_ctrl_hold,d0		; Are we holding up or down?
 	andi.b	#3,d0
 	beq.s	.NotUpDown			; If not, branch
 	tst.w	oPlayerGVel(a0)			; Are we moving at all?
 	beq.w	.End				; If not, branch
 
 .NotUpDown:
-	move.b	playerCtrlTap.w,d0		; Have we pressed A, B, or C?
+	move.b	player_ctrl_tap,d0		; Have we pressed A, B, or C?
 	andi.b	#$70,d0
 	beq.w	.End				; If not, branch
 
-	btst	#3,oFlags(a0)			; Are we standing on an object?
+	btst	#3,obj.flags(a0)		; Are we standing on an object?
 	beq.s	.NotOnObj			; If not, branch
 	jsr	ObjSonic_ChkFlipper		; Check if we are on a pinball flipper, and if so, get the angle and speed to launch at
 	beq.s	.GotAngle			; If we were on a pinball flipper, branch
 
 .NotOnObj:
 	moveq	#0,d0				; Get the amount of space over our head
-	move.b	oAngle(a0),d0
+	move.b	obj.angle(a0),d0
 	addi.b	#$80,d0
 	bsr.w	Player_CalcRoomOverHead
 	cmpi.w	#6,d1				; Is there at least 6 pixels of space?
 	blt.w	.End				; If not, branch
 
 	move.w	#$680,d2			; Get jump speed (6.5)
-	btst	#6,oFlags(a0)			; Are we underwater?
+	btst	#6,obj.flags(a0)		; Are we underwater?
 	beq.s	.NoWater			; If not, branch
 	move.w	#$380,d2			; Get underwater jump speed (3.5)
 
 .NoWater:
 	moveq	#0,d0				; Get our angle on the ground
-	move.b	oAngle(a0),d0
+	move.b	obj.angle(a0),d0
 	subi.b	#$40,d0
 
 .GotAngle:
 	jsr	CalcSine			; Get the sine and cosine of our angle
 	muls.w	d2,d1				; Get X velocity to jump at (jump speed * cos(angle))
 	asr.l	#8,d1
-	add.w	d1,oXVel(a0)
+	add.w	d1,obj.x_speed(a0)
 	muls.w	d2,d0				; Get Y velocity to jump at (jump speed * sin(angle))
 	asr.l	#8,d0
-	add.w	d0,oYVel(a0)
+	add.w	d0,obj.y_speed(a0)
 
-	bset	#1,oFlags(a0)			; Mark as in air
-	bclr	#5,oFlags(a0)			; Stop pushing
+	bset	#1,obj.flags(a0)		; Mark as in air
+	bclr	#5,obj.flags(a0)		; Stop pushing
 	addq.l	#4,sp				; Stop handling ground specific routines after this
 	move.b	#1,oPlayerJump(a0)		; Mark as jumping
 	clr.b	oPlayerStick(a0)		; Mark as not sticking to terrain
-	clr.b	lookMode.w			; Reset look double tap timer and flags
+	clr.b	look_mode			; Reset look double tap timer and flags
 
 	move.w	#FM_JUMP,d0			; Play jump sound
 	jsr	PlayFMSound
 
-	btst	#2,oFlags(a0)			; Were we rolling?
+	btst	#2,obj.flags(a0)		; Were we rolling?
 	bne.s	.RollJump			; If so, branch
-	tst.b	miniSonic			; Are we miniature?
+	tst.b	mini_player			; Are we miniature?
 	beq.s	.SetJumpSize			; If not, branch
-	move.b	#$A,oYRadius(a0)		; Set miniature jumping hitbox size
-	move.b	#5,oXRadius(a0)
+	move.b	#$A,obj.collide_height(a0)	; Set miniature jumping hitbox size
+	move.b	#5,obj.collide_width(a0)
 	bra.s	.StartJump			; Mark as jumping
 
 .SetJumpSize:
-	move.b	#$E,oYRadius(a0)		; Set jumping hitbox size
-	move.b	#7,oXRadius(a0)
-	addq.w	#5,oY(a0)
+	move.b	#$E,obj.collide_height(a0)	; Set jumping hitbox size
+	move.b	#7,obj.collide_width(a0)
+	addq.w	#5,obj.y(a0)
 
 .StartJump:
-	bset	#2,oFlags(a0)			; Mark as rolling
-	move.b	#2,oAnim(a0)			; Set animation to rolling animation
+	bset	#2,obj.flags(a0)		; Mark as rolling
+	move.b	#2,obj.anim_id(a0)		; Set animation to rolling animation
 
 .End:
 	rts
 
 .RollJump:
-	bset	#4,oFlags(a0)			; Mark as roll-jumping
+	bset	#4,obj.flags(a0)		; Mark as roll-jumping
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle Sonic's jump height
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_JumpHeight:
 	tst.b	oPlayerJump(a0)			; Are we jumping?
 	beq.s	.NotJump			; If not, branch
 
 	move.w	#-$400,d1			; Get minimum jump velocity
-	btst	#6,oFlags(a0)			; Are we underwater?
+	btst	#6,obj.flags(a0)		; Are we underwater?
 	beq.s	.GotCapVel			; If not, branch
 	move.w	#-$200,d1			; Get minimum underwater jump velocity
 
 .GotCapVel:
-	cmp.w	oYVel(a0),d1			; Are we going up faster than the minimum jump velocity?
+	cmp.w	obj.y_speed(a0),d1		; Are we going up faster than the minimum jump velocity?
 	ble.s	.End				; If so, branch
-	move.b	playerCtrlHold.w,d0		; Are we holding A, B, or C?
+	move.b	player_ctrl_hold,d0		; Are we holding A, B, or C?
 	andi.b	#$70,d0
 	bne.s	.End				; If so, branch
 
 	move.b	#0,oPlayerCharge(a0)		; Stop charging
-	move.w	d1,oYVel(a0)			; Cap our Y velocity at the minimum jump velocity
+	move.w	d1,obj.y_speed(a0)		; Cap our Y velocity at the minimum jump velocity
 
 .End:
 	rts
@@ -2287,20 +2287,20 @@ ObjSonic_JumpHeight:
 .NotJump:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle slope resistance for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_SlopeResist:
 	tst.b	oPlayerCharge(a0)		; Are we charging a peelout or spindash?
 	bne.s	.End2				; If so, branch
 
-	move.b	oAngle(a0),d0			; Are we on a ceiling?
+	move.b	obj.angle(a0),d0		; Are we on a ceiling?
 	addi.b	#$60,d0
 	cmpi.b	#$C0,d0
 	bcc.s	.End2				; If so, branch
 
-	move.b	oAngle(a0),d0			; Get slope resistance value (sin(angle) / 8)
+	move.b	obj.angle(a0),d0		; Get slope resistance value (sin(angle) / 8)
 	jsr	CalcSine
 	muls.w	#$20,d0
 	asr.l	#8,d0
@@ -2321,20 +2321,20 @@ ObjSonic_SlopeResist:
 .End2:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle slope resistance for Sonic while rolling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_SlopeResistRoll:
 	tst.b	oPlayerCharge(a0)		; Are we charging a peelout or spindash?
 	bne.s	.End				; If so, branch
 
-	move.b	oAngle(a0),d0			; Are we on a ceiling?
+	move.b	obj.angle(a0),d0		; Are we on a ceiling?
 	addi.b	#$60,d0
 	cmpi.b	#$C0,d0
 	bcc.s	.End				; If so, branch
 
-	move.b	oAngle(a0),d0			; Get slope resistance value (sin(angle) / 3.2)
+	move.b	obj.angle(a0),d0		; Get slope resistance value (sin(angle) / 3.2)
 	jsr	CalcSine
 	muls.w	#$50,d0
 	asr.l	#8,d0
@@ -2360,9 +2360,9 @@ ObjSonic_SlopeResistRoll:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check if Sonic should fall off a steep slope or ceiling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_CheckFallOff:
 	nop
@@ -2371,7 +2371,7 @@ ObjSonic_CheckFallOff:
 	tst.w	oPlayerMoveLock(a0)		; Is our movement currently temporarily locked?
 	bne.s	.RunMoveLock			; If so, branch
 
-	move.b	oAngle(a0),d0			; Are we on a steep enough slope or ceiling?
+	move.b	obj.angle(a0),d0		; Are we on a steep enough slope or ceiling?
 	addi.b	#$20,d0
 	andi.b	#$C0,d0
 	beq.s	.End				; If not, branch
@@ -2385,7 +2385,7 @@ ObjSonic_CheckFallOff:
 	bcc.s	.End				; If not, branch
 
 	clr.w	oPlayerGVel(a0)			; Set ground velocity to 0
-	bset	#1,oFlags(a0)			; Mark as in air
+	bset	#1,obj.flags(a0)		; Mark as in air
 	move.w	#30,oPlayerMoveLock(a0)		; Set movement lock timer
 
 .End:
@@ -2395,15 +2395,15 @@ ObjSonic_CheckFallOff:
 	subq.w	#1,oPlayerMoveLock(a0)		; Decrement movement lock timer
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Reset Sonic's angle in the air
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_JumpAngle:
 	btst	#1,oPlayerCtrl(a0)		; Are we on a 3D ramp?
 	bne.s	.End				; If so, branch
 
-	move.b	oAngle(a0),d0			; Get current angle
+	move.b	obj.angle(a0),d0		; Get current angle
 	beq.s	.End				; If it's 0, branch
 	bpl.s	.DecPosAngle			; If it's positive, branch
 
@@ -2420,28 +2420,28 @@ ObjSonic_JumpAngle:
 	moveq	#0,d0
 
 .SetNewAngle:
-	move.b	d0,oAngle(a0)			; Update angle
+	move.b	d0,obj.angle(a0)		; Update angle
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle level collision while in the air
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_LevelColInAir:
-	move.w	oXVel(a0),d1			; Get the angle that we are moving at
-	move.w	oYVel(a0),d2
+	move.w	obj.x_speed(a0),d1		; Get the angle that we are moving at
+	move.w	obj.y_speed(a0),d2
 	jsr	CalcAngle
 
-	move.b	d0,debugAngle			; Update debug angle buffers
+	move.b	d0,debug_angle			; Update debug angle buffers
 	subi.b	#$20,d0
-	move.b	d0,debugAngleShift
+	move.b	d0,debug_angle_shift
 	andi.b	#$C0,d0
-	move.b	d0,debugQuadrant
+	move.b	d0,debug_quadrant
 
 	cmpi.b	#$40,d0				; Are we moving left?
 	beq.w	Player_LvlColAir_Left		; If so, branch
@@ -2450,36 +2450,36 @@ Player_LevelColInAir:
 	cmpi.b	#$C0,d0				; Are we moving right?
 	beq.w	Player_LvlColAir_Right		; If so, branch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle level collision while moving downwards in the air
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_LvlColAir_Down:
 	bsr.w	Player_GetLWallDist		; Are we colliding with a wall on the left?
 	tst.w	d1
 	bpl.s	.NotLeftWall			; If not, branch
 
-	sub.w	d1,oX(a0)			; Move outside of the wall
-	move.w	#0,oXVel(a0)			; Stop moving horizontally
+	sub.w	d1,obj.x(a0)			; Move outside of the wall
+	move.w	#0,obj.x_speed(a0)		; Stop moving horizontally
 
 .NotLeftWall:
 	bsr.w	Player_GetRWallDist		; Are we colliding with a wall on the right?
 	tst.w	d1
 	bpl.s	.NotRightWall			; If not, branch
 
-	add.w	d1,oX(a0)			; Move outside of the wall
-	move.w	#0,oXVel(a0)			; Stop moving horizontally
+	add.w	d1,obj.x(a0)			; Move outside of the wall
+	move.w	#0,obj.x_speed(a0)		; Stop moving horizontally
 
 .NotRightWall:
 	bsr.w	Player_CheckFloor		; Are we colliding with the floor?
-	move.b	d1,debugFloorDist
+	move.b	d1,debug_floor_dist
 	tst.w	d1
 	bpl.s	.End				; If not, branch
 
-	move.b	oYVel(a0),d2			; Are we moving too fast downwards?
+	move.b	obj.y_speed(a0),d2		; Are we moving too fast downwards?
 	addq.b	#8,d2
 	neg.b	d2
 	cmp.b	d2,d1
@@ -2488,10 +2488,10 @@ Player_LvlColAir_Down:
 	blt.s	.End				; If so, branch
 
 .NotFallThrough:
-	add.w	d1,oY(a0)			; Move outside of the floor
-	move.b	d3,oAngle(a0)			; Set angle
+	add.w	d1,obj.y(a0)			; Move outside of the floor
+	move.b	d3,obj.angle(a0)		; Set angle
 	bsr.w	Player_ResetOnFloor		; Reset flags
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
+	move.b	#0,obj.anim_id(a0)		; Set animation to walking animation
 
 	move.b	d3,d0				; Did we land on a steep slope?
 	addi.b	#$20,d0
@@ -2504,22 +2504,22 @@ Player_LvlColAir_Down:
 	beq.s	.LandFloor			; If so, branch
 
 .LandSlope:
-	asr	oYVel(a0)			; Halve the landing speed
+	asr	obj.y_speed(a0)			; Halve the landing speed
 	bra.s	.KeepYVel
 
 .LandFloor:
-	move.w	#0,oYVel(a0)			; Stop moving vertically
-	move.w	oXVel(a0),oPlayerGVel(a0)	; Set landing speed
+	move.w	#0,obj.y_speed(a0)		; Stop moving vertically
+	move.w	obj.x_speed(a0),oPlayerGVel(a0)	; Set landing speed
 	rts
 
 .LandSteepSlope:
-	move.w	#0,oXVel(a0)			; Stop moving horizontally
-	cmpi.w	#$FC0,oYVel(a0)			; Is our landing speed greater than 15.75?
+	move.w	#0,obj.x_speed(a0)		; Stop moving horizontally
+	cmpi.w	#$FC0,obj.y_speed(a0)		; Is our landing speed greater than 15.75?
 	ble.s	.KeepYVel			; If not, branch
-	move.w	#$FC0,oYVel(a0)			; Cap it at 15.75
+	move.w	#$FC0,obj.y_speed(a0)		; Cap it at 15.75
 
 .KeepYVel:
-	move.w	oYVel(a0),oPlayerGVel(a0)	; Set landing speed
+	move.w	obj.y_speed(a0),oPlayerGVel(a0)	; Set landing speed
 	tst.b	d3				; Is our angle 0-$7F?
 	bpl.s	.End				; If so, branch
 	neg.w	oPlayerGVel(a0)			; If not, negate our landing speed
@@ -2527,21 +2527,21 @@ Player_LvlColAir_Down:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle level collision while moving left in the air
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_LvlColAir_Left:
 	bsr.w	Player_GetLWallDist		; Are we colliding with a wall on the left?
 	tst.w	d1
 	bpl.s	.NotLeftWall			; If not, branch
 
-	sub.w	d1,oX(a0)			; Move outside of the wall
-	move.w	#0,oXVel(a0)			; Stop moving horizontally
-	move.w	oYVel(a0),oPlayerGVel(a0)	; Set landing speed
+	sub.w	d1,obj.x(a0)			; Move outside of the wall
+	move.w	#0,obj.x_speed(a0)		; Stop moving horizontally
+	move.w	obj.y_speed(a0),oPlayerGVel(a0)	; Set landing speed
 	rts
 
 .NotLeftWall:
@@ -2549,61 +2549,61 @@ Player_LvlColAir_Left:
 	tst.w	d1
 	bpl.s	.NotCeiling			; If not, branch
 
-	sub.w	d1,oY(a0)			; Move outside of the ceiling
-	tst.w	oYVel(a0)			; Were we moving upwards?
+	sub.w	d1,obj.y(a0)			; Move outside of the ceiling
+	tst.w	obj.y_speed(a0)			; Were we moving upwards?
 	bpl.s	.End				; If not, branch
-	move.w	#0,oYVel(a0)			; If so, stop moving vertically
+	move.w	#0,obj.y_speed(a0)		; If so, stop moving vertically
 
 .End:
 	rts
 
 .NotCeiling:
-	tst.w	oYVel(a0)			; Are we moving upwards?
+	tst.w	obj.y_speed(a0)			; Are we moving upwards?
 	bmi.s	.End2				; If so, branch
 
 	bsr.w	Player_CheckFloor		; Are we colliding with the floor?
 	tst.w	d1
 	bpl.s	.End2				; If not, branch
 
-	add.w	d1,oY(a0)			; Move outside of the floor
-	move.b	d3,oAngle(a0)			; Set angle
+	add.w	d1,obj.y(a0)			; Move outside of the floor
+	move.b	d3,obj.angle(a0)		; Set angle
 	bsr.w	Player_ResetOnFloor		; Reset flags
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
-	move.w	#0,oYVel(a0)			; Stop moving vertically
-	move.w	oXVel(a0),oPlayerGVel(a0)	; Set landing speed
+	move.b	#0,obj.anim_id(a0)		; Set animation to walking animation
+	move.w	#0,obj.y_speed(a0)		; Stop moving vertically
+	move.w	obj.x_speed(a0),oPlayerGVel(a0)	; Set landing speed
 
 .End2:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle level collision while moving upwards in the air
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_LvlColAir_Up:
 	bsr.w	Player_GetLWallDist		; Are we colliding with a wall on the left?
 	tst.w	d1
 	bpl.s	.NotLeftWall			; If not, branch
 
-	sub.w	d1,oX(a0)			; Move outside of the wall
-	move.w	#0,oXVel(a0)			; Stop moving horizontally
+	sub.w	d1,obj.x(a0)			; Move outside of the wall
+	move.w	#0,obj.x_speed(a0)		; Stop moving horizontally
 
 .NotLeftWall:
 	bsr.w	Player_GetRWallDist		; Are we colliding with a wall on the right?
 	tst.w	d1
 	bpl.s	.NotRightWall			; If not, branch
 
-	add.w	d1,oX(a0)			; Move outside of the wall
-	move.w	#0,oXVel(a0)			; Stop moving horizontally
+	add.w	d1,obj.x(a0)			; Move outside of the wall
+	move.w	#0,obj.x_speed(a0)		; Stop moving horizontally
 
 .NotRightWall:
 	bsr.w	Player_CheckCeiling		; Are we colliding with a ceiling?
 	tst.w	d1
 	bpl.s	.End				; If not, branch
 
-	sub.w	d1,oY(a0)			; Move outside of the ceiling
+	sub.w	d1,obj.y(a0)			; Move outside of the ceiling
 
 	move.b	d3,d0				; Did we land on a steep slope?
 	addi.b	#$20,d0
@@ -2611,13 +2611,13 @@ Player_LvlColAir_Up:
 	bne.s	.LandSteepSlope			; If so, branch
 
 .LandCeiling:
-	move.w	#0,oYVel(a0)			; Stop moving vertically
+	move.w	#0,obj.y_speed(a0)		; Stop moving vertically
 	rts
 
 .LandSteepSlope:
-	move.b	d3,oAngle(a0)			; Set angle
+	move.b	d3,obj.angle(a0)		; Set angle
 	bsr.w	Player_ResetOnSteepSlope	; Reset flags
-	move.w	oYVel(a0),oPlayerGVel(a0)	; Set landing speed
+	move.w	obj.y_speed(a0),oPlayerGVel(a0)	; Set landing speed
 
 	tst.b	d3				; Is our angle 0-$7F?
 	bpl.s	.End				; If so, branch
@@ -2626,21 +2626,21 @@ Player_LvlColAir_Up:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle level collision while moving right in the air
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_LvlColAir_Right:
 	bsr.w	Player_GetRWallDist		; Are we colliding with a wall on the right?
 	tst.w	d1
 	bpl.s	.NotRightWall			; If not, branch
 
-	add.w	d1,oX(a0)			; Move outside of the wall
-	move.w	#0,oXVel(a0)			; Stop moving horizontally
-	move.w	oYVel(a0),oPlayerGVel(a0)	; Set landing speed
+	add.w	d1,obj.x(a0)			; Move outside of the wall
+	move.w	#0,obj.x_speed(a0)		; Stop moving horizontally
+	move.w	obj.y_speed(a0),oPlayerGVel(a0)	; Set landing speed
 	rts
 
 .NotRightWall:
@@ -2648,99 +2648,99 @@ Player_LvlColAir_Right:
 	tst.w	d1
 	bpl.s	.NotCeiling			; If not, branch
 
-	sub.w	d1,oY(a0)			; Move outside of the ceiling
-	tst.w	oYVel(a0)			; Were we moving upwards?
+	sub.w	d1,obj.y(a0)			; Move outside of the ceiling
+	tst.w	obj.y_speed(a0)			; Were we moving upwards?
 	bpl.s	.End				; If not, branch
-	move.w	#0,oYVel(a0)			; If so, stop moving vertically
+	move.w	#0,obj.y_speed(a0)		; If so, stop moving vertically
 
 .End:
 	rts
 
 .NotCeiling:
-	tst.w	oYVel(a0)			; Are we moving upwards?
+	tst.w	obj.y_speed(a0)			; Are we moving upwards?
 	bmi.s	.End2				; If so, branch
 
 	bsr.w	Player_CheckFloor		; Are we colliding with the floor?
 	tst.w	d1
 	bpl.s	.End2				; If not, branch
 
-	add.w	d1,oY(a0)			; Move outside of the floor
-	move.b	d3,oAngle(a0)			; Set angle
+	add.w	d1,obj.y(a0)			; Move outside of the floor
+	move.b	d3,obj.angle(a0)		; Set angle
 	bsr.w	Player_ResetOnFloor		; Reset flags
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
-	move.w	#0,oYVel(a0)			; Stop moving vertically
-	move.w	oXVel(a0),oPlayerGVel(a0)	; Set landing speed
+	move.b	#0,obj.anim_id(a0)		; Set animation to walking animation
+	move.w	#0,obj.y_speed(a0)		; Stop moving vertically
+	move.w	obj.x_speed(a0),oPlayerGVel(a0)	; Set landing speed
 
 .End2:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Reset flags for when the player lands on the floor
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_ResetOnFloor:
-	btst	#4,oFlags(a0)			; Did we jump after rolling?
+	btst	#4,obj.flags(a0)		; Did we jump after rolling?
 	beq.s	.NoRollJump			; If not, branch
 	nop
 
 .NoRollJump:
-	bclr	#5,oFlags(a0)			; Stop puishing
- 	bclr	#1,oFlags(a0)			; Mark as on the ground
-	bclr	#4,oFlags(a0)			; Clear roll jump flag
+	bclr	#5,obj.flags(a0)		; Stop puishing
+ 	bclr	#1,obj.flags(a0)		; Mark as on the ground
+	bclr	#4,obj.flags(a0)		; Clear roll jump flag
 
-	btst	#2,oFlags(a0)			; Did we land from a jump?
+	btst	#2,obj.flags(a0)		; Did we land from a jump?
 	beq.s	.NotJumping			; If not, branch
-	bclr	#2,oFlags(a0)			; Mark as not jumping
+	bclr	#2,obj.flags(a0)		; Mark as not jumping
 
-	tst.b	miniSonic			; Are we miniature?
+	tst.b	mini_player			; Are we miniature?
 	beq.s	.NormalSize			; If not, branch
 
-	move.b	#$A,oYRadius(a0)		; Restore miniature hitbox size
-	move.b	#5,oXRadius(a0)
+	move.b	#$A,obj.collide_height(a0)	; Restore miniature hitbox size
+	move.b	#5,obj.collide_width(a0)
 	bra.s	.LandSound			; Continue resetting more flags
 
 .NormalSize:
-	move.b	#$13,oYRadius(a0)		; Restore hitbox size
-	move.b	#9,oXRadius(a0)
-	subq.w	#5,oY(a0)
+	move.b	#$13,obj.collide_height(a0)	; Restore hitbox size
+	move.b	#9,obj.collide_width(a0)
+	subq.w	#5,obj.y(a0)
 
 .LandSound:
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
+	move.b	#0,obj.anim_id(a0)		; Set animation to walking animation
 
 .NotJumping:
 	move.b	#0,oPlayerJump(a0)		; Clear jumping flag
-	move.w	#0,scoreChain.w			; Clear chain bonus counter
+	move.w	#0,score_chain			; Clear chain bonus counter
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Reset flags for when the player lands on a steep slope
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - Player object RAM
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Player_ResetOnSteepSlope:
-	bclr	#5,oFlags(a0)			; Stop puishing
- 	bclr	#1,oFlags(a0)			; Mark as on the ground
-	bclr	#4,oFlags(a0)			; Clear roll jump flag
+	bclr	#5,obj.flags(a0)		; Stop puishing
+ 	bclr	#1,obj.flags(a0)		; Mark as on the ground
+	bclr	#4,obj.flags(a0)		; Clear roll jump flag
 	move.b	#0,oPlayerJump(a0)		; Clear jumping flag
-	move.w	#0,scoreChain.w			; Clear chain bonus counter
+	move.w	#0,score_chain			; Clear chain bonus counter
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's hurt routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Hurt:
 	jsr	ObjMove				; Apply velocity
 
-	addi.w	#$30,oYVel(a0)			; Make gravity stronger
-	btst	#6,oFlags(a0)			; Is Sonic underwater?
+	addi.w	#$30,obj.y_speed(a0)		; Make gravity stronger
+	btst	#6,obj.flags(a0)		; Is Sonic underwater?
 	beq.s	.NoWater			; If not, branch
-	subi.w	#$20,oYVel(a0)			; Make the gravity less strong underwater
+	subi.w	#$20,obj.y_speed(a0)		; Make the gravity less strong underwater
 
 .NoWater:
 	bsr.w	ObjSonic_HurtChkLand		; Check for landing on the ground
@@ -2750,34 +2750,34 @@ ObjSonic_Hurt:
 
 	jmp	DrawObject			; Draw sprite
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check for Sonic landing on the ground while hurting
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_HurtChkLand:
-	move.w	bottomBound.w,d0		; Have we gone past the bottom level boundary?
+	move.w	bottom_bound,d0			; Have we gone past the bottom level boundary?
 	addi.w	#224,d0
-	cmp.w	oY(a0),d0
+	cmp.w	obj.y(a0),d0
 	bcs.w	KillPlayer			; If so, branch
 
 	bsr.w	Player_LevelColInAir		; Handle level collision
-	btst	#1,oFlags(a0)			; Are we still in the air?
+	btst	#1,obj.flags(a0)			; Are we still in the air?
 	bne.s	.End				; If so, branch
 
 	moveq	#0,d0				; Stop movement
-	move.w	d0,oYVel(a0)
-	move.w	d0,oXVel(a0)
+	move.w	d0,obj.y_speed(a0)
+	move.w	d0,obj.x_speed(a0)
 	move.w	d0,oPlayerGVel(a0)
-	move.b	#0,oAnim(a0)			; Set animation to walking animation
-	subq.b	#2,oRoutine(a0)			; Go back to the main routine
+	move.b	#0,obj.anim_id(a0)		; Set animation to walking animation
+	subq.b	#2,obj.routine(a0)		; Go back to the main routine
 	move.w	#120,oPlayerHurt(a0)		; Set hurt time
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's death routine
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Dead:
 	bsr.w	ObjSonic_DeadChkGone		; Check if we have gone offscreen
@@ -2788,30 +2788,30 @@ ObjSonic_Dead:
 
 	jmp	DrawObject			; Draw sprite
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check for Sonic going offscreen when he's dead
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_DeadChkGone:
-	move.w	bottomBound.w,d0		; Have we gone past the bottom level boundary?
+	move.w	bottom_bound,d0			; Have we gone past the bottom level boundary?
 	addi.w	#256,d0
-	cmp.w	oY(a0),d0
+	cmp.w	obj.y(a0),d0
 	bcc.w	.End				; If not, branch
 
-	move.w	#-$38,oYVel(a0)			; Make us go upwards a little
-	addq.b	#2,oRoutine(a0)			; Set routine to gone
+	move.w	#-$38,obj.y_speed(a0)		; Make us go upwards a little
+	addq.b	#2,obj.routine(a0)		; Set routine to gone
 
-	clr.b	updateHUDTime			; Stop the level timer
-	addq.b	#1,updateHUDLives		; Decrement life counter
+	clr.b	update_hud_time			; Stop the level timer
+	addq.b	#1,update_hud_lives		; Decrement life counter
 	subq.b	#1,lives
 	bpl.s	.CapLives			; If we still have lives left, branch
 	clr.b	lives				; Cap lives at 0
 
 .CapLives:
-	cmpi.b	#$2B,oAnim(a0)			; Were we giving up from boredom?
+	cmpi.b	#$2B,obj.anim_id(a0)		; Were we giving up from boredom?
 	beq.s	.LoadGameOver			; If so, branch
 
-	tst.b	timeAttackMode			; Are we in time attack mode?
+	tst.b	time_attack_mode		; Are we in time attack mode?
 	beq.s	.LoadGameOver			; If not, branch
 
 	move.b	#0,lives			; Set lives to 0
@@ -2819,7 +2819,7 @@ ObjSonic_DeadChkGone:
 
 .LoadGameOver:
 	jsr	FindObjSlot			; Load the game over text object
-	move.b	#$3B,oID(a1)
+	move.b	#$3B,obj.id(a1)
 
 	move.w	#8*60,oPlayerReset(a0)		; Set game over delay timer to 8 seconds
 	tst.b	lives				; Do we still have lives left?
@@ -2831,9 +2831,9 @@ ObjSonic_DeadChkGone:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle Sonic's death delay timer and handle level reseting
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Restart:
 	tst.w	oPlayerReset(a0)		; Is the delay timer active?
@@ -2841,32 +2841,32 @@ ObjSonic_Restart:
 	subq.w	#1,oPlayerReset(a0)		; Decrement the delay timer
 	bne.w	.End				; If it hasn't run out, branch
 
-	move.w	#1,levelRestart			; Set to restart the level
+	move.w	#1,stage_restart		; Set to restart the level
 
 	bsr.w	ResetSavedObjFlags		; Reset saved object flags
-	clr.l	flowerCount			; Reset flower count
+	clr.l	flower_count			; Reset flower count
 
 	tst.b	checkpoint			; Have we hit a checkpoint?
 	bne.s	.Skip				; If so, branch
-	cmpi.b	#1,timeZone			; Are we in the present?
+	cmpi.b	#1,time_zone			; Are we in the present?
 	bne.s	.Skip				; If not, branch
-	bclr	#1,plcLoadFlags			; Set to reload the title card upon restarting
+	bclr	#1,nem_art_queue_flags		; Set to reload the title card upon restarting
 
 .Skip:
 	move.w	#SCMD_FADECDA,d0		; Set to fade out music
 
 	tst.b	lives				; Are we out of lives?
 	beq.s	.SendCmd			; If so, branch
-	cmpi.b	#1,timeZone			; Are we in the present?
+	cmpi.b	#1,time_zone			; Are we in the present?
 	bne.s	.SpawnAtStart			; If not, branch
 	tst.b	checkpoint			; Have we hit a checkpoint?
 	beq.s	.SendCmd			; If not, branch
 
-	move.b	#1,spawnMode			; Spawn at checkpoint
+	move.b	#1,spawn_mode			; Spawn at checkpoint
 	bra.s	.SendCmd			; Continue setting the fade out command
 
 .SpawnAtStart:
-	clr.b	spawnMode			; Spawn at beginning
+	clr.b	spawn_mode			; Spawn at beginning
 
 .SendCmd:
 	bra.w	SubCPUCmd			; Set the fade out command
@@ -2874,9 +2874,9 @@ ObjSonic_Restart:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle special chunks for Sonic
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_SpecialChunks:
 	rts					; This is dummied out in Wacky Workbench
@@ -2889,23 +2889,23 @@ ObjSonic_SpecialChunks:
 	bne.w	.End				; If not, branch
 
 .HasSpecChunks:
-	move.w	oY(a0),d0			; Get current chunk that we are in
+	move.w	obj.y(a0),d0			; Get current chunk that we are in
 	lsr.w	#1,d0
 	andi.w	#$380,d0
-	move.b	oX(a0),d1
+	move.b	obj.x(a0),d1
 	andi.w	#$7F,d1
 	add.w	d1,d0
-	lea	levelLayout.w,a1
+	lea	map_layout,a1
 	move.b	(a1,d0.w),d1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-	cmp.b	specialChunks+2.w,d1		; Are we in a special roll tunnel?
+	cmp.b	special_map_chunks+2,d1		; Are we in a special roll tunnel?
 	bne.s	.NotRoll			; If not, branch
 	tst.b	zone				; Are we in Palmtree Panic?
 	bne.w	.RollTunnel			; If not, branch
 
-	move.w	oY(a0),d0			; Is our Y position greater than or equal to $90?
+	move.w	obj.y(a0),d0			; Is our Y position greater than or equal to $90?
 	andi.w	#$FF,d0
 	cmpi.w	#$90,d0
 	bcc.w	.RollTunnel			; If so, branch
@@ -2913,66 +2913,66 @@ ObjSonic_SpecialChunks:
 	bra.s	.CheckIfLoop			; Continue checking other chunks
 
 .NotRoll:
-	cmp.b	specialChunks+3.w,d1		; Are we in a regular roll tunnel?
+	cmp.b	special_map_chunks+3,d1		; Are we in a regular roll tunnel?
 	beq.w	.RollTunnel			; If so, branch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CheckIfLoop:
-	cmp.b	specialChunks.w,d1		; Are we on a loop?
+	cmp.b	special_map_chunks,d1		; Are we on a loop?
 	beq.s	.CheckIfLeft			; If so, branch
-	cmp.b	specialChunks+1.w,d1		; Are we on a special loop?
+	cmp.b	special_map_chunks+1,d1		; Are we on a special loop?
 	beq.s	.CheckIfInAir			; If so, branch
 
-	bclr	#6,oSprFlags(a0)		; Set to lower path layer
+	bclr	#6,obj.sprite_flags(a0)		; Set to lower path layer
 	rts
 
 .CheckIfInAir:
 	cmpi.b	#5,zone				; Are we in Stardust Speedway?
 	beq.w	.SSZ				; If so, branch
 
-	btst	#1,oFlags(a0)			; Are we in the air?
+	btst	#1,obj.flags(a0)		; Are we in the air?
 	beq.s	.CheckIfLeft			; If not, branch
-	bclr	#6,oSprFlags(a0)		; Set to lower path layer
+	bclr	#6,obj.sprite_flags(a0)		; Set to lower path layer
 	rts
 
 .CheckIfLeft:
 	rts					; This code is dummied out
 
-	move.w	oX(a0),d2			; Are we left of the loop check section?
+	move.w	obj.x(a0),d2			; Are we left of the loop check section?
 	cmpi.b	#$2C,d2
 	bcc.s	.CheckIfRight			; If not, branch
-	bclr	#6,oSprFlags(a0)		; Set to lower path layer
+	bclr	#6,obj.sprite_flags(a0)		; Set to lower path layer
 	rts
 
 .CheckIfRight:
 	cmpi.b	#$E0,d2				; Are we right of the loop check section?
 	bcs.s	.CheckAngle			; If not, branch
-	bset	#6,oSprFlags(a0)		; Set to higher path layer
+	bset	#6,obj.sprite_flags(a0)		; Set to higher path layer
 	rts
 
 .CheckAngle:
-	btst	#6,oSprFlags(a0)		; Are we on the higher path layer?
+	btst	#6,obj.sprite_flags(a0)		; Are we on the higher path layer?
 	bne.s	.HighPath			; If so, branch
 
-	move.b	oAngle(a0),d1			; Get angle
+	move.b	obj.angle(a0),d1		; Get angle
 	beq.s	.End				; If we are flat on the floor, branch
 
 	cmpi.b	#$80,d1				; Are right of the path swap position?
 	bhi.s	.End				; If so, branch
-	bset	#6,oSprFlags(a0)		; Set to higher path layer
+	bset	#6,obj.sprite_flags(a0)		; Set to higher path layer
 	rts
 
 .HighPath:
-	move.b	oAngle(a0),d1			; Are left of the path swap position?
+	move.b	obj.angle(a0),d1		; Are left of the path swap position?
 	cmpi.b	#$80,d1
 	bls.s	.End				; If so, branch
-	bclr	#6,oSprFlags(a0)		; Set to lower path layer
+	bclr	#6,obj.sprite_flags(a0)		; Set to lower path layer
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .RollTunnel:
 	if REGION<>USA
@@ -2981,15 +2981,15 @@ ObjSonic_SpecialChunks:
 	endif
 	jmp	ObjSonic_StartRoll		; Start rolling
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .SSZ:
-	tst.w	oYVel(a0)			; Are we moving upwards?
+	tst.w	obj.y_speed(a0)			; Are we moving upwards?
 	bmi.s	.End2				; If so, branch
 
-	move.w	oY(a0),d1			; Get position within chunk
+	move.w	obj.y(a0),d1			; Get position within chunk
 	andi.w	#$FF,d1
-	move.w	oX(a0),d0
+	move.w	obj.x(a0),d0
 	andi.w	#$FF,d0
 
 	cmpi.w	#$80,d0				; Are we on the right side of the chunk?
@@ -3000,11 +3000,11 @@ ObjSonic_SpecialChunks:
 	bcs.s	.End2				; If so, branch
 
 .SetHighPlane:
-	bclr	#6,oSprFlags(a0)		; Set to lower path layer
+	bclr	#6,obj.sprite_flags(a0)		; Set to lower path layer
 	rts
 
 .SetLowPlane:
-	bset	#6,oSprFlags(a0)		; Set to higher path layer
+	bset	#6,obj.sprite_flags(a0)		; Set to higher path layer
 	rts
 
 .CheckIfAbove:
@@ -3016,21 +3016,21 @@ ObjSonic_SpecialChunks:
 .End2:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Animate Sonic's sprite
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_Animate:
 	lea	Ani_Sonic,a1			; Get animation script
 
 	moveq	#0,d0				; Get current animation
-	move.b	oAnim(a0),d0
-	cmp.b	oPrevAnim(a0),d0		; Are we changing animations?
+	move.b	obj.anim_id(a0),d0
+	cmp.b	obj.prev_anim_id(a0),d0		; Are we changing animations?
 	beq.s	.Do				; If not, branch
 
-	move.b	d0,oPrevAnim(a0)		; Reset animation flags
-	move.b	#0,oAnimFrame(a0)
-	move.b	#0,oAnimTime(a0)
+	move.b	d0,obj.prev_anim_id(a0)		; Reset animation flags
+	move.b	#0,obj.anim_frame(a0)
+	move.b	#0,obj.anim_time(a0)
 
 .Do:
 	bsr.w	ObjSonic_GetMiniAnim		; If we are miniature, get the mini version of the current animation
@@ -3040,20 +3040,20 @@ ObjSonic_Animate:
 	move.b	(a1),d0				; Get animation speed/special flag
 	bmi.s	.SpecialAnim			; If it's a special flag, branch
 
-	move.b	oFlags(a0),d1			; Apply horizontal flip flag
+	move.b	obj.flags(a0),d1		; Apply horizontal flip flag
 	andi.b	#%00000001,d1
-	andi.b	#%11111100,oSprFlags(a0)
-	or.b	d1,oSprFlags(a0)
+	andi.b	#%11111100,obj.sprite_flags(a0)
+	or.b	d1,obj.sprite_flags(a0)
 
-	subq.b	#1,oAnimTime(a0)		; Decrement frame duration time
+	subq.b	#1,obj.anim_time(a0)		; Decrement frame duration time
 	bpl.s	.AniDelay			; If it hasn't run out, branch
-	move.b	d0,oAnimTime(a0)		; Reset frame duration time
+	move.b	d0,obj.anim_time(a0)		; Reset frame duration time
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .RunAnimScript:
 	moveq	#0,d1				; Get animation frame
-	move.b	oAnimFrame(a0),d1
+	move.b	obj.anim_frame(a0),d1
 	move.b	1(a1,d1.w),d0
 	beq.s	.AniNext			; If it's a frame ID, branch
 	bpl.s	.AniNext
@@ -3061,8 +3061,8 @@ ObjSonic_Animate:
 	bge.s	.AniFF				; If so, branch
 
 .AniNext:
-	move.b	d0,oMapFrame(a0)		; Update animation frame
-	addq.b	#1,oAnimFrame(a0)
+	move.b	d0,obj.sprite_frame(a0)		; Update animation frame
+	addq.b	#1,obj.anim_frame(a0)
 
 .AniDelay:
 	rts
@@ -3071,7 +3071,7 @@ ObjSonic_Animate:
 	addq.b	#1,d0				; Is the flag $FF (loop)?
 	bne.s	.AniFE				; If not, branch
 
-	move.b	#0,oAnimFrame(a0)		; Set animation script frame back to 0
+	move.b	#0,obj.anim_frame(a0)		; Set animation script frame back to 0
 	move.b	1(a1),d0			; Get animation frame at that point
 	bra.s	.AniNext
 
@@ -3080,7 +3080,7 @@ ObjSonic_Animate:
 	bne.s	.AniFD
 
 	move.b	2(a1,d1.w),d0			; Get animation script frame to go back to
-	sub.b	d0,oAnimFrame(a0)
+	sub.b	d0,obj.anim_frame(a0)
 	sub.b	d0,d1				; Get animation frame at that point
 	move.b	1(a1,d1.w),d0
 	bra.s	.AniNext
@@ -3088,26 +3088,26 @@ ObjSonic_Animate:
 .AniFD:
 	addq.b	#1,d0				; Is the flag $FD (new animation)?
 	bne.s	.End
-	move.b	2(a1,d1.w),oAnim(a0)		; Set new animation ID
+	move.b	2(a1,d1.w),obj.anim_id(a0)	; Set new animation ID
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .SpecialAnim:
-	subq.b	#1,oAnimTime(a0)		; Decrement frame duration time
+	subq.b	#1,obj.anim_time(a0)		; Decrement frame duration time
 	bpl.s	.AniDelay			; If it hasn't run out, branch
 
 	addq.b	#1,d0				; Is this special animation $FF (walking/running)?
 	bne.w	.RollAnim			; If not, branch
 
-	tst.b	miniSonic			; Are we minature?
+	tst.b	mini_player			; Are we minature?
 	bne.w	.MiniSonicRun			; If so, branch
 
 	moveq	#0,d1				; Initialize flip flags
-	move.b	oAngle(a0),d0			; Get angle
-	move.b	oFlags(a0),d2			; Are we flipped horizontally?
+	move.b	obj.angle(a0),d0		; Get angle
+	move.b	obj.flags(a0),d2		; Are we flipped horizontally?
 	andi.b	#%00000001,d2
 	bne.s	.Flipped			; If so, branch
 	not.b	d0				; If not, flip the angle
@@ -3126,11 +3126,11 @@ ObjSonic_Animate:
 	moveq	#%00000011,d1			; If we are, set the flip flags accordingly
 
 .NoInvert:
-	andi.b	#%11111100,oSprFlags(a0)	; Apply flip flags
+	andi.b	#%11111100,obj.sprite_flags(a0)	; Apply flip flags
 	eor.b	d1,d2
-	or.b	d2,oSprFlags(a0)
+	or.b	d2,obj.sprite_flags(a0)
 
-	btst	#5,oFlags(a0)			; Are we pushing on something?
+	btst	#5,obj.flags(a0)		; Are we pushing on something?
 	bne.w	.PushAnim			; If so, branch
 
 	move.w	oPlayerGVel(a0),d2		; Get ground speed
@@ -3176,13 +3176,13 @@ ObjSonic_Animate:
 
 .BelowMax:
 	lsr.w	#8,d2
-	move.b	d2,oAnimTime(a0)
+	move.b	d2,obj.anim_time(a0)
 
 	bsr.w	.RunAnimScript			; Run animation script
-	add.b	d3,oMapFrame(a0)		; Add angle offset
+	add.b	d3,obj.sprite_frame(a0)		; Add angle offset
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .RollAnim:
 	addq.b	#1,d0				; Is this special animation $FE (rolling)?
@@ -3194,13 +3194,13 @@ ObjSonic_Animate:
 
 .CheckSpeed2:
 	lea	SonAni_RollMini,a1		; Get mini rolling sprites
-	tst.b	miniSonic			; Are we miniature?
+	tst.b	mini_player			; Are we miniature?
 	bne.s	.GotRollAnim			; If so, branch
 
 	lea	SonAni_RollFast,a1		; Get fast rolling sprites
 	btst	#1,oPlayerCtrl(a0)		; Are we on a 3D ramp?
 	beq.s	.No3DRoll			; If not, branch
-	move.b	oAngle(a0),d0			; Are we going upwards on the ramp?
+	move.b	obj.angle(a0),d0			; Are we going upwards on the ramp?
 	addi.b	#$10,d0
 	andi.b	#$C0,d0
 	beq.s	.GotRollAnim			; If not, branch
@@ -3220,16 +3220,16 @@ ObjSonic_Animate:
 
 .BelowMax2:
 	lsr.w	#8,d2
-	move.b	d2,oAnimTime(a0)
+	move.b	d2,obj.anim_time(a0)
 
-	move.b	oFlags(a0),d1			; Apply horizontal flip flag
+	move.b	obj.flags(a0),d1		; Apply horizontal flip flag
 	andi.b	#%00000001,d1
-	andi.b	#%11111100,oSprFlags(a0)
-	or.b	d1,oSprFlags(a0)
+	andi.b	#%11111100,obj.sprite_flags(a0)
+	or.b	d1,obj.sprite_flags(a0)
 
 	bra.w	.RunAnimScript			; Run animation script
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CheckPush:
 	addq.b	#1,d0				; Is this special animation $FD (pushing)?
@@ -3247,36 +3247,36 @@ ObjSonic_Animate:
 
 .BelowMax3:
 	lsr.w	#6,d2
-	move.b	d2,oAnimTime(a0)
+	move.b	d2,obj.anim_time(a0)
 
 	lea	SonAni_PushMini,a1		; Get mini pushing sprites
-	tst.b	miniSonic			; Are we miniature?
+	tst.b	mini_player			; Are we miniature?
 	bne.s	.GotPushAnim			; If so, branch
 	lea	SonAni_Push,a1			; Get normal pushing sprites
 
 .GotPushAnim:
-	move.b	oFlags(a0),d1			; Apply horizontal flip flag
+	move.b	obj.flags(a0),d1		; Apply horizontal flip flag
 	andi.b	#%00000001,d1
-	andi.b	#%11111100,oSprFlags(a0)
-	or.b	d1,oSprFlags(a0)
+	andi.b	#%11111100,obj.sprite_flags(a0)
+	or.b	d1,obj.sprite_flags(a0)
 
 	bra.w	.RunAnimScript			; Run animation script
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .FrozenAnim:
 	moveq	#0,d1				; This is special animation $FC (frozen animation)
-	move.b	oAnimFrame(a0),d1		; Get animation frame
-	move.b	1(a1,d1.w),oMapFrame(a0)
-	move.b	#0,oAnimTime(a0)		; Keep duration at 0 and don't advance the animation frame
+	move.b	obj.anim_frame(a0),d1		; Get animation frame
+	move.b	1(a1,d1.w),obj.sprite_frame(a0)
+	move.b	#0,obj.anim_time(a0)		; Keep duration at 0 and don't advance the animation frame
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .MiniSonicRun:
 	moveq	#0,d1				; Initialize flip flags
-	move.b	oAngle(a0),d0			; Get angle
-	move.b	oFlags(a0),d2			; Are we flipped horizontally?
+	move.b	obj.angle(a0),d0		; Get angle
+	move.b	obj.flags(a0),d2		; Are we flipped horizontally?
 	andi.b	#$00000001,d2
 	bne.s	.Flipped2			; If so, branch
 	not.b	d0				; If not, flip the angle
@@ -3287,16 +3287,16 @@ ObjSonic_Animate:
 	moveq	#0,d1				; If we are, then don't set the flags anyways
 
 .NoFlip2:
-	andi.b	#%11111100,oSprFlags(a0)	; Apply horizontal flip flag
-	or.b	d2,oSprFlags(a0)
+	andi.b	#%11111100,obj.sprite_flags(a0)	; Apply horizontal flip flag
+	or.b	d2,obj.sprite_flags(a0)
 
 	addi.b	#$30,d0				; Are we running on the floor?
 	cmpi.b	#$60,d0
 	bcs.s	.MiniOnFloor			; If so, branch
 
-	bset	#2,oFlags(a0)			; Mark as rolling
-	move.b	#$A,oYRadius(a0)		; Set miniature rolling hitbox size
-	move.b	#5,oXRadius(a0)
+	bset	#2,obj.flags(a0)		; Mark as rolling
+	move.b	#$A,obj.collide_height(a0)	; Set miniature rolling hitbox size
+	move.b	#5,obj.collide_width(a0)
 	move.b	#$FF,d0				; Go run the rolling animation instead
 	bra.w	.RollAnim
 
@@ -3319,23 +3319,23 @@ ObjSonic_Animate:
 
 .BelowMax4:
 	lsr.w	#8,d2
-	move.b	d2,oAnimTime(a0)
+	move.b	d2,obj.anim_time(a0)
 
 	bra.w	.RunAnimScript			; Run animation script
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get the mini version of Sonic's animation if Sonic is miniature
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_GetMiniAnim:
-	tst.b	miniSonic			; Are we miniature?
+	tst.b	mini_player			; Are we miniature?
 	beq.s	.End				; If not, branch
 	move.b	.MiniAnims(pc,d0.w),d0		; Get mini animation ID
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .MiniAnims:
 	dc.b	$21				; $00
@@ -3419,25 +3419,25 @@ ObjSonic_GetMiniAnim:
 	dc.b	$00				; $4E
 	dc.b	$00				; $4F
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic's animation script
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 Ani_Sonic:
 	include	"Level/Wacky Workbench/Objects/Sonic/Data/Animations.asm"
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load the tiles for Sonic's current sprite frame
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadSonicDynPLC:
 	tst.b	(a0)				; Are we even loaded at all?
 	beq.w	.End				; If not, branch
 
-	lea	sonicLastFrame.w,a2		; Get the ID of the last sprite frame that was loaded
+	lea	player_prev_frame,a2		; Get the ID of the last sprite frame that was loaded
 	moveq	#0,d0
-	move.b	oMapFrame(a0),d0		; Get current sprite frame ID
+	move.b	obj.sprite_frame(a0),d0		; Get current sprite frame ID
 	cmp.b	(a2),d0				; Has our sprite frame changed?
 	beq.s	.End				; If not, branch
 	move.b	d0,(a2)				; Update last sprite frame ID
@@ -3451,8 +3451,8 @@ LoadSonicDynPLC:
 	subq.b	#1,d1
 	bmi.s	.End				; If there are none, branch
 
-	lea	sonicArtBuf.w,a3		; Get sprite frame tile buffer
-	move.b	#1,updateSonicArt.w		; Mark buffer as updated
+	lea	player_art_buffer,a3		; Get sprite frame tile buffer
+	move.b	#1,update_player_art		; Mark buffer as updated
 
 .PieceLoop:
 	moveq	#0,d2				; Get number of tiles to load
@@ -3478,42 +3478,42 @@ LoadSonicDynPLC:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Check if Sonic is on a pinball flipper, and if so, get the angle to launch
 ; Sonic at when jumping off of it
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; RETURNS:
 ;	d0.b - Angle to launch at
 ;	d2.w - Speed to launch at
 ;	eq/ne - Was on flipper/Was not on flipper
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSonic_ChkFlipper:
 	moveq	#0,d0				; Get object we are standing on
 	move.b	oPlayerStandObj(a0),d0
 	lsl.w	#6,d0
-	addi.l	#objPlayerSlot&$FFFFFF,d0
+	addi.l	#player_object&$FFFFFF,d0
 	movea.l	d0,a1
 
-	cmpi.b	#$1E,oID(a1)			; Is it a pinball flipper from CCZ?
+	cmpi.b	#$1E,obj.id(a1)			; Is it a pinball flipper from CCZ?
 	bne.s	.End				; If not, branch
 
-	move.b	#1,oAnim(a1)			; Set flipper animation to move
+	move.b	#1,obj.anim_id(a1)			; Set flipper animation to move
 
-	move.w	oX(a1),d1			; Get angle in which to launch at
-	move.w	oY(a1),d2			; arctan((object Y + 24 - player Y) / (object X - player X))
+	move.w	obj.x(a1),d1			; Get angle in which to launch at
+	move.w	obj.y(a1),d2			; arctan((object Y + 24 - player Y) / (object X - player X))
 	addi.w	#24,d2
-	sub.w	oX(a0),d1
-	sub.w	oY(a0),d2
+	sub.w	obj.x(a0),d1
+	sub.w	obj.y(a0),d2
 	jsr	CalcAngle
 
 	moveq	#0,d2				; Get the amount of force used to get the speed to launch us at, depending on
-	move.b	oWidth(a1),d2			; the distance we are from the flipper's rotation pivot
-	move.w	oX(a0),d3			; (object width + (player X - object X))
-	sub.w	oX(a1),d3
+	move.b	obj.width(a1),d2			; the distance we are from the flipper's rotation pivot
+	move.w	obj.x(a0),d3			; (object width + (player X - object X))
+	sub.w	obj.x(a1),d3
 	add.w	d2,d3
 
-	btst	#0,oFlags(a1)			; Is the flipper object flipped horizontally?
+	btst	#0,obj.flags(a1)			; Is the flipper object flipped horizontally?
 	bne.s	.XFlip				; If so, branch
 
 	move.w	#64,d1				; Invert the force to account for the horizontal flip
@@ -3533,4 +3533,4 @@ ObjSonic_ChkFlipper:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

@@ -1,55 +1,55 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Snake blocks object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-oSnakePath	EQU	oVar2C
-oSnakeIndex	EQU	oVar32
-oSnakeSpawn	EQU	oVar34
+oSnakePath	EQU	obj.var_2C
+oSnakeIndex	EQU	obj.var_32
+oSnakeSpawn	EQU	obj.var_34
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Main block
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeBlocks:
-	tst.b	oSubtype(a0)
+	tst.b	obj.subtype(a0)
 	bmi.w	ObjSnakeSub
 	
 ObjSnakeMain:
 	moveq	#0,d0
-	move.b	oRoutine(a0),d0
+	move.b	obj.routine(a0),d0
 	move.w	.Index(pc,d0.w),d0
 	jsr	.Index(pc,d0.w)
 	
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	SolidObject
 	jsr	DrawObject
 	jmp	CheckObjDespawn
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index:
 	dc.w	ObjSnakeMain_Init-.Index
 	dc.w	ObjSnakeMain_Main-.Index
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeMain_Init:
-	addq.b	#2,oRoutine(a0)
-	ori.b	#4,oSprFlags(a0)
-	move.b	#1,oPriority(a0)
-	move.b	#16,oXRadius(a0)
-	move.b	#16,oWidth(a0)
-	move.b	#16,oYRadius(a0)
-	move.w	#$3A8,oTile(a0)
-	move.l	#MapSpr_SnakeBlocks,oMap(a0)
+	addq.b	#2,obj.routine(a0)
+	ori.b	#4,obj.sprite_flags(a0)
+	move.b	#1,obj.sprite_layer(a0)
+	move.b	#16,obj.collide_width(a0)
+	move.b	#16,obj.width(a0)
+	move.b	#16,obj.collide_height(a0)
+	move.w	#$3A8,obj.sprite_tile(a0)
+	move.l	#MapSpr_SnakeBlocks,obj.sprites(a0)
 	move.w	a0,oSnakeParent(a0)
 	st	oSnakeSpawn(a0)
 	move.w	#0,oSnakeIndex(a0)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeMain_Main:
 	tst.b	oSnakeSpawn(a0)
@@ -58,7 +58,7 @@ ObjSnakeMain_Main:
 	
 	lea	ObjSnakeBlocks_Paths(pc),a1
 	moveq	#0,d0
-	move.b	oSubtype(a0),d0
+	move.b	obj.subtype(a0),d0
 	add.w	d0,d0
 	adda.w	(a1,d0.w),a1
 	move.w	oSnakeIndex(a0),d0
@@ -78,37 +78,37 @@ ObjSnakeMain_Main:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sub block
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-oSnakeParent	EQU	oVar2A
-oSnakeTime	EQU	oVar30
-oSnakeSolidYVel	EQU	oVar34
-oSnakePrev	EQU	oVar36
-oSnakeXVel	EQU	oVar38
-oSnakeYVel	EQU	oVar3C
+oSnakeParent	EQU	obj.var_2A
+oSnakeTime	EQU	obj.var_30
+oSnakeSolidYVel	EQU	obj.var_34
+oSnakePrev	EQU	obj.var_36
+oSnakeXVel	EQU	obj.var_38
+oSnakeYVel	EQU	obj.var_3C
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub:
 	movea.w	oSnakeParent(a0),a1
-	cmpi.b	#$2A,oID(a1)
+	cmpi.b	#$2A,obj.id(a1)
 	bne.w	ObjSnakeSub_Delete
-	move.b	oSubtype2(a0),d0
-	cmp.b	oSubtype2(a1),d0
+	move.b	obj.subtype_2(a0),d0
+	cmp.b	obj.subtype_2(a1),d0
 	bne.w	ObjSnakeSub_Delete
 	
 	moveq	#0,d0
-	move.b	oRoutine(a0),d0
+	move.b	obj.routine(a0),d0
 	move.w	.Index(pc,d0.w),d0
 	jsr	.Index(pc,d0.w)
 	
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	SolidObject
 	jmp	DrawObject
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Index:
 	dc.w	ObjSnakeSub_Init-.Index
@@ -122,10 +122,10 @@ ObjSnakeSub:
 	dc.w	ObjSnakeSub_Wait2-.Index
 	dc.w	ObjSnakeSub_Done-.Index
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_Init:
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 	move.w	#63,oSnakeTime(a0)
 	move.l	#0,oSnakeXVel(a0)
 	move.l	#0,oSnakeYVel(a0)
@@ -152,7 +152,7 @@ ObjSnakeSub_Init:
 	
 .NotLeft:
 	movea.w	oSnakeParent(a0),a1
-	cmpi.b	#2,oSubtype(a1)
+	cmpi.b	#2,obj.subtype(a1)
 	bne.s	ObjSnakeSub_Move
 	
 	moveq	#1,d0
@@ -162,116 +162,116 @@ ObjSnakeSub_Init:
 	
 .SetSolidYVel:
 	move.w	d0,oSnakeSolidYVel(a0)
-	move.w	d0,oYVel(a0)
+	move.w	d0,obj.y_speed(a0)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_Move:
 	move.l	oSnakeXVel(a0),d0
-	add.l	d0,oX(a0)
+	add.l	d0,obj.x(a0)
 	move.l	oSnakeYVel(a0),d0
-	add.l	d0,oY(a0)
+	add.l	d0,obj.y(a0)
 	
 	subq.w	#1,oSnakeTime(a0)
 	bpl.s	.End
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 	
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_StartWait:
-	addq.b	#2,oRoutine(a0)
-	clr.w	oYVel(a0)
+	addq.b	#2,obj.routine(a0)
+	clr.w	obj.y_speed(a0)
 	
 	move.w	#30,d0
-	cmpi.b	#2,oSubtype(a1)
+	cmpi.b	#2,obj.subtype(a1)
 	bne.s	.SetTime
 	move.w	#0,d0
 	
 .SetTime:
 	move.w	d0,oSnakeTime(a0)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_Wait:
 	subq.w	#1,oSnakeTime(a0)
 	bpl.s	.End
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 	
 	bsr.w	ObjSnakeBlocks_Spawn
 	beq.s	.End
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 	movea.w	oSnakeParent(a0),a1
 	st	oSnakeSpawn(a1)
 	
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_WaitMove:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_StartMoveBack:
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 	move.w	#63,oSnakeTime(a0)
-	move.w	oSnakeSolidYVel(a0),oYVel(a0)
-	neg.w	oYVel(a0)
+	move.w	oSnakeSolidYVel(a0),obj.y_speed(a0)
+	neg.w	obj.y_speed(a0)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_MoveBack:
 	move.l	oSnakeXVel(a0),d0
-	sub.l	d0,oX(a0)
+	sub.l	d0,obj.x(a0)
 	move.l	oSnakeYVel(a0),d0
-	sub.l	d0,oY(a0)
+	sub.l	d0,obj.y(a0)
 	
 	subq.w	#1,oSnakeTime(a0)
 	bpl.s	.End
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 	
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_StartWait2:
-	addq.b	#2,oRoutine(a0)
-	clr.w	oYVel(a0)
+	addq.b	#2,obj.routine(a0)
+	clr.w	obj.y_speed(a0)
 	
 	move.w	#30,d0
-	cmpi.b	#2,oSubtype(a1)
+	cmpi.b	#2,obj.subtype(a1)
 	bne.s	.SetTime
 	move.w	#0,d0
 	
 .SetTime:
 	move.w	d0,oSnakeTime(a0)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_Wait2:
 	subq.w	#1,oSnakeTime(a0)
 	bpl.s	.End
 	
 	movea.w	oSnakePrev(a0),a1
-	tst.b	oSubtype(a1)
+	tst.b	obj.subtype(a1)
 	bpl.s	.Done
-	addq.b	#2,oRoutine(a1)
+	addq.b	#2,obj.routine(a1)
 	
 .Done:
-	addq.b	#2,oRoutine(a0)
+	addq.b	#2,obj.routine(a0)
 	
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_Done:
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	SolidObject
 	beq.s	.Done
 	jsr	GetOffObject
@@ -279,12 +279,12 @@ ObjSnakeSub_Done:
 .Done:
 	addq.l	#4,sp
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeSub_Delete:
 	jmp	DeleteObject
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeBlocks_Spawn:
 	movea.l	oSnakePath(a0),a6
@@ -305,22 +305,22 @@ ObjSnakeBlocks_Spawn:
 		move.b	(a2)+,(a3)+
 	endif
 	
-	move.b	#-1,oSubtype(a1)
+	move.b	#-1,obj.subtype(a1)
 	move.w	a0,oSnakePrev(a1)
 	move.l	a6,oSnakePath(a1)
-	addq.b	#1,oPriority(a1)
-	clr.b	oRoutine(a1)
+	addq.b	#1,obj.sprite_layer(a1)
+	clr.b	obj.routine(a1)
 	
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 MapSpr_SnakeBlocks:
 	include	"Level/Wacky Workbench/Objects/Snake Blocks/Data/Mappings.asm"
 	even
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSnakeBlocks_Paths:
 	dc.w ObjSnakeBlocks_Path0-ObjSnakeBlocks_Paths
@@ -441,4 +441,4 @@ unk_20EEE4:
 	dc.b	0
 	dc.b	$FF
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

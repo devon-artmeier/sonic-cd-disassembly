@@ -1,67 +1,67 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Breakable wall object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjBreakableWall:
 	moveq	#0,d0
-	move.b	oRoutine(a0),d0
+	move.b	obj.routine(a0),d0
 	move.w	ObjBreakableWall_Index(pc,d0.w),d0
 	jmp	ObjBreakableWall_Index(pc,d0.w)
 ; End of function ObjBreakableWall
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ObjBreakableWall_Index:
 	dc.w	ObjBreakableWall_Init-ObjBreakableWall_Index
 	dc.w	ObjBreakableWall_Main-ObjBreakableWall_Index
 	dc.w	ObjBreakableWall_Fall-ObjBreakableWall_Index
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjBreakableWall_Init:
-	addq.b	#2,oRoutine(a0)
-	ori.b	#4,oSprFlags(a0)
-	move.b	#1,oPriority(a0)
-	move.b	#$10,oXRadius(a0)
-	move.b	#$10,oWidth(a0)
-	move.b	#$18,oYRadius(a0)
-	move.b	#$EF,oColType(a0)
-	move.w	#$44BE,oTile(a0)
-	move.l	#MapSpr_BreakableWall,oMap(a0)
-	move.b	oSubtype(a0),oMapFrame(a0)
+	addq.b	#2,obj.routine(a0)
+	ori.b	#4,obj.sprite_flags(a0)
+	move.b	#1,obj.sprite_layer(a0)
+	move.b	#$10,obj.collide_width(a0)
+	move.b	#$10,obj.width(a0)
+	move.b	#$18,obj.collide_height(a0)
+	move.b	#$EF,obj.collide_type(a0)
+	move.w	#$44BE,obj.sprite_tile(a0)
+	move.l	#MapSpr_BreakableWall,obj.sprites(a0)
+	move.b	obj.subtype(a0),obj.sprite_frame(a0)
 ; End of function ObjBreakableWall_Init
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjBreakableWall_Main:
-	tst.b	oColStatus(a0)
+	tst.b	obj.collide_status(a0)
 	beq.s	.Solid
-	clr.w	oColType(a0)
-	addq.b	#2,oRoutine(a0)
-	lea	objPlayerSlot.w,a1
-	move.w	oXVel(a1),oVar2A(a0)
-	move.w	oYVel(a1),oVar2E(a0)
+	clr.w	obj.collide_type(a0)
+	addq.b	#2,obj.routine(a0)
+	lea	player_object,a1
+	move.w	obj.x_speed(a1),obj.var_2A(a0)
+	move.w	obj.y_speed(a1),obj.var_2E(a0)
 	bra.s	.BreakUp
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Solid:
-	lea	objPlayerSlot.w,a1
+	lea	player_object,a1
 	jsr	SolidObject
 	jsr	DrawObject
 	jmp	CheckObjDespawn
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .BreakUp:
 	move.w	#FM_B0,d0
 	jsr	PlayFMSound
-	lea	objPlayerSlot.w,a6
-	asr	oXVel(a6)
+	lea	player_object,a6
+	asr	obj.x_speed(a6)
 	lea	ObjBreakableWall_PieceFrames(pc),a5
 	moveq	#0,d0
-	move.b	oSubtype(a0),d0
+	move.b	obj.subtype(a0),d0
 	lsl.w	#3,d0
 	adda.w	d0,a5
 	lea	ObjBreakableWall_PieceDeltas(pc),a4
@@ -70,62 +70,62 @@ ObjBreakableWall_Main:
 	movea.w	a0,a1
 	bra.s	.InitLoop
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Loop:
 	jsr	FindObjSlot
 	bne.s	ObjBreakableWall_Fall
-	move.b	oID(a0),oID(a1)
-	move.b	oRoutine(a0),oRoutine(a1)
-	move.w	oX(a0),oX(a1)
-	move.w	oY(a0),oY(a1)
-	move.b	oSprFlags(a0),oSprFlags(a1)
-	move.b	oPriority(a0),oPriority(a1)
-	move.l	oMap(a0),oMap(a1)
-	move.w	oTile(a0),oTile(a1)
+	move.b	obj.id(a0),obj.id(a1)
+	move.b	obj.routine(a0),obj.routine(a1)
+	move.w	obj.x(a0),obj.x(a1)
+	move.w	obj.y(a0),obj.y(a1)
+	move.b	obj.sprite_flags(a0),obj.sprite_flags(a1)
+	move.b	obj.sprite_layer(a0),obj.sprite_layer(a1)
+	move.l	obj.sprites(a0),obj.sprites(a1)
+	move.w	obj.sprite_tile(a0),obj.sprite_tile(a1)
 
 .InitLoop:
-	move.b	#8,oXRadius(a1)
-	move.b	#8,oWidth(a1)
-	move.b	#8,oYRadius(a1)
-	move.b	(a5)+,oMapFrame(a1)
+	move.b	#8,obj.collide_width(a1)
+	move.b	#8,obj.width(a1)
+	move.b	#8,obj.collide_height(a1)
+	move.b	(a5)+,obj.sprite_frame(a1)
 	move.w	(a4)+,d0
 	move.w	(a4)+,d1
-	add.w	d0,oX(a1)
-	add.w	d1,oY(a1)
+	add.w	d0,obj.x(a1)
+	add.w	d1,obj.y(a1)
 	move.l	(a3)+,d0
-	move.l	(a3)+,oVar2E(a1)
-	tst.w	oXVel(a6)
+	move.l	(a3)+,obj.var_2E(a1)
+	tst.w	obj.x_speed(a6)
 	bpl.s	.NoFlip
 	neg.l	d0
 
 .NoFlip:
-	move.l	d0,oVar2A(a1)
+	move.l	d0,obj.var_2A(a1)
 	dbf	d6,.Loop
 ; End of function ObjBreakableWall_Main
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjBreakableWall_Fall:
-	addi.l	#$4000,oVar2E(a0)
-	move.l	oVar2A(a0),d0
-	move.l	oVar2E(a0),d1
-	add.l	d0,oX(a0)
-	add.l	d1,oY(a0)
-	lea	objPlayerSlot.w,a1
-	move.w	oY(a1),d0
-	sub.w	oY(a0),d0
+	addi.l	#$4000,obj.var_2E(a0)
+	move.l	obj.var_2A(a0),d0
+	move.l	obj.var_2E(a0),d1
+	add.l	d0,obj.x(a0)
+	add.l	d1,obj.y(a0)
+	lea	player_object,a1
+	move.w	obj.y(a1),d0
+	sub.w	obj.y(a0),d0
 	cmpi.w	#-$E0,d0
 	ble.s	.Destroy
 	jmp	DrawObject
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Destroy:
 	jmp	DeleteObject
 ; End of function ObjBreakableWall_Fall
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 MapSpr_BreakableWall:
 	include	"Level/Palmtree Panic/Objects/Breakable Wall/Data/Mappings.asm"
 	even
@@ -159,4 +159,4 @@ ObjBreakableWall_PieceSpeeds:
 	dc.w	$FFFD, $97C
 	dc.w	1,	$BBBB
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

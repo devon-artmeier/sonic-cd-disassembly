@@ -1,284 +1,287 @@
-; -------------------------------------------------------------------------
-; Sonic CD Disassembly
-; By Ralakimus 2021
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; Sonic CD (1993) Disassembly
+; By Devon Artmeier
+; ------------------------------------------------------------------------------
 ; Sub CPU definitions
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-SUBCPU		EQU	1
+SUB_CPU			equ 1					; Sub CPU
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Addresses
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; PRG-RAM
-PRGRAM		EQU	$000000			; PRG-RAM start
-PRGRAME		EQU	$080000			; PRG-RAM end
-PRGRAMS		EQU	PRGRAME-PRGRAM		; PRG-RAM size
-SPSTART		EQU	PRGRAM+$6000		; System program start
+; Program RAM
+PRG_RAM			equ 0					; Program RAM start
+PRG_RAM_SIZE		equ $80000				; Program RAM size
+PRG_RAM_END		equ PRG_RAM+PRG_RAM_SIZE		; Program RAM end
+SP_START		equ PRGRAM+$6000			; System program start
 
 ; Word RAM
-WORDRAM2M	EQU	$080000			; Word RAM start (2M)
-WORDRAM2ME	EQU	$0C0000			; Word RAM end (2M)
-WORDRAM2MS	EQU	WORDRAM2ME-WORDRAM2M	; Word RAM size (2M)
-WORDRAM1M	EQU	$0C0000			; Word RAM start (1M/1M)
-WORDRAM1ME	EQU	$0E0000			; Word RAM end (1M/1M)
-WORDRAM1MS	EQU	WORDRAM1ME-WORDRAM1M	; Word RAM size (1M/1M)
+WORD_RAM_1M		equ $C0000				; Word RAM start (1M/1M)
+WORD_RAM_1M_SIZE	equ $20000				; Word RAM size (1M/1M)
+WORD_RAM_1M_END		equ WORD_RAM_1M+WORD_RAM_1M_SIZE	; Word RAM end (1M/1M)
+WORD_RAM_2M		equ $80000				; Word RAM start (2M)
+WORD_RAM_2M_SIZE	equ $40000				; Word RAM size (2M)
+WORD_RAM_2M_END		equ WORD_RAM_2M+WORD_RAM_2M_SIZE	; Word RAM end (2M)
+WORD_RAM_IMAGE		equ $80000				; Word RAM image start (1M/1M)
+WORD_RAM_IMAGE_SIZE	equ $40000				; Word RAM image size (1M/1M)
+WORD_RAM_IMAGE_END	equ WORD_RAM_IMAGE+WORD_RAM_IMAGE_SIZE	; Word RAM image size (1M/1M)
 
 ; PCM registers
-PCMREGS		EQU	$FF0000			; PCM chip base
-PCMENV		EQU	PCMREGS+($0000*2+1)	; Volume
-PCMPAN		EQU	PCMREGS+($0001*2+1)	; Pan
-PCMFDL		EQU	PCMREGS+($0002*2+1)	; Frequency (low)
-PCMFDH		EQU	PCMREGS+($0003*2+1)	; Frequency (high)
-PCMLSL		EQU	PCMREGS+($0004*2+1)	; Wave memory stop address (low)
-PCMLSH		EQU	PCMREGS+($0005*2+1)	; Wave memory stop address (high)
-PCMST		EQU	PCMREGS+($0006*2+1)	; Wave memory start address
-PCMCTRL		EQU	PCMREGS+($0007*2+1)	; Control
-PCMONOFF	EQU	PCMREGS+($0008*2+1)	; On/Off
-PCMADDR		EQU	PCMREGS+($0010*2+1)	; Wave address
-PCMADDR1L	EQU	PCMADDR			; PCM1 address (low)
-PCMADDR1H	EQU	PCMADDR+2		; PCM1 address (high)
-PCMADDR2L	EQU	PCMADDR+4		; PCM2 address (low)
-PCMADDR2H	EQU	PCMADDR+6		; PCM2 address (high)
-PCMADDR3L	EQU	PCMADDR+8		; PCM2 address (low)
-PCMADDR3H	EQU	PCMADDR+$A		; PCM2 address (high)
-PCMADDR4L	EQU	PCMADDR+$C		; PCM2 address (low)
-PCMADDR4H	EQU	PCMADDR+$E		; PCM2 address (high)
-PCMADDR5L	EQU	PCMADDR+$10		; PCM2 address (low)
-PCMADDR5H	EQU	PCMADDR+$12		; PCM2 address (high)
-PCMADDR6L	EQU	PCMADDR+$14		; PCM2 address (low)
-PCMADDR6H	EQU	PCMADDR+$16		; PCM2 address (high)
-PCMADDR7L	EQU	PCMADDR+$18		; PCM2 address (low)
-PCMADDR7H	EQU	PCMADDR+$1A		; PCM2 address (high)
-PCMADDR8L	EQU	PCMADDR+$1C		; PCM2 address (low)
-PCMADDR8H	EQU	PCMADDR+$1E		; PCM2 address (high)
-PCMWAVE		EQU	PCMREGS+($1000*2+1)	; Wave RAM
+PCM_REGS		equ $FF0000				; PCM registers base
+PCM_VOLUME		equ $FF0001				; Volume
+PCM_PAN			equ $FF0003				; Pan
+PCM_FREQ_L		equ $FF0005				; Frequency (low)
+PCM_FREQ_H		equ $FF0007				; Frequency (high)
+PCM_LOOP_L		equ $FF0009				; Wave memory stop address (low)
+PCM_LOOP_H		equ $FF000B				; Wave memory stop address (high)
+PCM_START		equ $FF000D				; Wave memory start address
+PCM_CTRL		equ $FF000F				; Control
+PCM_ON_OFF		equ $FF0011				; On/Off
+PCM_ADDR		equ $FF0021				; Wave address
+PCM_ADDR_1L		equ $FF0021				; PCM1 wave address (low)
+PCM_ADDR_1H		equ $FF0023				; PCM1 wave address (high)
+PCM_ADDR_2L		equ $FF0025				; PCM2 wave address (low)
+PCM_ADDR_2H		equ $FF0027				; PCM2 wave address (high)
+PCM_ADDR_3L		equ $FF0029				; PCM3 wave address (low)
+PCM_ADDR_3H		equ $FF002B				; PCM3 wave address (high)
+PCM_ADDR_4L		equ $FF002D				; PCM4 wave address (low)
+PCM_ADDR_4H		equ $FF002F				; PCM4 wave address (high)
+PCM_ADDR_5L		equ $FF0031				; PCM5 wave address (low)
+PCM_ADDR_5H		equ $FF0033				; PCM5 wave address (high)
+PCM_ADDR_6L		equ $FF0035				; PCM6 wave address (low)
+PCM_ADDR_6H		equ $FF0037				; PCM6 wave address (high)
+PCM_ADDR_7L		equ $FF0039				; PCM7 wave address (low)
+PCM_ADDR_7H		equ $FF003B				; PCM7 wave address (high)
+PCM_ADDR_8L		equ $FF003D				; PCM8 wave address (low)
+PCM_ADDR_8H		equ $FF003F				; PCM8 wave address (high)
+PCM_WAVE_RAM		equ $FF2001				; Wave RAM
 
 ; Gate array
-GATEARRAY	EQU	$FFFF8000		; Gate array base
-GALEDCTRL	EQU	GATEARRAY+$0000		; LED control
-GACDRESET	EQU	GATEARRAY+$0001		; Reset
-GAWRPROTECT	EQU	GATEARRAY+$0002		; Write protection
-GAMEMMODE	EQU	GATEARRAY+$0003		; Memory mode
-GACDCDEVICE	EQU	GATEARRAY+$0004		; CDC device destination
-GACDCCRS0	EQU	GATEARRAY+$0005		; CDC register address
-GACDCCRS1	EQU	GATEARRAY+$0007		; CDC register data
-GACDCHOST	EQU	GATEARRAY+$0008		; 16-bit CDC data to host
-GADMAADDR	EQU	GATEARRAY+$000A		; DMA offset into destination area
-GASTOPWATCH	EQU	GATEARRAY+$000C		; Stopwatch
-GACOMFLAGS	EQU	GATEARRAY+$000E		; Communication flags
-GAMAINFLAG	EQU	GATEARRAY+$000E		; Main CPU communication flag
-GASUBFLAG	EQU	GATEARRAY+$000F		; Sub CPU communication flag
-GACOMCMDS	EQU	GATEARRAY+$0010		; Communication commands
-GACOMCMD0	EQU	GATEARRAY+$0010		; Communication command 0
-GACOMCMD1	EQU	GATEARRAY+$0011		; Communication command 1
-GACOMCMD2	EQU	GATEARRAY+$0012		; Communication command 2
-GACOMCMD3	EQU	GATEARRAY+$0013		; Communication command 3
-GACOMCMD4	EQU	GATEARRAY+$0014		; Communication command 4
-GACOMCMD5	EQU	GATEARRAY+$0015		; Communication command 5
-GACOMCMD6	EQU	GATEARRAY+$0016		; Communication command 6
-GACOMCMD7	EQU	GATEARRAY+$0017		; Communication command 7
-GACOMCMD8	EQU	GATEARRAY+$0018		; Communication command 8
-GACOMCMD9	EQU	GATEARRAY+$0019		; Communication command 9
-GACOMCMDA	EQU	GATEARRAY+$001A		; Communication command A
-GACOMCMDB	EQU	GATEARRAY+$001B		; Communication command B
-GACOMCMDC	EQU	GATEARRAY+$001C		; Communication command C
-GACOMCMDD	EQU	GATEARRAY+$001D		; Communication command D
-GACOMCMDE	EQU	GATEARRAY+$001E		; Communication command E
-GACOMCMDF	EQU	GATEARRAY+$001F		; Communication command F
-GACOMSTATS	EQU	GATEARRAY+$0020		; Communication statuses
-GACOMSTAT0	EQU	GATEARRAY+$0020		; Communication status 0
-GACOMSTAT1	EQU	GATEARRAY+$0021		; Communication status 1
-GACOMSTAT2	EQU	GATEARRAY+$0022		; Communication status 2
-GACOMSTAT3	EQU	GATEARRAY+$0023		; Communication status 3
-GACOMSTAT4	EQU	GATEARRAY+$0024		; Communication status 4
-GACOMSTAT5	EQU	GATEARRAY+$0025		; Communication status 5
-GACOMSTAT6	EQU	GATEARRAY+$0026		; Communication status 6
-GACOMSTAT7	EQU	GATEARRAY+$0027		; Communication status 7
-GACOMSTAT8	EQU	GATEARRAY+$0028		; Communication status 8
-GACOMSTAT9	EQU	GATEARRAY+$0029		; Communication status 9
-GACOMSTATA	EQU	GATEARRAY+$002A		; Communication status A
-GACOMSTATB	EQU	GATEARRAY+$002B		; Communication status B
-GACOMSTATC	EQU	GATEARRAY+$002C		; Communication status C
-GACOMSTATD	EQU	GATEARRAY+$002D		; Communication status D
-GACOMSTATE	EQU	GATEARRAY+$002E		; Communication status E
-GACOMSTATF	EQU	GATEARRAY+$002F		; Communication status F
-GAIRQ3TIME	EQU	GATEARRAY+$0031 	; Interrupt 3 timer
-GAIRQMASK	EQU	GATEARRAY+$0033 	; Interrupt mask
-GACDFADER	EQU	GATEARRAY+$0034 	; Fader control/Spindle speed
-GACDDTYPE	EQU	GATEARRAT+$0036 	; CDD data type
-GACDDCTRL	EQU	GATEARRAY+$0037 	; CDD control
-GACDDCOM	EQU	GATEARRAY+$0038 	; CDD communication
-GACDDSTAT0	EQU	GATEARRAY+$0038 	; CDD receive status 0
-GACDDSTAT1	EQU	GATEARRAY+$0039 	; CDD receive status 1
-GACDDSTAT2	EQU	GATEARRAY+$003A 	; CDD receive status 2
-GACDDSTAT3	EQU	GATEARRAY+$003B 	; CDD receive status 3
-GACDDSTAT4	EQU	GATEARRAY+$003C 	; CDD receive status 4
-GACDDSTAT5	EQU	GATEARRAY+$003D 	; CDD receive status 5
-GACDDSTAT6	EQU	GATEARRAY+$003E 	; CDD receive status 6
-GACDDSTAT7	EQU	GATEARRAY+$003F 	; CDD receive status 7
-GACDDSTAT8	EQU	GATEARRAY+$0040 	; CDD receive status 8
-GACDDSTAT9	EQU	GATEARRAY+$0041 	; CDD receive status 9
-GACDDCMD0	EQU	GATEARRAY+$0042 	; CDD transfer command 0
-GACDDCMD1	EQU	GATEARRAY+$0043 	; CDD transfer command 1
-GACDDCMD2	EQU	GATEARRAY+$0044 	; CDD transfer command 2
-GACDDCMD3	EQU	GATEARRAY+$0045 	; CDD transfer command 3
-GACDDCMD4	EQU	GATEARRAY+$0046 	; CDD transfer command 4
-GACDDCMD5	EQU	GATEARRAY+$0047 	; CDD transfer command 5
-GACDDCMD6	EQU	GATEARRAY+$0048 	; CDD transfer command 6
-GACDDCMD7	EQU	GATEARRAY+$0049 	; CDD transfer command 7
-GACDDCMD8	EQU	GATEARRAY+$004A 	; CDD transfer command 8
-GACDDCMD9	EQU	GATEARRAY+$004B 	; CDD transfer command 9
-GAFONTCOLOR	EQU	GATEARRAY+$004C 	; Font color
-GAFONTBIT	EQU	GATEARRAY+$004E 	; Font bit
-GAFONTDATA	EQU	GATEARRAY+$0056 	; Font data
-GASTAMPSIZE	EQU	GATEARRAY+$0058 	; Stamp size/Map size
-GASTAMPMAP	EQU	GATEARRAY+$005A 	; Stamp map base address
-GAIMGVCELL	EQU	GATEARRAY+$005C 	; Image buffer height in tiles
-GAIMGSTART	EQU	GATEARRAY+$005E 	; Image buffer start address
-GAIMGOFFSET	EQU	GATEARRAY+$0060 	; Image buffer offset
-GAIMGHDOT	EQU	GATEARRAY+$0062 	; Image buffer width in pixels
-GAIMGVDOT	EQU	GATEARRAY+$0064 	; Image buffer height in pixels
-GAIMGTRACE	EQU	GATEARRAY+$0066 	; Trace vector base address
-GASUBADDR	EQU	GATEARRAY+$0068 	; Subcode top address
-GASUBCODE	EQU	GATEARRAY+$0100 	; 64 word subcode buffer
-GASUBIMAGE	EQU	GATEARRAY+$0180 	; Image of subcode buffer
+MCD_REGS		equ $FFFF8000				; Mega CD registers base
+MCD_LED_CTRL		equ $FFFF8000				; LED control
+MCD_RESET		equ $FFFF8001				; Periphery reset
+MCD_PROTECT		equ $FFFF8002				; Write protection
+MCD_MEM_MODE		equ $FFFF8003				; Memory mode
+MCD_CDC_DEVICE		equ $FFFF8004				; CDC device destination
+MCD_CDC_REG_ADDR	equ $FFFF8005				; CDC register address
+MCD_CDC_REG_DATA	equ $FFFF8007				; CDC register data
+MCD_CDC_HOST		equ $FFFF8008				; CDC data
+MCD_CDC_DMA		equ $FFFF800A				; CDC DMA address
+MCD_STOPWATCH		equ $FFFF800C				; Stopwatch
+MCD_COMM_FLAGS		equ $FFFF800E				; Communication flags
+MCD_MAIN_FLAG		equ $FFFF800E				; Main CPU communication flag
+MCD_SUB_FLAG		equ $FFFF800F				; Sub CPU communication flag
+MCD_MAIN_COMMS		equ $FFFF8010				; Main CPU communication registers
+MCD_MAIN_COMM_0		equ $FFFF8010				; Main CPU communication register 0
+MCD_MAIN_COMM_1		equ $FFFF8011				; Main CPU communication register 1
+MCD_MAIN_COMM_2		equ $FFFF8012				; Main CPU communication register 2
+MCD_MAIN_COMM_3		equ $FFFF8013				; Main CPU communication register 3
+MCD_MAIN_COMM_4		equ $FFFF8014				; Main CPU communication register 4
+MCD_MAIN_COMM_5		equ $FFFF8015				; Main CPU communication register 5
+MCD_MAIN_COMM_6		equ $FFFF8016				; Main CPU communication register 6
+MCD_MAIN_COMM_7		equ $FFFF8017				; Main CPU communication register 7
+MCD_MAIN_COMM_8		equ $FFFF8018				; Main CPU communication register 8
+MCD_MAIN_COMM_9		equ $FFFF8019				; Main CPU communication register 9
+MCD_MAIN_COMM_10	equ $FFFF801A				; Main CPU communication register 10
+MCD_MAIN_COMM_11	equ $FFFF801B				; Main CPU communication register 11
+MCD_MAIN_COMM_12	equ $FFFF801C				; Main CPU communication register 12
+MCD_MAIN_COMM_13	equ $FFFF801D				; Main CPU communication register 13
+MCD_MAIN_COMM_14	equ $FFFF801E				; Main CPU communication register 14
+MCD_MAIN_COMM_15	equ $FFFF801F				; Main CPU communication register 15
+MCD_SUB_COMMS		equ $FFFF8020				; Sub CPU communication registers
+MCD_SUB_COMM_0		equ $FFFF8020				; Sub CPU communication register 0
+MCD_SUB_COMM_1		equ $FFFF8021				; Sub CPU communication register 1
+MCD_SUB_COMM_2		equ $FFFF8022				; Sub CPU communication register 2
+MCD_SUB_COMM_3		equ $FFFF8023				; Sub CPU communication register 3
+MCD_SUB_COMM_4		equ $FFFF8024				; Sub CPU communication register 4
+MCD_SUB_COMM_5		equ $FFFF8025				; Sub CPU communication register 5
+MCD_SUB_COMM_6		equ $FFFF8026				; Sub CPU communication register 6
+MCD_SUB_COMM_7		equ $FFFF8027				; Sub CPU communication register 7
+MCD_SUB_COMM_8		equ $FFFF8028				; Sub CPU communication register 8
+MCD_SUB_COMM_9		equ $FFFF8029				; Sub CPU communication register 9
+MCD_SUB_COMM_10		equ $FFFF802A				; Sub CPU communication register 10
+MCD_SUB_COMM_11		equ $FFFF802B				; Sub CPU communication register 11
+MCD_SUB_COMM_12		equ $FFFF802C				; Sub CPU communication register 12
+MCD_SUB_COMM_13		equ $FFFF802D				; Sub CPU communication register 13
+MCD_SUB_COMM_14		equ $FFFF802E				; Sub CPU communication register 14
+MCD_SUB_COMM_15		equ $FFFF802F				; Sub CPU communication register 15
+MCD_IRQ3_TIME		equ $FFFF8031 				; Interrupt 3 timer
+MCD_IRQ_MASK		equ $FFFF8033 				; Interrupt mask
+MCD_FADER		equ $FFFF8034 				; Fader control/Spindle speed
+MCD_CDD_TYPE		equ $FFFF8036 				; CDD data type
+MCD_CDD_CTRL		equ $FFFF8037 				; CDD control
+MCD_CDD_STATUSES	equ $FFFF8038 				; CDD statuses
+MCD_CDD_STATUS_0	equ $FFFF8038 				; CDD status 0
+MCD_CDD_STATUS_1	equ $FFFF8039 				; CDD status 1
+MCD_CDD_STATUS_2	equ $FFFF803A 				; CDD status 2
+MCD_CDD_STATUS_3	equ $FFFF803B 				; CDD status 3
+MCD_CDD_STATUS_4	equ $FFFF803C 				; CDD status 4
+MCD_CDD_STATUS_5	equ $FFFF803D 				; CDD status 5
+MCD_CDD_STATUS_6	equ $FFFF803E 				; CDD status 6
+MCD_CDD_STATUS_7	equ $FFFF803F 				; CDD status 7
+MCD_CDD_STATUS_8	equ $FFFF8040 				; CDD status 8
+MCD_CDD_STATUS_9	equ $FFFF8041 				; CDD status 9
+MCD_CDD_CMDS		equ $FFFF8038 				; CDD commands
+MCD_CDD_CMD_0		equ $FFFF8042 				; CDD command 0
+MCD_CDD_CMD_1		equ $FFFF8043 				; CDD command 1
+MCD_CDD_CMD_2		equ $FFFF8044 				; CDD command 2
+MCD_CDD_CMD_3		equ $FFFF8045 				; CDD command 3
+MCD_CDD_CMD_4		equ $FFFF8046 				; CDD command 4
+MCD_CDD_CMD_5		equ $FFFF8047 				; CDD command 5
+MCD_CDD_CMD_6		equ $FFFF8048 				; CDD command 6
+MCD_CDD_CMD_7		equ $FFFF8049 				; CDD command 7
+MCD_CDD_CMD_8		equ $FFFF804A 				; CDD command 8
+MCD_CDD_CMD_9		equ $FFFF804B 				; CDD command 9
+MCD_1BPP_COLOR		equ $FFFF804C 				; 1BPP conversion color
+MCD_1BPP_IN		equ $FFFF804E 				; 1BPP conversion input data
+MCD_1BPP_OUT		equ $FFFF8050 				; 1BPP conversion output data
+MCD_IMG_CTRL		equ $FFFF8058				; Image render control (2M)
+MCD_IMG_SRC_MAP		equ $FFFF805A 				; Image source map address (2M)
+MCD_IMG_STRIDE		equ $FFFF805C 				; Image buffer stride (2M)
+MCD_IMG_START		equ $FFFF805E 				; Image buffer address (2M)
+MCD_IMG_OFFSET		equ $FFFF8060 				; Image buffer pixel offset (2M)
+MCD_IMG_WIDTH		equ $FFFF8062 				; Image buffer width (2M)
+MCD_IMG_HEIGHT		equ $FFFF8064 				; Image buffer height (2M)
+MCD_IMG_TRACE		equ $FFFF8066 				; Trace table address (2M)
+MCD_SUBCODE_ADDR	equ $FFFF8068 				; Subcode address
+MCD_SUBCODE_DATA	equ $FFFF8100 				; Subcode data
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; BIOS function codes
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-MSCSTOP		EQU	$02
-MSCPAUSEON	EQU	$03
-MSCPAUSEOFF	EQU	$04
-MSCSCANFF	EQU	$05
-MSCSCANFR	EQU	$06
-MSCSCANOFF	EQU	$07
+MSCSTOP			equ $02
+MSCPAUSEON		equ $03
+MSCPAUSEOFF		equ $04
+MSCSCANFF		equ $05
+MSCSCANFR		equ $06
+MSCSCANOFF		equ $07
 
-ROMPAUSEON	EQU	$08
-ROMPAUSEOFF	EQU	$09
+ROMPAUSEON		equ $08
+ROMPAUSEOFF		equ $09
 
-DRVOPEN		EQU	$0A
-DRVINIT		EQU	$10
+DRVOPEN			equ $0A
+DRVINIT			equ $10
 
-MSCPLAY		EQU	$11
-MSCPLAY1	EQU	$12
-MSCPLAYR	EQU	$13
-MSCPLAYT	EQU	$14
-MSCSEEK		EQU	$15
-MSCSEEKT	EQU	$16
+MSCPLAY			equ $11
+MSCPLAY1		equ $12
+MSCPLAYR		equ $13
+MSCPLAYT		equ $14
+MSCSEEK			equ $15
+MSCSEEKT		equ $16
 
-ROMREAD		EQU	$17
-ROMSEEK		EQU	$18
+ROMREAD			equ $17
+ROMSEEK			equ $18
 
-MSCSEEK1	EQU	$19
-TESTENTRY	EQU	$1E
-TESTENTRYLOOP	EQU	$1F
+MSCSEEK1		equ $19
+TESTENTRY		equ $1E
+TESTENTRYLOOP		equ $1F
 
-ROMREADN	EQU	$20
-ROMREADE	EQU	$21
+ROMREADN		equ $20
+ROMREADE		equ $21
 
-CDBCHK		EQU	$80
-CDBSTAT		EQU	$81
-CDBTOCWRITE	EQU	$82
-CDBTOCREAD	EQU	$83
-CDBPAUSE	EQU	$84
+CDBCHK			equ $80
+CDBSTAT			equ $81
+CDBTOCWRITE		equ $82
+CDBTOCREAD		equ $83
+CDBPAUSE		equ $84
 
-FDRSET		EQU	$85
-FDRCHG		EQU	$86
+FDRSET			equ $85
+FDRCHG			equ $86
 
-CDCSTART	EQU	$87
-CDCSTARTP	EQU	$88
-CDCSTOP		EQU	$89
-CDCSTAT		EQU	$8A
-CDCREAD		EQU	$8B
-CDCTRN		EQU	$8C
-CDCACK		EQU	$8D
+CDCSTART		equ $87
+CDCSTARTP		equ $88
+CDCSTOP			equ $89
+CDCSTAT			equ $8A
+CDCREAD			equ $8B
+CDCTRN			equ $8C
+CDCACK			equ $8D
 
-SCDINIT		EQU	$8E
-SCDSTART	EQU	$8F
-SCDSTOP		EQU	$90
-SCDSTAT		EQU	$91
-SCDREAD		EQU	$92
-SCDPQ		EQU	$93
-SCDPQL		EQU	$94
+SCDINIT			equ $8E
+SCDSTART		equ $8F
+SCDSTOP			equ $90
+SCDSTAT			equ $91
+SCDREAD			equ $92
+SCDPQ			equ $93
+SCDPQL			equ $94
 
-LEDSET		EQU	$95
+LEDSET			equ $95
 
-CDCSETMODE	EQU	$96
+CDCSETMODE		equ $96
 
-WONDERREQ	EQU	$97
-WONDERCHK	EQU	$98
+WONDERREQ		equ $97
+WONDERCHK		equ $98
 
-CBTINIT		EQU	$00
-CBTINT		EQU	$01
-CBTOPENDISC	EQU	$02
-CBTOPENSTAT	EQU	$03
-CBTCHKDISC	EQU	$04
-CBTCHKSTAT	EQU	$05
-CBTIPDISC	EQU	$06
-CBTIPSTAT	EQU	$07
-CBTSPDISC	EQU	$08
-CBTSPSTAT	EQU	$09
+CBTINIT			equ $00
+CBTINT			equ $01
+CBTOPENDISC		equ $02
+CBTOPENSTAT		equ $03
+CBTCHKDISC		equ $04
+CBTCHKSTAT		equ $05
+CBTIPDISC		equ $06
+CBTIPSTAT		equ $07
+CBTSPDISC		equ $08
+CBTSPSTAT		equ $09
 
-BRMINIT		EQU	$00
-BRMSTAT		EQU	$01
-BRMSERCH	EQU	$02
-BRMREAD		EQU	$03
-BRMWRITE	EQU	$04
-BRMDEL		EQU	$05
-BRMFORMAT	EQU	$06
-BRMDIR		EQU	$07
-BRMVERIFY	EQU	$08
+BRMINIT			equ $00
+BRMSTAT			equ $01
+BRMSERCH		equ $02
+BRMREAD			equ $03
+BRMWRITE		equ $04
+BRMDEL			equ $05
+BRMFORMAT		equ $06
+BRMDIR			equ $07
+BRMVERIFY		equ $08
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; BIOS entry points
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-_ADRERR		EQU	$005F40
-_BOOTSTAT	EQU	$005EA0
-_BURAM		EQU	$005F16
-_CDBIOS		EQU	$005F22
-_CDBOOT		EQU	$005F1C
-_CDSTAT		EQU	$005E80
-_CHKERR		EQU	$005F52
-_CODERR		EQU	$005F46
-_DEVERR		EQU	$005F4C
-_LEVEL1		EQU	$005F76
-_LEVEL2		EQU	$005F7C
-_LEVEL3		EQU	$005F82
-_LEVEL4		EQU	$005F88
-_LEVEL5		EQU	$005F8E
-_LEVEL6		EQU	$005F94
-_LEVEL7		EQU	$005F9A
-_NOCOD0		EQU	$005F6A
-_NOCOD1		EQU	$005F70
-_SETJMPTBL	EQU	$005F0A
-_SPVERR		EQU	$005F5E
-_TRACE		EQU	$005F64
-_TRAP00		EQU	$005FA0
-_TRAP01		EQU	$005FA6
-_TRAP02		EQU	$005FAC
-_TRAP03		EQU	$005FB2
-_TRAP04		EQU	$005FB8
-_TRAP05		EQU	$005FBE
-_TRAP06		EQU	$005FC4
-_TRAP07		EQU	$005FCA
-_TRAP08		EQU	$005FD0
-_TRAP09		EQU	$005FD6
-_TRAP10		EQU	$005FDC
-_TRAP11		EQU	$005FE2
-_TRAP12		EQU	$005FE8
-_TRAP13		EQU	$005FEE
-_TRAP14		EQU	$005FF4
-_TRAP15		EQU	$005FFA
-_TRPERR		EQU	$005F58
-_USERCALL0	EQU	$005F28
-_USERCALL1	EQU	$005F2E
-_USERCALL2	EQU	$005F34
-_USERCALL3	EQU	$005F3A
-_USERMODE	EQU	$005EA6
-_WAITVSYNC	EQU	$005F10
+_ADRERR			equ $005F40
+_BOOTSTAT		equ $005EA0
+_BURAM			equ $005F16
+_CDBIOS			equ $005F22
+_CDBOOT			equ $005F1C
+_CDSTAT			equ $005E80
+_CHKERR			equ $005F52
+_CODERR			equ $005F46
+_DEVERR			equ $005F4C
+_LEVEL1			equ $005F76
+_LEVEL2			equ $005F7C
+_LEVEL3			equ $005F82
+_LEVEL4			equ $005F88
+_LEVEL5			equ $005F8E
+_LEVEL6			equ $005F94
+_LEVEL7			equ $005F9A
+_NOCOD0			equ $005F6A
+_NOCOD1			equ $005F70
+_SETJMPTBL		equ $005F0A
+_SPVERR			equ $005F5E
+_TRACE			equ $005F64
+_TRAP00			equ $005FA0
+_TRAP01			equ $005FA6
+_TRAP02			equ $005FAC
+_TRAP03			equ $005FB2
+_TRAP04			equ $005FB8
+_TRAP05			equ $005FBE
+_TRAP06			equ $005FC4
+_TRAP07			equ $005FCA
+_TRAP08			equ $005FD0
+_TRAP09			equ $005FD6
+_TRAP10			equ $005FDC
+_TRAP11			equ $005FE2
+_TRAP12			equ $005FE8
+_TRAP13			equ $005FEE
+_TRAP14			equ $005FF4
+_TRAP15			equ $005FFA
+_TRPERR			equ $005F58
+_USERCALL0		equ $005F28
+_USERCALL1		equ $005F2E
+_USERCALL2		equ $005F34
+_USERCALL3		equ $005F3A
+_USERMODE		equ $005EA6
+_WAITVSYNC		equ $005F10
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

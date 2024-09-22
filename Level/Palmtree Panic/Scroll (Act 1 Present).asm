@@ -1,51 +1,51 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Palmtree Panic Act 1 Present level scrolling/drawing
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Get level size and start position
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LevelSizeLoad:
 	moveq	#0,d0				; Clear unused variables
-	move.b	d0,unusedF740.w
-	move.b	d0,unusedF741.w
-	move.b	d0,unusedF746.w
-	move.b	d0,unusedF748.w
-	move.b	d0,eventRoutine.w		; Clear level event routine
+	move.b	d0,unused_f740
+	move.b	d0,unused_f741
+	move.b	d0,unused_f746
+	move.b	d0,unused_f748
+	move.b	d0,event_routine		; Clear level event routine
 
 	lea	CamBounds,a0			; Prepare camera boundary information
 	move.w	(a0)+,d0			; Get unused word
-	move.w	d0,unusedF730.w
+	move.w	d0,unused_f730
 	move.l	(a0)+,d0			; Get left and right boundaries
-	move.l	d0,leftBound.w
-	move.l	d0,destLeftBound.w
+	move.l	d0,left_bound
+	move.l	d0,target_left_bound
 	move.l	(a0)+,d0			; Get top and bottom boundaries
-	move.l	d0,topBound.w
-	move.l	d0,destTopBound.w
-	move.w	leftBound.w,d0			; Get left boundary + $240
+	move.l	d0,top_bound
+	move.l	d0,target_top_bound
+	move.w	left_bound,d0			; Get left boundary + $240
 	addi.w	#$240,d0
-	move.w	d0,leftBound3.w
-	move.w	#$1010,horizBlkCrossed.w	; Initialize horizontal block crossed flags
+	move.w	d0,left_bound_unknown
+	move.w	#$1010,map_block_cross_fg_x	; Initialize horizontal block crossed flags
 	move.w	(a0)+,d0			; Get camera Y center
-	move.w	d0,camYCenter.w
-	move.w	#320/2,camXCenter.w		; Get camera X center
+	move.w	d0,camera_y_center
+	move.w	#320/2,camera_x_center		; Get camera X center
 
 	bra.w	LevelSizeLoad_StartPos
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Camera boundaries
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CamBounds:
 	dc.w	4, 0, $2897, 0, $710, $60
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Leftover ending demo start positions from Sonic 1
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 EndingStLocsS1:
 	dc.w	$50, $3B0
@@ -57,17 +57,17 @@ EndingStLocsS1:
 	dc.w	$1B0, $72C
 	dc.w	$1400, $2AC
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LevelSizeLoad_StartPos:
-	tst.b	spawnMode			; Is the player being spawned at the beginning?
+	tst.b	spawn_mode			; Is the player being spawned at the beginning?
 	beq.s	.DefaultStart			; If so, branch
 
 	jsr	LoadCheckpointData		; Load checkpoint data
 	moveq	#0,d0				; Get player position
 	moveq	#0,d1
-	move.w	objPlayerSlot+oX.w,d1
-	move.w	objPlayerSlot+oY.w,d0
+	move.w	player_object+obj.x,d1
+	move.w	player_object+obj.y,d0
 	bpl.s	.SkipCap			; If the Y position is positive, branch
 	moveq	#0,d0				; Cap the Y position at 0 if negative
 
@@ -78,10 +78,10 @@ LevelSizeLoad_StartPos:
 	lea	LevelStartLoc,a1		; Prepare level start position
 	moveq	#0,d1				; Get starting X position
 	move.w	(a1)+,d1
-	move.w	d1,objPlayerSlot+oX.w
+	move.w	d1,player_object+obj.x
 	moveq	#0,d0				; Get starting Y position
 	move.w	(a1),d0
-	move.w	d0,objPlayerSlot+oY.w
+	move.w	d0,player_object+obj.y
 
 .SetupCamera:
 	subi.w	#320/2,d1			; Get camera X position
@@ -89,52 +89,52 @@ LevelSizeLoad_StartPos:
 	moveq	#0,d1				; If it does, cap at 0
 
 .SkipXLeftBnd:
-	move.w	rightBound.w,d2			; Is the camera past the right boundary?
+	move.w	right_bound,d2			; Is the camera past the right boundary?
 	cmp.w	d2,d1
 	bcs.s	.SkipXRightBnd			; If not, branch
 	move.w	d2,d1				; If so, cap it
 
 .SkipXRightBnd:
-	move.w	d1,cameraX.w			; Set camera X position
+	move.w	d1,camera_fg_x			; Set camera X position
 
 	subi.w	#$60,d0				; Get camera Y position
 	bcc.s	.SkipYTopBnd			; If it doesn't need to be capped, branch
 	moveq	#0,d0				; If it does, cap at 0
 
 .SkipYTopBnd:
-	cmp.w	bottomBound.w,d0		; Is the camera past the bottom boundary?
+	cmp.w	bottom_bound,d0			; Is the camera past the bottom boundary?
 	blt.s	.SkipYBtmBnd			; If not, branch
-	move.w	bottomBound.w,d0		; If so, cap it
+	move.w	bottom_bound,d0			; If so, cap it
 
 .SkipYBtmBnd:
-	move.w	d0,cameraY.w			; Set camera Y position
+	move.w	d0,camera_fg_y			; Set camera Y position
 
 	bsr.w	InitLevelScroll			; Initialize level scrolling
 
 	lea	SpecChunks,a1			; Get loop chunks
-	move.l	(a1),specialChunks.w
+	move.l	(a1),special_map_chunks
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Start location
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LevelStartLoc:
 	incbin	"Level/Palmtree Panic/Data/Start Position (Act 1 Present).bin"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Special chunk IDs
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 SpecChunks:
 	dc.b	$7F, $7F, $7F, $7F
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Initialize level scrolling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitLevelScroll:
-	cmpi.w	#$800,objPlayerSlot+oX.w	; Has the player gone past the first 3D ramp?
+	cmpi.w	#$800,player_object+obj.x	; Has the player gone past the first 3D ramp?
 	bcs.s	.No3DRamp			; If not, branch
 	subi.w	#$1E0,d0			; Get background Y position after first 3D ramp
 	bcs.s	.ChgDir
@@ -145,25 +145,25 @@ InitLevelScroll:
 
 .No3DRamp:
 	swap	d0				; Set background Y positions
-	move.l	d0,cameraBgY.w
+	move.l	d0,camera_bg_y
 	swap	d0
-	move.w	d0,cameraBg2Y.w
-	move.w	d0,cameraBg3Y.w
+	move.w	d0,camera_bg2_y
+	move.w	d0,camera_bg3_y
 
 	lsr.w	#1,d1				; Get background X positions
-	move.w	d1,cameraBgX.w
+	move.w	d1,camera_bg_x
 	lsr.w	#2,d1
 	move.w	d1,d2
 	add.w	d2,d2
 	add.w	d1,d2
-	move.w	d2,cameraBg3X.w
+	move.w	d2,camera_bg3_x
 	lsr.w	#1,d1
 	move.w	d1,d2
 	add.w	d2,d2
 	add.w	d1,d2
-	move.w	d2,cameraBg2X.w
+	move.w	d2,camera_bg2_x
 
-	lea	scrlSectSpeeds,a2		; Clear cloud speeds
+	lea	scroll_section_speeds,a2	; Clear cloud speeds
 	moveq	#$12,d6
 
 .ClearSpeeds:
@@ -171,20 +171,20 @@ InitLevelScroll:
 	dbf	d6,.ClearSpeeds
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Handle level scrolling
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LevelScroll:
-	tst.b	scrollLock.w			; Is scrolling locked?
+	tst.b	scroll_lock			; Is scrolling locked?
 	beq.s	.DoScroll			; If not, branch
 	rts
 
 .DoScroll:
-	clr.w	scrollFlags.w			; Clear scroll flags
-	clr.w	scrollFlagsBg.w
-	clr.w	scrollFlagsBg2.w
-	clr.w	scrollFlagsBg3.w
+	clr.w	scroll_flags_fg			; Clear scroll flags
+	clr.w	scroll_flags_bg
+	clr.w	scroll_flags_bg2
+	clr.w	scroll_flags_bg3
 
 	if REGION=USA
 		bsr.w	RunLevelEvents		; Run level events
@@ -196,29 +196,29 @@ LevelScroll:
 		bsr.w	RunLevelEvents		; Run level events
 	endif
 
-	move.w	cameraY.w,vscrollScreen.w	; Update VScroll values
-	move.w	cameraBgY.w,vscrollScreen+2.w
+	move.w	camera_fg_y,vscroll_screen	; Update VScroll values
+	move.w	camera_bg_y,vscroll_screen+2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	moveq	#0,d5				; Reset scroll speed offset
-	btst	#1,objPlayerSlot+oPlayerCtrl.w	; Is the player on a 3D ramp?
+	btst	#1,player_object+oPlayerCtrl	; Is the player on a 3D ramp?
 	beq.s	.GotSpeed			; If not, branch
-	tst.w	scrollXDiff.w			; Is the camera scrolling horizontally?
+	tst.w	scroll_x_diff			; Is the camera scrolling horizontally?
 	beq.s	.GotSpeed			; If not, branch
-	move.w	objPlayerSlot+oXVel.w,d5	; Set scroll speed offset to the player's X velocity
+	move.w	player_object+obj.x_speed,d5	; Set scroll speed offset to the player's X velocity
 	ext.l	d5
 	asl.l	#8,d5
 
 .GotSpeed:
-	move.w	scrollXDiff.w,d4		; Set scroll offset and flags for the clouds
+	move.w	scroll_x_diff,d4		; Set scroll offset and flags for the clouds
 	ext.l	d4
 	asl.l	#5,d4
 	add.l	d5,d4
 	moveq	#6,d6
 	bsr.w	SetHorizScrollFlagsBG3
 
-	move.w	scrollXDiff.w,d4		; Set scroll offset and flags for the mountains
+	move.w	scroll_x_diff,d4		; Set scroll offset and flags for the mountains
 	ext.l	d4
 	asl.l	#4,d4
 	move.l	d4,d3
@@ -229,17 +229,17 @@ LevelScroll:
 	moveq	#4,d6
 	bsr.w	SetHorizScrollFlagsBG2
 
-	lea	deformBuffer.w,a1		; Prepare deformation buffer
+	lea	deform_buffer,a1		; Prepare deformation buffer
 
-	move.w	scrollXDiff.w,d4		; Set scroll offset and flags for the bushes and water
+	move.w	scroll_x_diff,d4		; Set scroll offset and flags for the bushes and water
 	ext.l	d4
 	asl.l	#7,d4
 	add.l	d5,d4
 	moveq	#2,d6
 	bsr.w	SetHorizScrollFlagsBG
 
-	move.w	cameraY.w,d0			; Get background Y position
-	cmpi.w	#$800,objPlayerSlot+oX.w	; Has the player gone past the first 3D ramp?
+	move.w	camera_fg_y,d0			; Get background Y position
+	cmpi.w	#$800,player_object+obj.x	; Has the player gone past the first 3D ramp?
 	bcs.s	.No3DRamp			; If not, branch
 	subi.w	#$1E0,d0			; Get background Y position past the first 3D ramp
 	bcs.s	.ChgDir
@@ -251,17 +251,17 @@ LevelScroll:
 .No3DRamp:
 	bsr.w	SetVertiScrollFlagsBG2		; Set BG2 vertical scroll flags
 
-	move.w	cameraBgY.w,vscrollScreen+2.w	; Update background Y positions
-	move.w	cameraBgY.w,cameraBg2Y.w
-	move.w	cameraBgY.w,cameraBg3Y.w
+	move.w	camera_bg_y,vscroll_screen+2	; Update background Y positions
+	move.w	camera_bg_y,camera_bg2_y
+	move.w	camera_bg_y,camera_bg3_y
 
-	move.b	scrollFlagsBg3.w,d0		; Combine background scroll flags for the level drawing routine
-	or.b	scrollFlagsBg2.w,d0
-	or.b	d0,scrollFlagsBg.w
-	clr.b	scrollFlagsBg3.w
-	clr.b	scrollFlagsBg2.w
+	move.b	scroll_flags_bg3,d0		; Combine background scroll flags for the level drawing routine
+	or.b	scroll_flags_bg2,d0
+	or.b	d0,scroll_flags_bg
+	clr.b	scroll_flags_bg3
+	clr.b	scroll_flags_bg2
 
-	lea	scrlSectSpeeds,a2		; Set speeds for the clouds
+	lea	scroll_section_speeds,a2	; Set speeds for the clouds
 	addi.l	#$10000,(a2)+
 	addi.l	#$E000,(a2)+
 	addi.l	#$C000,(a2)+
@@ -282,17 +282,17 @@ LevelScroll:
 	addi.l	#$4000,(a2)+
 	addi.l	#$2000,(a2)+
 
-	move.w	cameraX.w,d0			; Prepare scroll buffer entry
+	move.w	camera_fg_x,d0			; Prepare scroll buffer entry
 	neg.w	d0
 	swap	d0
 
-	lea	scrlSectSpeeds,a2		; Prepare cloud speeds
+	lea	scroll_section_speeds,a2	; Prepare cloud speeds
 	moveq	#10-1,d6			; Number of cloud sections
 
 .CloudsScroll:
 	move.l	(a2)+,d1			; Get cloud section scroll offset
 	swap	d1
-	add.w	cameraBg3X.w,d1
+	add.w	camera_bg3_x,d1
 	neg.w	d1
 
 	moveq	#0,d5				; Get number of lines in this section
@@ -304,7 +304,7 @@ LevelScroll:
 	dbf	d5,.CloudsScrollSect		; Loop until this section is stored
 	dbf	d6,.CloudsScroll		; Loop until the clouds are finished being processed
 
-	move.w	cameraBg2X.w,d0			; Scroll top mountains
+	move.w	camera_bg2_x,d0			; Scroll top mountains
 	neg.w	d0
 	moveq	#20-1,d6
 
@@ -312,7 +312,7 @@ LevelScroll:
 	move.w	d0,(a1)+
 	dbf	d6,.ScrollMountains
 
-	move.w	cameraBgX.w,d0			; Scroll top bushes
+	move.w	camera_bg_x,d0			; Scroll top bushes
 	neg.w	d0
 	moveq	#4-1,d6
 
@@ -320,7 +320,7 @@ LevelScroll:
 	move.w	d0,(a1)+
 	dbf	d6,.ScrollBushes
 
-	move.w	cameraBgX.w,d0			; Scroll water (top and upside down)
+	move.w	camera_bg_x,d0			; Scroll water (top and upside down)
 	neg.w	d0
 	move.w	#(28*2)-1,d6
 
@@ -328,7 +328,7 @@ LevelScroll:
 	move.w	d0,(a1)+
 	dbf	d6,.ScrollWater
 
-	move.w	cameraBgX.w,d0			; Scroll upside down bushes
+	move.w	camera_bg_x,d0			; Scroll upside down bushes
 	neg.w	d0
 	moveq	#4-1,d6
 
@@ -336,7 +336,7 @@ LevelScroll:
 	move.w	d0,(a1)+
 	dbf	d6,.ScrollUpsideDownBushes
 
-	move.w	cameraBg2X.w,d0			; Scroll upside down mountains
+	move.w	camera_bg2_x,d0			; Scroll upside down mountains
 	neg.w	d0
 	moveq	#20-1,d6
 
@@ -349,7 +349,7 @@ LevelScroll:
 .UpsideDownCloudsScroll:
 	move.l	(a2)+,d1			; Get cloud section scroll offset
 	swap	d1
-	add.w	cameraBg3X.w,d1
+	add.w	camera_bg3_x,d1
 	neg.w	d1
 
 	moveq	#0,d5				; Get number of lines in this section
@@ -361,7 +361,7 @@ LevelScroll:
 	dbf	d5,.UpsideDownCloudsScrollSect	; Loop until this section is stored
 	dbf	d6,.UpsideDownCloudsScroll	; Loop until the clouds are finished being processed
 
-	move.w	cameraBg2X.w,d0			; Scroll bottom mountains
+	move.w	camera_bg2_x,d0			; Scroll bottom mountains
 	neg.w	d0
 	moveq	#20-1,d6
 
@@ -369,7 +369,7 @@ LevelScroll:
 	move.w	d0,(a1)+
 	dbf	d6,.ScrollBtmMountains
 
-	move.w	cameraBgX.w,d0			; Scroll bottom bushes
+	move.w	camera_bg_x,d0			; Scroll bottom bushes
 	neg.w	d0
 	moveq	#4-1,d6
 
@@ -377,7 +377,7 @@ LevelScroll:
 	move.w	d0,(a1)+
 	dbf	d6,.ScrollBtmBushes
 
-	move.w	cameraBgX.w,d0			; Scroll bottom water
+	move.w	camera_bg_x,d0			; Scroll bottom water
 	neg.w	d0
 	move.w	#16-1,d6
 
@@ -385,10 +385,10 @@ LevelScroll:
 	move.w	d0,(a1)+
 	dbf	d6,.ScrollBtmWater
 
-	lea	hscroll.w,a1			; Prepare horizontal scroll buffer
-	lea	deformBuffer.w,a2		; Prepare deformation buffer
+	lea	hscroll,a1			; Prepare horizontal scroll buffer
+	lea	deform_buffer,a2		; Prepare deformation buffer
 
-	move.w	cameraBgY.w,d0			; Get background Y position
+	move.w	camera_bg_y,d0			; Get background Y position
 	move.w	d0,d2
 	move.w	d0,d4
 	andi.w	#$7F8,d0
@@ -398,7 +398,7 @@ LevelScroll:
 	lea	WaterDeformSects,a3		; Prepare water deformation section information
 	bra.w	ApplyBGHScroll			; Apply HScroll
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 CloudSectSizes:					; Top cloud section sizes
 	dc.b	2-1
@@ -429,7 +429,7 @@ WaterDeformSects:				; Water deform section positions and sizes
 	dc.w	$780, $80
 	dc.w	$7FFF, $360
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ApplyBGHScroll:
 	cmp.w	(a3),d4				; Is the background scrolled past the current water section?
@@ -471,8 +471,8 @@ ApplyBGHScroll:
 	beq.s	.NextSection
 
 	move.w	#224,d3				; Get base water deformation speed
-	move.w	cameraBgX.w,d0
-	move.w	cameraX.w,d2
+	move.w	camera_bg_x,d0
+	move.w	camera_fg_x,d2
 	sub.w	d0,d2
 	ext.l	d2
 	asl.l	#8,d2
@@ -534,44 +534,44 @@ ApplyBGHScroll:
 	move.w	d4,d2				; Start scrolling regular blocks of lines again
 	bra.w	.ScrollUnmodified
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll the camera horizontally
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ScrollCamX:
-	move.w	cameraX.w,d4			; Handle camera movement
+	move.w	camera_fg_x,d4			; Handle camera movement
 	bsr.s	MoveScreenHoriz
 
-	move.w	cameraX.w,d0			; Check if a block has been crossed and set flags accordingly
+	move.w	camera_fg_x,d0			; Check if a block has been crossed and set flags accordingly
 	andi.w	#$10,d0
-	move.b	horizBlkCrossed.w,d1
+	move.b	map_block_cross_fg_x,d1
 	eor.b	d1,d0
 	bne.s	.End
-	eori.b	#$10,horizBlkCrossed.w
-	move.w	cameraX.w,d0
+	eori.b	#$10,map_block_cross_fg_x
+	move.w	camera_fg_x,d0
 	sub.w	d4,d0
 	bpl.s	.Forward
-	bset	#2,scrollFlags.w
+	bset	#2,scroll_flags_fg
 	rts
 
 .Forward:
-	bset	#3,scrollFlags.w
+	bset	#3,scroll_flags_fg
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 MoveScreenHoriz:
-	move.w	objPlayerSlot+oX.w,d0		; Get the distance scrolled
-	sub.w	cameraX.w,d0
-	sub.w	camXCenter.w,d0
+	move.w	player_object+obj.x,d0		; Get the distance scrolled
+	sub.w	camera_fg_x,d0
+	sub.w	camera_x_center,d0
 	beq.s	.AtDest				; If not scrolled at all, branch
 	bcs.s	MoveScreenHoriz_CamBehind	; If scrolled to the left, branch
 	bra.s	MoveScreenHoriz_CamAhead	; If scrolled to the right, branch
 
 .AtDest:
-	clr.w	scrollXDiff.w			; Didn't scroll at all
+	clr.w	scroll_x_diff			; Didn't scroll at all
 	rts
 
 MoveScreenHoriz_CamAhead:
@@ -580,17 +580,17 @@ MoveScreenHoriz_CamAhead:
 	move.w	#16,d0				; Cap at 16 pixels
 
 .CapSpeed:
-	add.w	cameraX.w,d0			; Have we gone past the right boundary?
-	cmp.w	rightBound.w,d0
+	add.w	camera_fg_x,d0			; Have we gone past the right boundary?
+	cmp.w	right_bound,d0
 	blt.s	MoveScreenHoriz_MoveCam		; If not, branch
-	move.w	rightBound.w,d0			; Cap at the right boundary
+	move.w	right_bound,d0			; Cap at the right boundary
 
 MoveScreenHoriz_MoveCam:
 	move.w	d0,d1				; Update camera position
-	sub.w	cameraX.w,d1
+	sub.w	camera_fg_x,d1
 	asl.w	#8,d1
-	move.w	d0,cameraX.w
-	move.w	d1,scrollXDiff.w		; Get scroll delta
+	move.w	d0,camera_fg_x
+	move.w	d1,scroll_x_diff		; Get scroll delta
 	rts
 
 MoveScreenHoriz_CamBehind:
@@ -599,18 +599,18 @@ MoveScreenHoriz_CamBehind:
 	move.w	#-16,d0				; Cap at 16 pixels
 
 .CapSpeed:
-	add.w	cameraX.w,d0			; Have we gone past the left boundary?
-	cmp.w	leftBound.w,d0
+	add.w	camera_fg_x,d0			; Have we gone past the left boundary?
+	cmp.w	left_bound,d0
 	bgt.s	MoveScreenHoriz_MoveCam		; If not, branch
-	move.w	leftBound.w,d0			; Cap at the left boundary
+	move.w	left_bound,d0			; Cap at the left boundary
 	bra.s	MoveScreenHoriz_MoveCam
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Shift the camera horizontally
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d0.w - Scroll direction
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ShiftCameraHoriz:
 	tst.w	d0				; Are we shifting to the right?
@@ -622,48 +622,48 @@ ShiftCameraHoriz:
 	move.w	#2,d0				; Shift to the right
 	bra.s	MoveScreenHoriz_CamAhead
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Scroll the camera vertically
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ScrollCamY:
 	moveq	#0,d1				; Get how far we have scrolled vertically
-	move.w	objPlayerSlot+oY.w,d0
-	sub.w	cameraY.w,d0
-	btst	#2,objPlayerSlot+oFlags.w	; Is the player rolling?
+	move.w	player_object+obj.y,d0
+	sub.w	camera_fg_y,d0
+	btst	#2,player_object+obj.flags	; Is the player rolling?
 	beq.s	.NoRoll				; If not, branch
 	subq.w	#5,d0				; Account for the different height
 
 .NoRoll:
-	btst	#1,objPlayerSlot+oFlags.w	; Is the player in the air?
+	btst	#1,player_object+obj.flags	; Is the player in the air?
 	beq.s	.OnGround			; If not, branch
 
 	addi.w	#$20,d0
-	sub.w	camYCenter.w,d0
+	sub.w	camera_y_center,d0
 	bcs.s	.DoScrollFast			; If the player is above the boundary, scroll to catch up
 	subi.w	#$20*2,d0
 	bcc.s	.DoScrollFast			; If the player is below the boundary, scroll to catch up
 
-	tst.b	btmBoundShift.w			; Is the bottom boundary shifting?
+	tst.b	bottom_bound_shift			; Is the bottom boundary shifting?
 	bne.s	.StopCam			; If it is, branch
 	bra.s	.DoNotScroll
 
 .OnGround:
-	sub.w	camYCenter.w,d0			; Subtract center position
+	sub.w	camera_y_center,d0			; Subtract center position
 	bne.s	.CamMoving			; If the player has moved, scroll to catch up
-	tst.b	btmBoundShift.w			; Is the bottom boundary shifting?
+	tst.b	bottom_bound_shift			; Is the bottom boundary shifting?
 	bne.s	.StopCam			; If it is, branch
 
 .DoNotScroll:
-	clr.w	scrollYDiff.w			; Didn't scroll at all
+	clr.w	scroll_y_diff			; Didn't scroll at all
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CamMoving:
-	cmpi.w	#$60,camYCenter.w		; Is the camera center normal?
+	cmpi.w	#$60,camera_y_center		; Is the camera center normal?
 	bne.s	.DoScrollSlow			; If not, branch
-	move.w	objPlayerSlot+oPlayerGVel.w,d1	; Get the player's ground velocity
+	move.w	player_object+oPlayerGVel,d1	; Get the player's ground velocity
 	bpl.s	.DoScrollMedium
 	neg.w	d1
 
@@ -693,16 +693,16 @@ ScrollCamY:
 	blt.s	.MovingUp			; If so, move the camera at the capped speed
 	bra.s	.GotCamSpeed			; Otherwise, move the camera at the player's speed
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .StopCam:
 	moveq	#0,d0				; Stop the camera
-	move.b	d0,btmBoundShift.w		; Clear bottom boundary shifting flag
+	move.b	d0,bottom_bound_shift		; Clear bottom boundary shifting flag
 
 .GotCamSpeed:
 	moveq	#0,d1
 	move.w	d0,d1				; Get position difference
-	add.w	cameraY.w,d1			; Add old camera Y position
+	add.w	camera_fg_y,d1			; Add old camera Y position
 	tst.w	d0				; Is the camera scrolling down?
 	bpl.w	.ChkBottom			; If so, branch
 	bra.w	.ChkTop
@@ -711,118 +711,118 @@ ScrollCamY:
 	neg.w	d1				; Make the value negative
 	ext.l	d1
 	asl.l	#8,d1				; Move this into the upper word to align with the camera's Y position variable
-	add.l	cameraY.w,d1			; Shift the camera over
+	add.l	camera_fg_y,d1			; Shift the camera over
 	swap	d1				; Get the proper Y position
 
 .ChkTop:
-	cmp.w	topBound.w,d1			; Is the new position past the top boundary?
+	cmp.w	top_bound,d1			; Is the new position past the top boundary?
 	bgt.s	.MoveCam			; If not, branch
 	cmpi.w	#-$100,d1			; Is Y wrapping enabled?
 	bgt.s	.CapTop				; If not, branch
 	andi.w	#$7FF,d1			; Apply wrapping
-	andi.w	#$7FF,objPlayerSlot+oY.w
-	andi.w	#$7FF,cameraY.w
-	andi.w	#$3FF,cameraBgY.w
+	andi.w	#$7FF,player_object+obj.y
+	andi.w	#$7FF,camera_fg_y
+	andi.w	#$3FF,camera_bg_y
 	bra.s	.MoveCam
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CapTop:
-	move.w	topBound.w,d1			; Cap at the top boundary
+	move.w	top_bound,d1			; Cap at the top boundary
 	bra.s	.MoveCam
 
 .MovingDown:
 	ext.l	d1
 	asl.l	#8,d1				; Move this into the upper word to align with the camera's Y position variable
-	add.l	cameraY.w,d1			; Shift the camera over
+	add.l	camera_fg_y,d1			; Shift the camera over
 	swap	d1				; Get the proper Y position
 
 .ChkBottom:
-	cmp.w	bottomBound.w,d1		; Is the new position past the bottom boundary?
+	cmp.w	bottom_bound,d1			; Is the new position past the bottom boundary?
 	blt.s	.MoveCam			; If not, branch
 	subi.w	#$800,d1			; Should we wrap?
 	bcs.s	.CapBottom			; If not, branch
-	andi.w	#$7FF,objPlayerSlot+oY.w	; Apply wrapping
-	subi.w	#$800,cameraY.w
-	andi.w	#$3FF,cameraBgY.w
+	andi.w	#$7FF,player_object+obj.y	; Apply wrapping
+	subi.w	#$800,camera_fg_y
+	andi.w	#$3FF,camera_bg_y
 	bra.s	.MoveCam
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CapBottom:
-	move.w	bottomBound.w,d1		; Cap at the bottom boundary
+	move.w	bottom_bound,d1			; Cap at the bottom boundary
 
 .MoveCam:
-	move.w	cameraY.w,d4			; Update the camera position and get the scroll delta
+	move.w	camera_fg_y,d4			; Update the camera position and get the scroll delta
 	swap	d1
 	move.l	d1,d3
-	sub.l	cameraY.w,d3
+	sub.l	camera_fg_y,d3
 	ror.l	#8,d3
-	move.w	d3,scrollYDiff.w
-	move.l	d1,cameraY.w
+	move.w	d3,scroll_y_diff
+	move.l	d1,camera_fg_y
 
-	move.w	cameraY.w,d0			; Check if a block has been crossed and set flags accordingly
+	move.w	camera_fg_y,d0			; Check if a block has been crossed and set flags accordingly
 	andi.w	#$10,d0
-	move.b	vertiBlkCrossed.w,d1
+	move.b	map_block_cross_fg_y,d1
 	eor.b	d1,d0
 	bne.s	.End
-	eori.b	#$10,vertiBlkCrossed.w
-	move.w	cameraY.w,d0
+	eori.b	#$10,map_block_cross_fg_y
+	move.w	camera_fg_y,d0
 	sub.w	d4,d0
 	bpl.s	.Downward
-	bset	#0,scrollFlags.w
+	bset	#0,scroll_flags_fg
 	rts
 
 .Downward:
-	bset	#1,scrollFlags.w
+	bset	#1,scroll_flags_fg
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	include	"Level/Scroll Flag Set.asm"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Update level background drawing
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawLevelBG:
 	lea	VDPCTRL,a5			; Prepare VDP ports
 	lea	VDPDATA,a6
 
-	lea	scrollFlagsBg.w,a2		; Update background section 1
-	lea	cameraBgX.w,a3
-	lea	levelLayout+$40.w,a4
+	lea	scroll_flags_bg,a2		; Update background section 1
+	lea	camera_bg_x,a3
+	lea	map_layout+$40,a4
 	move.w	#$6000,d2
 	bsr.w	DrawLevelBG1
 
-	lea	scrollFlagsBg2.w,a2		; Update background section 2
-	lea	cameraBg2X.w,a3
+	lea	scroll_flags_bg2,a2		; Update background section 2
+	lea	camera_bg2_x,a3
 	bra.w	DrawLevelBG2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Update level drawing
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawLevel:
 	lea	VDPCTRL,a5			; Prepare VDP ports
 	lea	VDPDATA,a6
 
-	lea	scrollFlagsBgCopy,a2		; Update background
-	lea	camXBgCopy,a3
-	lea	levelLayout+$40.w,a4
+	lea	scroll_flags_bg_copy,a2		; Update background
+	lea	camera_bg_x_copy,a3
+	lea	map_layout+$40,a4
 	move.w	#$6000,d2
 	bsr.w	DrawLevelBG1
 
-	lea	scrollFlagsCopy,a2		; Update foreground
-	lea	camXCopy,a3
-	lea	levelLayout.w,a4
+	lea	scroll_flags_fg_copy,a2		; Update foreground
+	lea	camera_fg_x_copy,a3
+	lea	map_layout,a4
 	move.w	#$4000,d2
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw foreground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Base high VDP write command
 ;	a2.l - Scroll flags pointer
@@ -830,7 +830,7 @@ DrawLevel:
 ;	a4.l - Layout data pointer
 ;	a5.l - VDP control port
 ;	a6.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawLevelFG:
 	tst.b	(a2)				; Are any scroll flags set?
@@ -878,9 +878,9 @@ DrawLevelFG:
 .End:
 	rts
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw background section #1
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Base high VDP write command
 ;	a2.l - Scroll flags pointer
@@ -888,7 +888,7 @@ DrawLevelFG:
 ;	a4.l - Layout data pointer
 ;	a5.l - VDP control port
 ;	a6.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawLevelBG1:
 	lea	BGCameraSectIDs,a0		; Prepare background section camera IDs
@@ -904,7 +904,7 @@ DrawLevelBG1:
 	move.w	#224,d4				; Prepare to draw a row at the bottom
 
 .GotRowPos:
-	move.w	cameraBgY.w,d0			; Get which camera the current block section is using
+	move.w	camera_bg_y,d0			; Get which camera the current block section is using
 	add.w	d4,d0
 	andi.w	#$FFF0,d0
 	asr.w	#4,d0
@@ -950,7 +950,7 @@ DrawLevelBG1:
 	move.w	#320,d5				; Prepare to draw a column on the right
 
 .GotScrollDir:
-	move.w	cameraBgY.w,d0			; Prepare background section camera ID array
+	move.w	camera_bg_y,d0			; Prepare background section camera ID array
 	andi.w	#$FFF0,d0
 	asr.w	#4,d0
 	suba.w	#1,a0
@@ -958,15 +958,15 @@ DrawLevelBG1:
 
 	bra.w	.DrawColumn
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .CameraSects:
-	dc.l	camXBgCopy			; BG1 (static)
-	dc.l	camXBgCopy			; BG1 (dynamic)
-	dc.l	camXBg2Copy			; BG2 (dynamic)
-	dc.l	camXBg3Copy			; BG3 (dynamic)
+	dc.l	camera_bg_x_copy		; BG1 (static)
+	dc.l	camera_bg_x_copy		; BG1 (dynamic)
+	dc.l	camera_bg2_x_copy		; BG2 (dynamic)
+	dc.l	camera_bg3_x_copy		; BG3 (dynamic)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .DrawColumn:
 	moveq	#((224+(16*2))/16)-1,d6		; 16 blocks in a column
@@ -996,9 +996,9 @@ DrawLevelBG1:
 	clr.b	(a2)				; Clear scroll flags
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw background section #2 (unused)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Base high VDP write command
 ;	a2.l - Scroll flags pointer
@@ -1006,14 +1006,14 @@ DrawLevelBG1:
 ;	a4.l - Layout data pointer
 ;	a5.l - VDP control port
 ;	a6.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawLevelBG2:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw background section #3 (unused)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Base high VDP write command
 ;	a2.l - Scroll flags pointer
@@ -1021,43 +1021,43 @@ DrawLevelBG2:
 ;	a4.l - Layout data pointer
 ;	a5.l - VDP control port
 ;	a6.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawLevelBG3:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	include	"Level/Block Draw.asm"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Start level drawing
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitLevelDraw:
 	lea	VDPCTRL,a5			; Prepare VDP ports
 	lea	VDPDATA,a6
 
-	lea	cameraX.w,a3			; Initialize foreground
-	lea	levelLayout.w,a4
+	lea	camera_fg_x,a3			; Initialize foreground
+	lea	map_layout,a4
 	move.w	#$4000,d2
 	bsr.s	InitLevelDrawFG
 
-	lea	cameraBgX.w,a3			; Initialize background
-	lea	levelLayout+$40.w,a4
+	lea	camera_bg_x,a3			; Initialize background
+	lea	map_layout+$40,a4
 	move.w	#$6000,d2
 	bra.w	InitLevelDrawBG
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw foreground
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Base high VDP write command
 ;	a3.l - Camera position pointer
 ;	a4.l - Layout data pointer
 ;	a5.l - VDP control port
 ;	a6.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitLevelDrawFG:
 	moveq	#-16,d4				; Start drawing at the top of the screen
@@ -1079,16 +1079,16 @@ InitLevelDrawFG:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw background
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Base high VDP write command
 ;	a3.l - Camera position pointer
 ;	a4.l - Layout data pointer
 ;	a5.l - VDP control port
 ;	a6.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 InitLevelDrawBG:
 	moveq	#-16,d4				; Start drawing at the top of the screen
@@ -1098,7 +1098,7 @@ InitLevelDrawBG:
 	movem.l	d4-d6/a0,-(sp)			; Draw a row of blocks
 	lea	BGCameraSectIDs,a0
 	adda.w	#1,a0
-	move.w	cameraBgY.w,d0
+	move.w	camera_bg_y,d0
 	add.w	d4,d0
 	andi.w	#$7F0,d0
 	bsr.w	DrawBGBlockRow
@@ -1109,17 +1109,17 @@ InitLevelDrawBG:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Background camera sections
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Each row of blocks is assigned a background camera section to help
 ; determine how to draw it
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; 0 = Background 1 (Static)
 ; 2 = Background 1 (Dynamic)
 ; 4 = Background 2 (Dynamic)
 ; 6 = Background 3 (Dynamic)
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGCameraSectIDs:
 	BGSECT	16,  BGSTATIC			; Offscreen top row, required to be here
@@ -1156,17 +1156,17 @@ BGCameraSectIDs:
 	BGSECT	32,  BGSTATIC			; Bottom bushes
 	BGSECT	144, BGSTATIC			; Bottom water
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 BGCameraSects:
-	dc.l	cameraBgX&$FFFFFF		; BG1 (static)
-	dc.l	cameraBgX&$FFFFFF		; BG1 (dynamic)
-	dc.l	cameraBg2X&$FFFFFF		; BG2 (dynamic)
-	dc.l	cameraBg3X&$FFFFFF		; BG3 (dynamic)
+	dc.l	camera_bg_x&$FFFFFF		; BG1 (static)
+	dc.l	camera_bg_x&$FFFFFF		; BG1 (dynamic)
+	dc.l	camera_bg2_x&$FFFFFF		; BG2 (dynamic)
+	dc.l	camera_bg3_x&$FFFFFF		; BG3 (dynamic)
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Draw row of blocks for the background
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	d2.w - Base high VDP write command
 ;	a0.l - Background camera sections
@@ -1174,7 +1174,7 @@ BGCameraSects:
 ;	a4.l - Layout data pointer
 ;	a5.l - VDP control port
 ;	a6.l - VDP data port
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 DrawBGBlockRow:
 	lsr.w	#4,d0				; Get camera section ID
@@ -1201,4 +1201,4 @@ DrawBGBlockRow:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

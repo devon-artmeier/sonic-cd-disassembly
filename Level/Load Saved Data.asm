@@ -1,90 +1,90 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load saved data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadTimeWarpData:
-	move.w	warpX,oX(a6)
-	move.w	warpY,oY(a6)
-	move.b	warpPlayerFlags,oFlags(a6)
-	move.w	warpGVel,oPlayerGVel(a6)
-	move.w	warpXVel,oXVel(a6)
-	move.w	warpYVel,oYVel(a6)
-	move.w	warpRings,rings
-	move.b	warpLivesFlags,livesFlags
-	move.l	warpTime,time
-	move.b	warpWaterRoutine,waterRoutine.w
-	move.w	warpBtmBound,bottomBound.w
-	move.w	warpBtmBound,destBottomBound.w
-	move.w	warpCamX,cameraX.w
-	move.w	warpCamY,cameraY.w
-	move.w	warpCamBgX,cameraBgX.w
-	move.w	warpCamBgY,cameraBgY.w
-	move.w	warpCamBg2X,cameraBg2X.w
-	move.w	warpCamBg2Y,cameraBg2Y.w
-	move.w	warpCamBg3X,cameraBg3X.w
-	move.w	warpCamBg3Y,cameraBg3Y.w
+	move.w	warp_x,obj.x(a6)
+	move.w	warp_y,obj.y(a6)
+	move.b	warp_player_flags,obj.flags(a6)
+	move.w	warp_ground_speed,oPlayerGVel(a6)
+	move.w	warp_x_speed,obj.x_speed(a6)
+	move.w	warp_y_speed,obj.y_speed(a6)
+	move.w	warp_rings,rings
+	move.b	warp_lives_flags,lives_flags
+	move.l	warp_time,time
+	move.b	warp_water_routine,water_routine
+	move.w	warp_bottom_bound,bottom_bound
+	move.w	warp_bottom_bound,target_bottom_bound
+	move.w	warp_camera_fg_x,camera_fg_x
+	move.w	warp_camera_fg_y,camera_fg_y
+	move.w	warp_camera_bg_x,camera_bg_x
+	move.w	warp_camera_bg_y,camera_bg_y
+	move.w	warp_camera_bg2_x,camera_bg2_x
+	move.w	warp_camera_bg2_y,camera_bg2_y
+	move.w	warp_camera_bg3_x,camera_bg3_x
+	move.w	warp_camera_bg3_y,camera_bg3_y
 	cmpi.b	#6,zone
 	bne.s	.NoMini2
-	move.b	warpMiniSonic,miniSonic
+	move.b	warp_mini_player,mini_player
 
 .NoMini2:
-	tst.b	spawnMode
+	tst.b	spawn_mode
 	bpl.s	.End
-	move.w	warpX,d0
+	move.w	warp_x,d0
 	subi.w	#320/2,d0
-	move.w	d0,leftBound.w
+	move.w	d0,left_bound
 
 .End:
 	rts
 	
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadCheckpointData:
-	lea	objPlayerSlot.w,a6
-	cmpi.b	#2,spawnMode
+	lea	player_object,a6
+	cmpi.b	#2,spawn_mode
 	beq.w	LoadTimeWarpData
 	
-	move.b	savedSpawnMode,spawnMode
-	move.w	savedX,oX(a6)
-	move.w	savedY,oY(a6)
+	move.b	saved_spawn_mode,spawn_mode
+	move.w	saved_x,obj.x(a6)
+	move.w	saved_y,obj.y(a6)
 	clr.w	rings
-	clr.b	livesFlags
-	move.l	savedTime,time
-	move.b	#59,timeFrames
-	subq.b	#1,timeSeconds
-	move.b	savedWaterRoutine,waterRoutine.w
-	move.w	savedBtmBound,bottomBound.w
-	move.w	savedBtmBound,destBottomBound.w
-	move.w	savedCamX,cameraX.w
-	move.w	savedCamY,cameraY.w
-	move.w	savedCamBgX,cameraBgX.w
-	move.w	savedCamBgY,cameraBgY.w
-	move.w	savedCamBg2X,cameraBg2X.w
-	move.w	savedCamBg2Y,cameraBg2Y.w
-	move.w	savedCamBg3X,cameraBg3X.w
-	move.w	savedCamBg3Y,cameraBg3Y.w
+	clr.b	lives_flags
+	move.l	saved_time,time
+	move.b	#59,time_frames
+	subq.b	#1,time_seconds
+	move.b	saved_water_routine,water_routine
+	move.w	saved_bottom_bound,bottom_bound
+	move.w	saved_bottom_bound,target_bottom_bound
+	move.w	saved_camera_fg_x,camera_fg_x
+	move.w	saved_camera_fg_y,camera_fg_y
+	move.w	saved_camera_bg_x,camera_bg_x
+	move.w	saved_camera_bg_y,camera_bg_y
+	move.w	saved_camera_bg2_x,camera_bg2_x
+	move.w	saved_camera_bg2_y,camera_bg2_y
+	move.w	saved_camera_bg3_x,camera_bg3_x
+	move.w	saved_camera_bg3_y,camera_bg3_y
 	cmpi.b	#6,zone
 	bne.s	.NoMini
-	move.b	savedMiniSonic,miniSonic
+	move.b	saved_mini_player,mini_player
 
 .NoMini:
 	cmpi.b	#2,zone
 	bne.s	.NoWater
-	move.w	savedWaterHeight,waterHeight2.w
-	move.b	savedWaterRoutine,waterRoutine.w
-	move.b	savedWaterFull,waterFullscreen.w
+	move.w	saved_water_height,water_height_logical
+	move.b	saved_water_routine,water_routine
+	move.b	saved_water_fullscreen,water_fullscreen
 
 .NoWater:
-	tst.b	spawnMode
+	tst.b	spawn_mode
 	bpl.s	.End
-	move.w	savedX,d0
+	move.w	saved_x,d0
 	subi.w	#320/2,d0
-	move.w	d0,leftBound.w
+	move.w	d0,left_bound
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

@@ -1,13 +1,13 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wacky Workbench level data load functions
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load level data
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadLevelData:
 	moveq	#0,d0				; Prepare level data index
@@ -19,7 +19,7 @@ LoadLevelData:
 	move.l	(a2)+,d1			; Load level blocks
 	andi.l	#$3FFFFF,d1
 	movea.l	d1,a0
-	lea	blockBuffer,a4
+	lea	map_blocks,a4
 	bsr.w	NemDecToRAM
 
 	movea.l	(a2)+,a0			; Skip over level chunks (chunks are uncompressed, and are referenced directly
@@ -35,7 +35,7 @@ LoadLevelData:
 	movea.l	(sp)+,a2			; Skip over to PLC ID
 	addq.w	#4,a2
 
-	btst	#1,plcLoadFlags			; Was the title card marked as loaded?
+	btst	#1,nem_art_queue_flags		; Was the title card marked as loaded?
 	beq.s	.End				; If not, branch
 
 	moveq	#0,d0				; Load PLCs
@@ -46,12 +46,12 @@ LoadLevelData:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Load a level layout
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 LoadLevelLayout:
-	lea	levelLayout.w,a3		; Clear layout RAM
+	lea	map_layout,a3			; Clear layout RAM
 	move.w	#$1FF,d1
 	moveq	#0,d0
 
@@ -59,14 +59,14 @@ LoadLevelLayout:
 	move.l	d0,(a3)+
 	dbf	d1,.Clear			; Loop until finished
 
-	lea	levelLayout.w,a3		; Load foreground layout
+	lea	map_layout,a3			; Load foreground layout
 	moveq	#0,d1
 	bsr.w	.LoadPlane
 
-	lea	levelLayout+$40.w,a3		; Load background layout
+	lea	map_layout+$40,a3		; Load background layout
 	moveq	#2,d1
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .LoadPlane:
 	moveq	#0,d0				; Get pointer to layout data
@@ -93,4 +93,4 @@ LoadLevelLayout:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

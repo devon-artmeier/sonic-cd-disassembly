@@ -1,21 +1,21 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Palette functions
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade the screen from black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromBlack:
 	moveq	#0,d0				; Get starting palette fill location
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	moveq	#0,d1				; Get palette fill value (black)
-	move.b	palFadeLen.w,d0			; Get palette fill length
+	move.b	palette_fade_length,d0		; Get palette fill length
 
 .Clear:
 	move.w	d1,(a0)+
@@ -24,7 +24,7 @@ FadeFromBlack:
 	move.w	#(7*3),d4			; Prepare to do fading
 
 .Fade:
-	move.b	#$12,vintRoutine.w		; VSync
+	move.b	#$12,vblank_routine		; VSync
 	bsr.w	VSync
 	bsr.s	FadeColorsFromBlack		; Fade colors once
 	bsr.w	ProcessPLCs			; Process PLCs
@@ -32,16 +32,16 @@ FadeFromBlack:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorsFromBlack:
 	moveq	#0,d0				; Get starting palette fade locations
-	lea	palette.w,a0
-	lea	fadePalette.w,a1
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	lea	fade_palette,a1
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	adda.w	d0,a1
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0		; Get palette fade length
 
 .Loop:
 	bsr.s	FadeColorFromBlack		; Fade a color
@@ -51,12 +51,12 @@ FadeColorsFromBlack:
 	bne.s	.End				; If not, branch
 
 	moveq	#0,d0				; Get starting palette fade locations for water
-	lea	waterPalette.w,a0
-	lea	waterFadePal.w,a1
-	move.b	palFadeStart.w,d0
+	lea	water_palette,a0
+	lea	water_fade_palette,a1
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	adda.w	d0,a1
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0		; Get palette fade length
 
 .LoopWater:
 	bsr.s	FadeColorFromBlack		; Fade a color
@@ -65,7 +65,7 @@ FadeColorsFromBlack:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorFromBlack:
 	move.w	(a1)+,d2			; Get target color
@@ -98,17 +98,17 @@ FadeColorFromBlack:
 	addq.w	#2,a0				; Skip over this color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade the screen to black
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToBlack:
-	move.w	#$3F,palFadeInfo.w		; Set palette fade start and length
+	move.w	#$3F,palette_fade_params	; Set palette fade start and length
 
 	move.w	#(7*3),d4			; Prepare to do fading
 
 .Fade:
-	move.b	#$12,vintRoutine.w		; VSync
+	move.b	#$12,vblank_routine		; VSync
 	bsr.w	VSync
 	bsr.s	FadeColorsToBlack		; Fade colors once
 	bsr.w	ProcessPLCs			; Process PLCs
@@ -116,24 +116,24 @@ FadeToBlack:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorsToBlack:
 	moveq	#0,d0				; Get starting palette fade location
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0			; Get palette fade length
 
 .Loop:
 	bsr.s	FadeColorToBlack		; Fade a color
 	dbf	d0,.Loop			; Loop until finished
 
 	moveq	#0,d0				; Get starting palette fade location for water
-	lea	waterPalette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	water_palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0			; Get palette fade length
 
 .LoopWater:
 	bsr.s	FadeColorToBlack		; Fade a color
@@ -141,7 +141,7 @@ FadeColorsToBlack:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorToBlack:
 	move.w	(a0),d2				; Get color
@@ -172,19 +172,19 @@ FadeColorToBlack:
 	addq.w	#2,a0				; Skip over this color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade the screen from white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeFromWhite:
-	move.w	#$3F,palFadeInfo.w		; Set palette fade start and length
+	move.w	#$3F,palette_fade_params	; Set palette fade start and length
 
 	moveq	#0,d0				; Get starting palette fill location
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	move.w	#$EEE,d1			; Get palette fill value (whiyte)
-	move.b	palFadeLen.w,d0			; Get palette fill length
+	move.b	palette_fade_length,d0		; Get palette fill length
 
 .Fill:
 	move.w	d1,(a0)+
@@ -193,7 +193,7 @@ FadeFromWhite:
 	move.w	#(7*3),d4			; Prepare to do fading
 
 .Fade:
-	move.b	#$12,vintRoutine.w		; VSync
+	move.b	#$12,vblank_routine		; VSync
 	bsr.w	VSync
 	bsr.s	FadeColorsFromWhite		; Fade colors once
 	bsr.w	ProcessPLCs			; Process PLCs
@@ -201,16 +201,16 @@ FadeFromWhite:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorsFromWhite:
 	moveq	#0,d0				; Get starting palette fade locations
-	lea	palette.w,a0
-	lea	fadePalette.w,a1
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	lea	fade_palette,a1
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	adda.w	d0,a1
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0		; Get palette fade length
 
 .Loop:
 	bsr.s	FadeColorFromWhite		; Fade a color
@@ -220,12 +220,12 @@ FadeColorsFromWhite:
 	bne.s	.End				; If not, branch
 
 	moveq	#0,d0				; Get starting palette fade locations for water
-	lea	waterPalette.w,a0
-	lea	waterFadePal.w,a1
-	move.b	palFadeStart.w,d0
+	lea	water_palette,a0
+	lea	water_fade_palette,a1
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
 	adda.w	d0,a1
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0		; Get palette fade length
 
 .LoopWater:
 	bsr.s	FadeColorFromWhite		; Fade a color
@@ -234,7 +234,7 @@ FadeColorsFromWhite:
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorFromWhite:
 	move.w	(a1)+,d2			; Get target color
@@ -267,17 +267,17 @@ FadeColorFromWhite:
 	addq.w	#2,a0				; Skip over this color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Fade the screen to white
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeToWhite:
-	move.w	#$3F,palFadeInfo.w		; Set palette fade start and length
+	move.w	#$3F,palette_fade_params	; Set palette fade start and length
 
 	move.w	#(7*3),d4			; Prepare to do fading
 
 .Fade:
-	move.b	#$12,vintRoutine.w		; VSync
+	move.b	#$12,vblank_routine		; VSync
 	bsr.w	VSync
 	bsr.s	FadeColorsToWhite		; Fade colors once
 	bsr.w	ProcessPLCs			; Process PLCs
@@ -285,31 +285,31 @@ FadeToWhite:
 
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorsToWhite:
 	moveq	#0,d0				; Get starting palette fade location
-	lea	palette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0		; Get palette fade length
 
 .Loop:
 	bsr.s	FadeColorToWhite		; Fade a color
 	dbf	d0,.Loop			; Loop until finished
 
 	moveq	#0,d0				; Get starting palette fade location for water
-	lea	waterPalette.w,a0
-	move.b	palFadeStart.w,d0
+	lea	water_palette,a0
+	move.b	palette_fade_start,d0
 	adda.w	d0,a0
-	move.b	palFadeLen.w,d0			; Get palette fade length
+	move.b	palette_fade_length,d0		; Get palette fade length
 
 .LoopWater:
 	bsr.s	FadeColorToWhite		; Fade a color
 	dbf	d0,.LoopWater			; Loop until finished
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 FadeColorToWhite:
 	move.w	(a0),d2				; Get color
@@ -344,4 +344,4 @@ FadeColorToWhite:
 	addq.w	#2,a0				; Skip over this color
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

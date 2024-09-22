@@ -1,5 +1,5 @@
 # Sonic CD Disassembly
-This is a WIP disassembly of Sonic CD (1993) for the Sega CD. Builds a working ISO, as long as you provide the rest of the files.
+This is a WIP disassembly of Sonic CD for the Sega CD. Builds a working ISO, as long as you provide the rest of the files.
 
 ## Currently Contains
 * Initial program

@@ -1,44 +1,44 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Wacky Workbench Present animated tiles update
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 UpdateAnimTiles:
 	jsr	LoadShieldArt
 
-	lea	aniArtTimers.w,a2
-	lea	aniArtFrames.w,a4
+	lea	anim_art_timers,a2
+	lea	anim_art_frames,a4
 
 	lea	AniArt_ElectricSparks,a1
 	move.w	#$100/4-1,d6
 	bsr.w	AnimateTilesSimple
 	bne.s	.AniSparkOrb
-	LVLDMA	aniArtBuffer,$4440,$100,VRAM
+	LVLDMA	anim_art_buffer,$4440,$100,VRAM
 	
 .AniSparkOrb:
 	lea	AniArt_ElecSparkOrb,a1
 	move.w	#$80/4-1,d6
 	bsr.w	AnimateTilesSimple
 	bne.s	.AniSiren
-	LVLDMA	aniArtBuffer,$43C0,$80,VRAM
+	LVLDMA	anim_art_buffer,$43C0,$80,VRAM
 	
 .AniSiren:
 	lea	AniArt_Siren,a1
 	move.w	#$80/4-1,d6
 	bsr.w	AnimateTilesScript
 	bne.s	.End
-	LVLDMA	aniArtBuffer,$4340,$80,VRAM
+	LVLDMA	anim_art_buffer,$4340,$80,VRAM
 	
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	include	"Level/Animate Tiles (Scripted).asm"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 AniArt_Siren:
 	dc.b	4, 0
@@ -51,11 +51,11 @@ AniArt_Siren:
 	dc.l	Art_Siren+$100
 	dc.l	Art_Siren+$180
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 	include	"Level/Animate Tiles (Simple).asm"
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 AniArt_ElectricSparks:
 	dc.b	4, 3
@@ -68,4 +68,4 @@ AniArt_ElecSparkOrb:
 	dc.l	Art_ElecSparkOrb
 	dc.l	Art_ElecSparkOrb+$80
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

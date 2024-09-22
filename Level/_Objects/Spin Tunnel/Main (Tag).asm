@@ -1,16 +1,16 @@
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Spin tunnel flag object
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSpinTunnel:
 	moveq	#0,d0
-	move.b	oRoutine(a0),d0
+	move.b	obj.routine(a0),d0
 	move.w	ObjSpinTunnel_Index(pc,d0.w),d0
 	jsr	ObjSpinTunnel_Index(pc,d0.w)
-	tst.b	debugCheat
+	tst.b	debug_cheat
 	beq.s	.NoDisplay
 	jsr	DrawObject
 
@@ -18,34 +18,34 @@ ObjSpinTunnel:
 	jmp	CheckObjDespawn
 ; End of function ObjSpinTunnel
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ObjSpinTunnel_Index:
 	dc.w	ObjSpinTunnel_Init-ObjSpinTunnel_Index
 	dc.w	ObjSpinTunnel_Main-ObjSpinTunnel_Index
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSpinTunnel_Init:
-	addq.b	#2,oRoutine(a0)
-	ori.b	#%00000100,oSprFlags(a0)
-	move.w	#$544,oTile(a0)
-	move.l	#MapSpr_Powerup,oMap(a0)
-	move.b	oSubtype(a0),oMapFrame(a0)
-	addq.b	#1,oMapFrame(a0)
+	addq.b	#2,obj.routine(a0)
+	ori.b	#%00000100,obj.sprite_flags(a0)
+	move.w	#$544,obj.sprite_tile(a0)
+	move.l	#MapSpr_Powerup,obj.sprites(a0)
+	move.b	obj.subtype(a0),obj.sprite_frame(a0)
+	addq.b	#1,obj.sprite_frame(a0)
 ; End of function ObjSpinTunnel_Init
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSpinTunnel_Main:
-	lea	objPlayerSlot.w,a1
-	cmpi.b	#$2B,oAnim(a1)
+	lea	player_object,a1
+	cmpi.b	#$2B,obj.anim_id(a1)
 	beq.w	.End
-	cmpi.b	#6,oRoutine(a1)
+	cmpi.b	#6,obj.routine(a1)
 	bcc.w	.End
 	bsr.w	ObjSpinTunnel_CheckInRange
 	beq.w	.End
-	tst.b	oSubtype(a0)
+	tst.b	obj.subtype(a0)
 	bne.s	.ChkSubtype1
-	move.w	oXVel(a1),d0
+	move.w	obj.x_speed(a1),d0
 	bpl.s	.AbsVX
 	neg.w	d0
 
@@ -61,14 +61,14 @@ ObjSpinTunnel_Main:
 	move.w	d1,d0
 
 .CheckXSign:
-	tst.w	oXVel(a1)
+	tst.w	obj.x_speed(a1)
 	bpl.s	.GotSpeed
 	neg.w	d0
 
 .GotSpeed:
-	move.w	d0,oXVel(a1)
+	move.w	d0,obj.x_speed(a1)
 	move.w	d0,oPlayerGVel(a1)
-	move.b	oAngle(a1),d0
+	move.b	obj.angle(a1),d0
 	addi.b	#$20,d0
 	andi.b	#$C0,d0
 	cmpi.b	#$80,d0
@@ -76,14 +76,14 @@ ObjSpinTunnel_Main:
 	neg.w	oPlayerGVel(a1)
 	bra.s	.SetRoll
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .ChkSubtype1:
-	cmpi.b	#2,oSubtype(a0)
+	cmpi.b	#2,obj.subtype(a0)
 	bcc.s	.HighSubtype
 
 .Subtype1:
-	move.w	oYVel(a1),d0
+	move.w	obj.y_speed(a1),d0
 	bpl.s	.AbsVY
 	neg.w	d0
 
@@ -93,44 +93,44 @@ ObjSpinTunnel_Main:
 	move.w	#$D00,d0
 
 .GotYCap:
-	tst.w	oYVel(a1)
+	tst.w	obj.y_speed(a1)
 	bpl.s	.CheckYSign
 	neg.w	d0
 
 .CheckYSign:
-	move.w	d0,oYVel(a1)
+	move.w	d0,obj.y_speed(a1)
 	move.w	d0,oPlayerGVel(a1)
-	bset	#1,oFlags(a1)
+	bset	#1,obj.flags(a1)
 
 .SetRoll:
-	bset	#2,oFlags(a1)
+	bset	#2,obj.flags(a1)
 	bne.s	.End
-	move.b	#$E,oYRadius(a1)
-	move.b	#7,oXRadius(a1)
-	addq.w	#5,oY(a1)
-	move.b	#2,oAnim(a1)
+	move.b	#$E,obj.collide_height(a1)
+	move.b	#7,obj.collide_width(a1)
+	addq.w	#5,obj.y(a1)
+	move.b	#2,obj.anim_id(a1)
 
 .End:
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .HighSubtype:
-	move.b	p1CtrlHold.w,d1
-	cmpi.b	#4,oSubtype(a0)
+	move.b	p1_ctrl_hold,d1
+	cmpi.b	#4,obj.subtype(a0)
 	beq.s	.Subtype4
-	cmpi.b	#2,oSubtype(a0)
+	cmpi.b	#2,obj.subtype(a0)
 	bne.s	.Subtype3
 
 .Subtype2:
-	tst.w	oYVel(a1)
+	tst.w	obj.y_speed(a1)
 	bpl.s	.SetRoll
 	bra.s	.ChkLaunch
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Subtype3:
-	tst.w	oYVel(a1)
+	tst.w	obj.y_speed(a1)
 	bmi.s	.SetRoll
 
 .ChkLaunch:
@@ -142,19 +142,19 @@ ObjSpinTunnel_Main:
 	neg.w	d0
 
 .GotLaunch:
-	cmpi.b	#2,oSubtype(a0)
+	cmpi.b	#2,obj.subtype(a0)
 	beq.s	.SkipAir
-	bset	#1,oFlags(a1)
+	bset	#1,obj.flags(a1)
 
 .SkipAir:
-	move.w	d0,oXVel(a1)
+	move.w	d0,obj.x_speed(a1)
 	move.w	d0,oPlayerGVel(a1)
 	bra.s	.SetRoll
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .Subtype4:
-	tst.w	oXVel(a1)
+	tst.w	obj.x_speed(a1)
 	bmi.s	.SetRoll
 	btst	#0,d1
 	beq.w	.SetRoll
@@ -162,19 +162,19 @@ ObjSpinTunnel_Main:
 	bra.w	.CheckYSign
 ; End of function ObjSpinTunnel_Main
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ObjSpinTunnel_CheckInRange:
-	tst.b	debugMode
+	tst.b	debug_mode
 	bne.s	.NotInRange
-	move.w	oX(a1),d0
-	sub.w	oX(a0),d0
+	move.w	obj.x(a1),d0
+	sub.w	obj.x(a0),d0
 	addi.w	#$28,d0
 	bmi.s	.NotInRange
 	cmpi.w	#$50,d0
 	bcc.s	.NotInRange
-	move.w	oY(a1),d0
-	sub.w	oY(a0),d0
+	move.w	obj.y(a1),d0
+	sub.w	obj.y(a0),d0
 	addi.w	#$28,d0
 	bmi.s	.NotInRange
 	cmpi.w	#$50,d0
@@ -182,10 +182,10 @@ ObjSpinTunnel_CheckInRange:
 	moveq	#1,d0
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 .NotInRange:
 	moveq	#0,d0
 	rts
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------

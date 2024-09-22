@@ -1,198 +1,202 @@
-; -------------------------------------------------------------------------
-; Sonic CD Disassembly
-; By Ralakimus 2021
-; -------------------------------------------------------------------------
-; Main CPU global variables
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
+; Sonic CD (1993) Disassembly
+; By Devon Artmeier
+; ------------------------------------------------------------------------------
+; Global variables
+; ------------------------------------------------------------------------------
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ; Constants
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
 ; Time zones
-	rsreset
-TIME_PAST		rs.b	1		; Past
-TIME_PRESENT		rs.b	1		; Present
-TIME_FUTURE		rs.b	1		; Future
+TIME_PAST		equ 0					; Past
+TIME_PRESENT		equ 1					; Present
+TIME_FUTURE		equ 2					; Future
 
-; -------------------------------------------------------------------------
+; Objects
+MAP_OBJECT_STATE_SLOTS	equ $FF					; Map object state entry count
+
+; ------------------------------------------------------------------------------
 ; Variables
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 
-	rsset	WORKRAM+$F00
-MAINVARS		rs.b	0		; Main CPU global variables
-ipxVSync		rs.b	1		; IPX VSync flag
-timeAttackMode		rs.b	1		; Time attack mode flag
-savedLevel		rs.w	1		; Saved level
-			rs.b	$C
-timeAttackTime		rs.l	1		; Time attack time
-timeAttackLevel		rs.w	1		; Time attack level
-ipxVDPReg1		rs.w	1		; IPX VDP register 1
-timeAttackUnlock	rs.b	1		; Last unlocked time attack zone
-unkBuRAMVar		rs.b	1		; Unknown Backup RAM variable
-goodFutures		rs.b	1		; Good futures achieved flags
-			rs.b	1
-demoID			rs.b	1		; Demo ID
-titleFlags		rs.b	1		; Title screen flags
-			rs.b	1
-saveDisabled		rs.b	1		; Save disabled flag
-timeStones		rs.b	1		; Time stones retrieved flags
-curSpecStage		rs.b	1		; Current special stage
-palClearFlags		rs.b	1		; Palette clear flags
-			rs.b	1
-endingID		rs.b	1		; Ending ID
-specStageLost		rs.b	1		; Special stage lost flag
-			rs.b	$DA
-unkBuffer 		rs.b	$200		; Unknown level buffer
+	rsset WORK_RAM+$F00
+global_variables	rs.b 0					; Global variables
 
-OBJFLAGSCNT		EQU	$2FC		; Saved object flags entry count
-savedObjFlags 		rs.b	2+OBJFLAGSCNT	; Saved object flags
+ipx_vsync		rs.b 1					; IPX VSync flag
+time_attack_mode	rs.b 1					; Time attack mode flag
+saved_stage		rs.w 1					; Saved stage
+			rs.b $C
+time_attack_time	rs.l 1					; Time attack time
+time_attack_stage	rs.w 1					; Time attack stage
+ipx_vdp_reg_81		rs.w 1					; IPX VDP register $81
+time_attack_unlock	rs.b 1					; Last unlocked time attack zone
+unknown_buram_var	rs.b 1					; Unknown Backup RAM variable
+good_future_zones	rs.b 1					; Good future zone flags
+			rs.b 1
+demo_id			rs.b 1					; Demo ID
+title_flags		rs.b 1					; Title screen flags
+			rs.b 1
+save_disabled		rs.b 1					; Save disabled flag
+time_stones		rs.b 1					; Time stones retrieved flags
+current_special_stage	rs.b 1					; Current special stage
+palette_clear_flags	rs.b 1					; Palette clear flags
+			rs.b 1
+ending_id		rs.b 1					; Ending ID
+special_stage_lost	rs.b 1					; Special stage lost flag
+			rs.b $DA
+unknown_buffer 		rs.b $200				; Unknown buffer
 
-			rs.l	1
-levelRestart		rs.w	1		; Level restart flag
-levelFrames 		rs.w	1		; Level frame counter
-zoneAct			rs.b	0		; Zone and act ID
-zone			rs.b	1		; Zone ID
-act			rs.b	1		; Act ID
-lives			rs.b	1		; Life count
-usePlayer2 		rs.b	1		; Use player 2
-drownTimer 		rs.w	1		; Drown timer
-timeOver 		rs.b	1		; Level time over
-livesFlags 		rs.b	1		; Lives flags
-updateHUDLives 		rs.b	1		; Update HUD life count
-updateHUDRings 		rs.b	1		; Update HUD ring count
-updateHUDTime 		rs.b	1		; Update HUD timer
-updateHUDScore 		rs.b	1		; Update HUD score
-rings			rs.w	1		; Ring count
-time			rs.b	1		; Time
-timeMinutes		rs.b	1		; Minutes
-timeSeconds		rs.b	1		; Seconds
-timeFrames		rs.b	1		; Centiseconds
-score			rs.l	1		; Score
-plcLoadFlags		rs.b	1		; PLC load flags
-palFadeFlags		rs.b	1		; Palette fade flags
-shield			rs.b	1		; Shield flag
-invincible 		rs.b	1		; Invincible flag
-speedShoes 		rs.b	1		; Speed shoes flag
-timeWarp 		rs.b	1		; Time warp flag
-spawnMode		rs.b	1		; Spawn mode flag
-savedSpawnMode		rs.b	1		; Saved spawn mode flag
-savedX 			rs.w	1		; Saved X position
-savedY 			rs.w	1		; Saved Y position
-warpRings		rs.w	1		; Time warp ring count
-savedTime 		rs.l	1		; Saved time
-timeZone		rs.b	1		; Time zone
-			rs.b	1
-savedBtmBound		rs.w	1		; Saved bottom boundary
-savedCamX		rs.w	1		; Saved camera X position
-savedCamY		rs.w	1		; Saved camera Y position
-savedCamBgX		rs.w	1		; Saved background camera X position
-savedCamBgY		rs.w	1		; Saved background camera Y position
-savedCamBg2X		rs.w	1		; Saved background camera X position 2
-savedCamBg2Y		rs.w	1		; Saved background camera Y position 2
-savedCamBg3X		rs.w	1		; Saved background camera X position 3
-savedCamBg3Y		rs.w	1		; Saved background camera Y position 3
-savedWaterHeight	rs.b	1		; Saved water height
-savedWaterRoutine	rs.b	1		; Saved water routine
-savedWaterFull		rs.b	1		; Saved water fullscreen flag
-warpLivesFlags		rs.b	1		; Time warp lives flags
-warpSpawnMode		rs.b	1		; Time warp spawn mode flag
-			rs.b	1
-warpX 			rs.w	1		; Time warp X position
-warpY 			rs.w	1		; Time warp Y position
-warpPlayerFlags		rs.b	1		; Time warp flags
-			rs.b	1
-warpBtmBound		rs.w	1		; Time warp bottom boundary
-warpCamX		rs.w	1		; Time warp camera X position
-warpCamY		rs.w	1		; Time warp camera Y position
-warpCamBgX		rs.w	1		; Time warp background camera X position
-warpCamBgY		rs.w	1		; Time warp background camera Y position
-warpCamBg2X		rs.w	1		; Time warp background camera X position 2
-warpCamBg2Y		rs.w	1		; Time warp background camera Y position 2
-warpCamBg3X		rs.w	1		; Time warp background camera X position 3
-warpCamBg3Y		rs.w	1		; Time warp background camera Y position 3
-warpWaterHeight		rs.w	1		; Time warp water height
-warpWaterRoutine	rs.b	1		; Time warp water routine
-warpWaterFull		rs.b	1		; Time warp water fullscreen flag
-warpGVel 		rs.w	1		; Time warp ground velocity
-warpXVel 		rs.w	1		; Time warp X velocity
-warpYVel 		rs.w	1		; Time warp Y velocity
-goodFuture		rs.b	1		; Good future flag
-powerup			rs.b	1		; Powerup ID
-unkLevelFlag 		rs.b	1		; Unknown level flag
-projDestroyed		rs.b	1		; Projector destroyed flag
-specialStage		rs.b	1		; Special stage flag
-combineRing 		rs.b	1		; Combine ring flag (leftover)
-warpTime 		rs.l	1		; Time warp time
-sectionID		rs.w	1		; Section ID
-			rs.b	1
-amyCaptured		rs.b	1		; Amy captured flag
-nextLifeScore		rs.l	1		; Next life score
-debugAngle 		rs.b	1		; Debug angle
-debugAngleShift		rs.b	1		; Debug angle (shifted)
-debugQuadrant		rs.b	1		; Debug quadrant
-debugFloorDist 		rs.b	1		; Debug floor distance
-demoMode		rs.w	1		; Demo mode flag
-			rs.w	1
-s1CreditsIndex		rs.w	1		; Credits index (leftover from Sonic 1)
-versionCache 		rs.b	1		; Hardware version cache
-			rs.b	1
-debugCheat		rs.w	1		; Debug cheat flag
-initFlag 		rs.l	1		; Initialized flag
-checkpoint		rs.b	1		; Checkpoint ID
-			rs.b	1
-goodFutureFlags		rs.b	1		; Good future flags
-savedMiniSonic		rs.b	1		; Saved mini Sonic flag
-			rs.b	1
-warpMiniSonic		rs.b	1		; Time warp mini Sonic flag
-			rs.b	$6C
-flowerPosBuf		rs.b	$300		; Flower position buffer
-flowerCount		rs.b	3		; Flower count
-fadeEnableDisplay	rs.b	1		; Enable display when fading
-debugObject 		rs.b	1		; Level debug object
-			rs.b	1
-debugMode 		rs.w	1		; Level debug mode
-			rs.w	1
-levelVIntCounter	rs.l	1		; Level V-BLANK interrupt counter
-timeStopTimer		rs.w	1		; Time stop timer
-logSpikeAnimTimer	rs.b	1		; Log spike animation timer (leftover from Sonic 1)
-logSpikeAnimFrame	rs.b	1		; Log spike animation frame (leftover from Sonic 1)
-ringAnimTimer		rs.b	1		; Ring animation timer
-ringAnimFrame		rs.b	1		; Ring animation frame
-unkAnimTimer		rs.b	1		; Unknown animation timer (leftover from Sonic 1)
-unkAnimFrame		rs.b	1		; Unknown animation frame (leftover from Sonic 1)
-ringLossAnimTimer	rs.b	1		; Ring loss animation timer
-ringLossAnimFrame	rs.b	1		; Ring loss animation frame
-ringLossAnimAccum	rs.w	1		; Ring loss animation accumulator
-			rs.b	$C
-camXCopy		rs.l	1		; Camera X position copy
-camYCopy		rs.l	1		; Camera Y position copy
-camXBgCopy		rs.l	1		; Camera background X position copy
-camYBgCopy		rs.l	1		; Camera background Y position copy
-camXBg2Copy		rs.l	1		; Camera background X position 2 copy
-camYBg2Copy		rs.l	1		; Camera background Y position 2 copy
-camXBg3Copy		rs.l	1		; Camera background X position 3 copy
-camYBg3Copy		rs.l	1		; Camera background Y position 3 copy
-scrollFlagsCopy		rs.w	1		; Scroll flags copy
-scrollFlagsBgCopy	rs.w	1		; Scroll flags copy (background)
-scrollFlagsBg2Copy	rs.w	1		; Scroll flags copy (background 2)
-scrollFlagsBg3Copy	rs.w	1		; Scroll flags copy (background 3)
-debugBlock 		rs.w	1		; Level debug block ID
-			rs.l	1
-debugSubtype2		rs.b	1		; Level debug subtype 2 ID
-waterSwayAngle		rs.b	1		; Water sway angle
-layer			rs.b	1		; Layer ID
-levelStarted		rs.b	1		; Level started flag
-bossMusic		rs.b	1		; Boss music flag
-			rs.b	1
-wwzBeamMode		rs.b	1		; Wacky Workbench electric beam mode
-miniSonic 		rs.b	1		; Mini Sonic flag
-			rs.b	$24
-aniArtBuffer 		rs.b	$480		; Animated art buffer
-scrlSectSpeeds		rs.b	$200		; Scroll section speeds
-MAINVARSSZ		EQU	__rs-MAINVARS	; Size of Main CPU global variables area
+map_object_states 	rs.b 2+(MAP_OBJECT_STATE_SLOTS*3)	; Map object states
+			rs.b __rs&1
+			
+			rs.b 2
+stage_restart		rs.w 1					; Stage restart flag
+stage_frames 		rs.w 1					; Stage frame count
+zone_act		rs.b 0					; Zone and act ID
+zone			rs.b 1					; Zone ID
+act			rs.b 1					; Act ID
+lives			rs.b 1					; Life count
+use_player_2 		rs.b 1					; Use player 2
+drown_timer 		rs.w 1					; Drown timer
+time_over 		rs.b 1					; Time over
+lives_flags 		rs.b 1					; Lives flags
+update_hud_lives 	rs.b 1					; Update HUD life count
+update_hud_rings 	rs.b 1					; Update HUD ring count
+update_hud_time 	rs.b 1					; Update HUD timer
+update_hud_score 	rs.b 1					; Update HUD score
+rings			rs.w 1					; Ring count
+time			rs.b 1					; Time
+time_minutes		rs.b 1					; Minutes
+time_seconds		rs.b 1					; Seconds
+time_frames		rs.b 1					; Centiseconds
+score			rs.l 1					; Score
+nem_art_queue_flags	rs.b 1					; Nemesis art queue load flags
+palette_fade_flags	rs.b 1					; Palette fade flags
+shield			rs.b 1					; Shield flag
+invincible 		rs.b 1					; Invincible flag
+speed_shoes 		rs.b 1					; Speed shoes flag
+time_warp 		rs.b 1					; Time warp flag
+spawn_mode		rs.b 1					; Spawn mode flag
+saved_spawn_mode	rs.b 1					; Saved spawn mode flag
+saved_x 		rs.w 1					; Saved X position
+saved_y 		rs.w 1					; Saved Y position
+warp_rings		rs.w 1					; Time warp ring count
+saved_time 		rs.l 1					; Saved time
+time_zone		rs.b 1					; Time zone
+			rs.b 1
+saved_bottom_bound	rs.w 1					; Saved bottom boundary
+saved_camera_fg_x	rs.w 1					; Saved camera X position
+saved_camera_fg_y	rs.w 1					; Saved camera Y position
+saved_camera_bg_x	rs.w 1					; Saved background camera X position
+saved_camera_bg_y	rs.w 1					; Saved background camera Y position
+saved_camera_bg2_x	rs.w 1					; Saved background camera X position 2
+saved_camera_bg2_y	rs.w 1					; Saved background camera Y position 2
+saved_camera_bg3_x	rs.w 1					; Saved background camera X position 3
+saved_camera_bg3_y	rs.w 1					; Saved background camera Y position 3
+saved_water_height	rs.b 1					; Saved water height
+saved_water_routine	rs.b 1					; Saved water routine
+saved_water_fullscreen	rs.b 1					; Saved water fullscreen flag
+warp_lives_flags	rs.b 1					; Time warp lives flags
+warp_spawn_mode		rs.b 1					; Time warp spawn mode flag
+			rs.b 1
+warp_x 			rs.w 1					; Time warp X position
+warp_y 			rs.w 1					; Time warp Y position
+warp_player_flags	rs.b 1					; Time warp flags
+			rs.b 1
+warp_bottom_bound	rs.w 1					; Time warp bottom boundary
+warp_camera_fg_x	rs.w 1					; Time warp camera X position
+warp_camera_fg_y	rs.w 1					; Time warp camera Y position
+warp_camera_bg_x	rs.w 1					; Time warp background camera X position
+warp_camera_bg_y	rs.w 1					; Time warp background camera Y position
+warp_camera_bg2_x	rs.w 1					; Time warp background camera X position 2
+warp_camera_bg2_y	rs.w 1					; Time warp background camera Y position 2
+warp_camera_bg3_x	rs.w 1					; Time warp background camera X position 3
+warp_camera_bg3_y	rs.w 1					; Time warp background camera Y position 3
+warp_water_height	rs.w 1					; Time warp water height
+warp_water_routine	rs.b 1					; Time warp water routine
+warp_water_fullscreen	rs.b 1					; Time warp water fullscreen flag
+warp_ground_speed 	rs.w 1					; Time warp ground velocity
+warp_x_speed 		rs.w 1					; Time warp X velocity
+warp_y_speed 		rs.w 1					; Time warp Y velocity
+good_future		rs.b 1					; Good future flag
+powerup			rs.b 1					; Powerup ID
+unknown_stage_flag 	rs.b 1					; Unknown stage flag
+projector_destroyed	rs.b 1					; Projector destroyed flag
+special_stage		rs.b 1					; Special stage flag
+combine_ring 		rs.b 1					; Combine ring flag (leftover)
+warp_time 		rs.l 1					; Time warp time
+section_id		rs.w 1					; Section ID
+			rs.b 1
+amy_captured		rs.b 1					; Amy captured flag
+next_1up_score		rs.l 1					; Next 1UP score
+debug_angle 		rs.b 1					; Debug angle
+debug_angle_shift	rs.b 1					; Debug angle (shifted)
+debug_quadrant		rs.b 1					; Debug quadrant
+debug_floor_dist 	rs.b 1					; Debug floor distance
+demo_mode		rs.w 1					; Demo mode flag
+			rs.w 1
+s1_credits_index	rs.w 1					; Credits index (leftover from Sonic 1)
+hardware_version 	rs.b 1					; Hardware version
+			rs.b 1
+debug_cheat		rs.w 1					; Debug cheat flag
+init_flag 		rs.l 1					; Initialized flag
+checkpoint		rs.b 1					; Checkpoint ID
+			rs.b 1
+good_future_acts	rs.b 1					; Good future act flags
+saved_mini_player	rs.b 1					; Saved mini player flag
+			rs.b 1
+warp_mini_player	rs.b 1					; Time warp mini player flag
+			rs.b $6C
+flower_positions	rs.b $300				; Flower position buffer
+flower_count		rs.b 3					; Flower count
+fade_enable_display	rs.b 1					; Enable display when fading
+debug_object 		rs.b 1					; Debug object
+			rs.b 1
+debug_mode 		rs.w 1					; Debug mode
+			rs.b 2
+stage_vblank_frames	rs.l 1					; Stage V-BLANK frame count
+time_stop		rs.w 1					; Time stop timer
+log_spike_anim_timer	rs.b 1					; Log spike animation timer (leftover from Sonic 1)
+log_spike_anim_frame	rs.b 1					; Log spike animation frame (leftover from Sonic 1)
+ring_anim_timer		rs.b 1					; Ring animation timer
+ring_anim_frame		rs.b 1					; Ring animation frame
+unknown_anim_timer	rs.b 1					; Unknown animation timer (leftover from Sonic 1)
+unknown_anim_frame	rs.b 1					; Unknown animation frame (leftover from Sonic 1)
+ring_loss_anim_timer	rs.b 1					; Ring loss animation timer
+ring_loss_anim_frame	rs.b 1					; Ring loss animation frame
+ring_loss_anim_accum	rs.w 1					; Ring loss animation accumulator
+			rs.b $C
+camera_fg_x_copy	rs.l 1					; Camera X position copy
+camera_fg_y_copy	rs.l 1					; Camera Y position copy
+camera_bg_x_copy	rs.l 1					; Camera background X position copy
+camera_bg_y_copy	rs.l 1					; Camera background Y position copy
+camera_bg2_x_copy	rs.l 1					; Camera background X position 2 copy
+camera_bg2_y_copy	rs.l 1					; Camera background Y position 2 copy
+camera_bg3_x_copy	rs.l 1					; Camera background X position 3 copy
+camera_bg3_y_copy	rs.l 1					; Camera background Y position 3 copy
+scroll_flags_fg_copy	rs.w 1					; Scroll flags copy
+scroll_flags_bg_copy	rs.w 1					; Scroll flags copy (background)
+scroll_flags_bg2_copy	rs.w 1					; Scroll flags copy (background 2)
+scroll_flags_bg3_copy	rs.w 1					; Scroll flags copy (background 3)
+debug_map_block 	rs.w 1					; Debug map block ID
+ccz_no_bumper		rs.b 1
+			rs.b 3
+debug_subtype_2		rs.b 1					; Debug subtype 2 ID
+water_sway_angle	rs.b 1					; Water sway angle
+layer			rs.b 1					; Layer ID
+stage_started		rs.b 1					; Stage started flag
+boss_music		rs.b 1					; Boss music flag
+			rs.b 1
+wwz_beam_mode		rs.b 1					; Wacky Workbench electric beam mode
+mini_player 		rs.b 1					; Mini player flag
+			rs.b $24
+anim_art_buffer 	rs.b $480				; Animated art buffer
+scroll_section_speeds	rs.b $200				; Scroll section speeds
+work_ram_file		rs.b 0					; Work RAM file data
 
-WORKRAMFILE		rs.b	$6000		; Work RAM file data
-WORKRAMFILESZ		EQU	$FFFB00-WORKRAMFILE
+GLOBAL_VARS_SIZE	equ __rs-global_variables		; Size of global variables
+WORK_RAM_FILE_SIZE	equ (WORK_RAM+$B00)-WORK_RAM_FILE	; Size of Work RAM file
 
-; -------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
