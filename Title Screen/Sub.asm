@@ -668,11 +668,11 @@ KosDec_Done:
 ; ------------------------------------------------------------------------------
 
 LoadCloudData:
-	lea	Stamps_Clouds(pc),a0				; Load stamp art
+	lea	CloudStamps(pc),a0				; Load stamp art
 	lea	WORD_RAM_2M+$200,a1
 	bsr.w	KosDec
 	
-	lea	StampMap_Clouds(pc),a0				; Load stamp map
+	lea	CloudMap(pc),a0					; Load stamp map
 	lea	WORD_RAM_2M+STAMPMAP,a1
 	bsr.w	KosDec
 	rts
@@ -681,11 +681,11 @@ LoadCloudData:
 ; Clouds data
 ; ------------------------------------------------------------------------------
 
-Stamps_Clouds:
+CloudStamps:
 	incbin	"Title Screen/Data/Cloud Stamps.kos"
 	even
 
-StampMap_Clouds:
+CloudMap:
 	incbin	"Title Screen/Data/Cloud Stamp Map.kos"
 	even
 

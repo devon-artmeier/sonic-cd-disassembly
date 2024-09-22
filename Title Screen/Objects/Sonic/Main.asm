@@ -11,7 +11,7 @@ sonic.delay		rs.b 1				; Animation delay
 ; ------------------------------------------------------------------------------
 
 ObjSonic:
-	move.l	#MapSpr_Sonic,obj.sprites(a0)		; Set mappings
+	move.l	#SonicSprites,obj.sprites(a0)		; Set mappings
 	move.w	#$E000|($6D00/$20),obj.sprite_tile(a0)	; Set sprite tile ID
 	move.b	#%11,obj.flags(a0)			; Set flags
 	move.w	#91,obj.x(a0)				; Set X position
@@ -38,7 +38,7 @@ ObjSonic:
 
 	move.l	a0,-(sp)				; Load background mountains art
 	VDP_CMD move.l,$6000,VRAM,WRITE,VDP_CTRL
-	lea	Art_Mountains(pc),a0
+	lea	MountainsArt(pc),a0
 	bsr.w	NemDec
 	movea.l	(sp)+,a0
 
@@ -54,7 +54,7 @@ ObjSonic:
 
 	move.l	a0,-(sp)				; Load background mountains art
 	VDP_CMD move.l,$6B00,VRAM,WRITE,VDP_CTRL
-	lea	Art_Water(pc),a0
+	lea	WaterArt(pc),a0
 	bsr.w	NemDec
 	movea.l	(sp)+,a0
 
@@ -109,7 +109,7 @@ ObjSonic:
 ; Sonic mappings
 ; ------------------------------------------------------------------------------
 
-MapSpr_Sonic:
+SonicSprites:
 	include	"Title Screen/Objects/Sonic/Data/Mappings.asm"
 	even
 
@@ -127,7 +127,7 @@ arm.parent		rs.w 1			; Parent object
 ; ------------------------------------------------------------------------------
 
 ObjSonicArm:
-	move.l	#MapSpr_Sonic,obj.sprites(a0)		; Set mappings
+	move.l	#SonicSprites,obj.sprites(a0)		; Set mappings
 	move.w	#$E000|($6D00/$20),obj.sprite_tile(a0)	; Set sprite tile ID
 	move.b	#%11,obj.flags(a0)			; Set flags
 	move.w	#140,obj.x(a0)				; Set X position
