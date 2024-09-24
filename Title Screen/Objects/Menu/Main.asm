@@ -587,6 +587,7 @@ ObjMenuArrow_Right:
 
 	addi.b	#$10,arrow.delay(a0)				; Increment animation delay counter
 	bcc.s	.Displayed					; If it hasn't overflowed, branch
+	
 	addq.b	#1,arrow.frame(a0)				; Increment animation frame
 	cmpi.b	#.FramesEnd-.Frames,arrow.frame(a0)
 	bcs.s	.Displayed					; Branch if it doesn't need to wrap
@@ -632,6 +633,7 @@ ObjMenuArrow_Left:
 
 	addi.b	#$10,arrow.delay(a0)				; Increment animation delay counter
 	bcc.s	.Displayed					; If it hasn't overflowed, branch
+	
 	addq.b	#1,arrow.frame(a0)				; Increment animation frame
 	cmpi.b	#.FramesEnd-.Frames,arrow.frame(a0)
 	bcs.s	.Displayed					; Branch if it doesn't need to wrap
