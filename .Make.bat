@@ -30,15 +30,20 @@ if exist "Sound Drivers\FM\_Driver.p" (
 )
 
 %ASM68K% "DA Garden\Track Titles.asm", "_Built\Files\PLANET_D.BIN", "DA Garden\Track Titles.sym"
-_Bin\GetPsyQSyms.exe "DA Garden\Track Titles.sym" "DA Garden\Track Title Labels.i"
+_Bin\extract-psyq-symbols.exe -i "DA Garden\Track Titles.sym" -o "DA Garden\Track Title Labels.i"
 if exist "DA Garden\Track Titles.sym" ( del "DA Garden\Track Titles.sym" > nul )
 %ASM68K% "DA Garden\Main.asm", "_Built\Files\PLANET_M.MMD", , "DA Garden\Main.lst"
 %ASM68K% "DA Garden\Sub.asm", "_Built\Files\PLANET_S.BIN", , "DA Garden\Sub.lst"
 
+%ASM68K% "CD System Program\SP.asm", "_Built\Misc\SP.BIN", , "CD System Program\SP.lst"
+%ASM68K% "CD System Program\SPX.asm", "_Built\Files\SPX___.BIN", "CD System Program\SPX.sym", "CD System Program\SPX.lst"
+_Bin\extract-psyq-symbols.exe -i "CD System Program\SPX.sym" -o "CD System Program\File IDs.i" -p "FILE_"
+_Bin\extract-psyq-symbols.exe -i "CD System Program\SPX.sym" -o "CD System Program\Command IDs.i" -p "SCMD_"
+if exist "CD System Program\SPX.sym" ( del "CD System Program\SPX.sym" > nul )
+
 %ASM68K% "CD Initial Program\IP.asm", "_Built\Misc\IP.BIN", , "CD Initial Program\IP.lst"
 %ASM68K% "CD Initial Program\IPX.asm", "_Built\Files\IPX___.MMD",  , "CD Initial Program\IPX.lst"
-%ASM68K% "CD System Program\SP.asm", "_Built\Misc\SP.BIN", , "CD System Program\SP.lst"
-%ASM68K% "CD System Program\SPX.asm", "_Built\Files\SPX___.BIN", , "CD System Program\SPX.lst"
+
 %ASM68K% "Backup RAM\Initialization\Main.asm", "_Built\Files\BRAMINIT.MMD", , "Backup RAM\Initialization\Main.lst"
 %ASM68K% "Backup RAM\Sub.asm", "_Built\Files\BRAMSUB.BIN", , "Backup RAM\Sub.lst"
 %ASM68K% "Mega Drive Init\Main.asm", "_Built\Files\MDINIT.MMD", , "Mega Drive Init\Main.lst"
@@ -95,7 +100,7 @@ _Bin\MakeSTM.exe "FMV\Data\Opening.gif" %FMVWAV% 0 0 "_Built\Files\OPN.STM"
 %ASM68K% /e DEMO=0 "Level\Wacky Workbench\Act 1 Present.asm", "_Built\Files\R61A__.MMD", , "Level\Wacky Workbench\Act 1 Present.lst"
 
 %ASM68K% "Special Stage\Stage Data.asm", "Special Stage\Stage Data.bin", "Special Stage\Stage Data.sym"
-_Bin\GetPsyQSyms.exe "Special Stage\Stage Data.sym" "Special Stage\Stage Data Labels.i"
+_Bin\extract-psyq-symbols.exe -i "Special Stage\Stage Data.sym" -o "Special Stage\Stage Data Labels.i"
 if exist "Special Stage\Stage Data.sym" ( del "Special Stage\Stage Data.sym" > nul )
 %ASM68K% "Special Stage\Main.asm", "_Built\Files\SPMM__.MMD", , "Special Stage\Main.lst"
 %ASM68K% "Special Stage\Sub.asm", "_Built\Files\SPSS__.BIN", , "Special Stage\Sub.lst"

@@ -110,9 +110,9 @@ BuRAMManager:
 ; ------------------------------------------------------------------------------
 
 SpecStage1Demo:
-	move.b	#1-1,specStageIDCmd		; Stage 1
-	move.b	#0,timeStonesCmd		; Reset time stones retrieved for this stage
-	bset	#0,specStageFlags		; Temporary mode
+	move.b	#1-1,special_stage_id_cmd		; Stage 1
+	move.b	#0,time_stones_cmd		; Reset time stones retrieved for this stage
+	bset	#0,special_stage_flags_cmd		; Temporary mode
 	
 	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
 	bsr.w	RunMMD
@@ -123,9 +123,9 @@ SpecStage1Demo:
 ; ------------------------------------------------------------------------------
 
 SpecStage6Demo:
-	move.b	#6-1,specStageIDCmd		; Stage 6
-	move.b	#0,timeStonesCmd		; Reset time stones retrieved for this stage
-	bset	#0,specStageFlags		; Temporary mode
+	move.b	#6-1,special_stage_id_cmd		; Stage 6
+	move.b	#0,time_stones_cmd		; Reset time stones retrieved for this stage
+	bset	#0,special_stage_flags_cmd		; Temporary mode
 	
 	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
 	bsr.w	RunMMD
@@ -585,9 +585,9 @@ RunLevel:
 	rts
 
 .SpecialStage:
-	move.b	current_special_stage,specStageIDCmd	; Set stage ID
-	move.b	time_stones,timeStonesCmd	; Copy time stones retrieved flags
-	bclr	#0,specStageFlags		; Normal mode
+	move.b	current_special_stage,special_stage_id_cmd	; Set stage ID
+	move.b	time_stones,time_stones_cmd	; Copy time stones retrieved flags
+	bclr	#0,special_stage_flags_cmd		; Normal mode
 
 	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
 	bsr.w	RunMMD
@@ -1064,10 +1064,10 @@ SoundTest_Exit:
 ; ------------------------------------------------------------------------------
 
 SoundTest_SpecStg8:
-	move.b	#8-1,specStageIDCmd		; Stage 8
-	move.b	#0,timeStonesCmd		; Reset time stones retrieved for this stage
-	bset	#0,specStageFlags		; Temporary mode
-	bset	#2,specStageFlags		; Secret mode
+	move.b	#8-1,special_stage_id_cmd		; Stage 8
+	move.b	#0,time_stones_cmd			; Reset time stones retrieved for this stage
+	bset	#0,special_stage_flags_cmd		; Temporary mode
+	bset	#2,special_stage_flags_cmd		; Secret mode
 	
 	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
 	bsr.w	RunMMD
@@ -1289,9 +1289,9 @@ TimeAttack_SS:
 	neg.b	d0				; Set special stage ID
 	ext.w	d0
 	subq.w	#1,d0
-	move.b	d0,specStageIDCmd
-	move.b	#0,timeStonesCmd		; Reset time stones retrieved for this stage
-	bset	#1,specStageFlags		; Time attack mode
+	move.b	d0,special_stage_id_cmd
+	move.b	#0,time_stones_cmd		; Reset time stones retrieved for this stage
+	bset	#1,special_stage_flags_cmd		; Time attack mode
 
 	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
 	bsr.w	RunMMD

@@ -139,15 +139,15 @@ MCD_IRQ3_TIME		equ $FFFF8031 				; Interrupt 3 timer
 MCD_IRQ_MASK		equ $FFFF8033 				; Interrupt mask
 	MCDR_IEN1_BIT:		equ 1				; Graphics interrupt enable flag
 	MCDR_IEN1:		equ 1<<MCDR_IEN1_BIT
-	MCDR_IEN2_BIT:		equ 1				; Mega Drive interrupt enable flag
+	MCDR_IEN2_BIT:		equ 2				; Mega Drive interrupt enable flag
 	MCDR_IEN2:		equ 1<<MCDR_IEN2_BIT
-	MCDR_IEN3_BIT:		equ 1				; Timer interrupt enable flag
+	MCDR_IEN3_BIT:		equ 3				; Timer interrupt enable flag
 	MCDR_IEN3:		equ 1<<MCDR_IEN3_BIT
-	MCDR_IEN4_BIT:		equ 1				; CDD interrupt enable flag
+	MCDR_IEN4_BIT:		equ 4				; CDD interrupt enable flag
 	MCDR_IEN4:		equ 1<<MCDR_IEN4_BIT
-	MCDR_IEN5_BIT:		equ 1				; CDC interrupt enable flag
+	MCDR_IEN5_BIT:		equ 5				; CDC interrupt enable flag
 	MCDR_IEN5:		equ 1<<MCDR_IEN5_BIT
-	MCDR_IEN6_BIT:		equ 1				; Subcode interrupt enable flag
+	MCDR_IEN6_BIT:		equ 6				; Subcode interrupt enable flag
 	MCDR_IEN6:		equ 1<<MCDR_IEN6_BIT
 MCD_FADER		equ $FFFF8034 				; Fader control/Spindle speed
 	MCDR_SSF_BIT:		equ 1				; Spindle speed flag (lower byte)

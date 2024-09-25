@@ -9,6 +9,7 @@
 	include	"_Include/Main CPU.i"
 	include	"_Include/System.i"
 	include	"_Include/MMD.i"
+	include	"CD System Program/Command IDs.i"
 
 ; ------------------------------------------------------------------------------
 ; Security block

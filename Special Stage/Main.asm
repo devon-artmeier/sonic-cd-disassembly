@@ -287,14 +287,14 @@ Results:
 	mulu.w	#20,d0
 	move.l	d0,timeBonus
 	
-	bsr.w	GiveWordRAMAccess		; Give Word RAM access to the Sub CPU
+	bsr.w	GiveWordRAMAccess			; Give Word RAM access to the Sub CPU
 	
-	move.b	#0,demoActive.w			; Deactivate the demo
-	move.b	#0,special_stage		; Clear special stage flag
-	move.w	#6,vintRoutine.w		; Fade to white
+	move.b	#0,demoActive.w				; Deactivate the demo
+	move.b	#0,special_stage			; Clear special stage flag
+	move.w	#6,vintRoutine.w			; Fade to white
 	bsr.w	FadeToWhite
-	move.b	specStageID,current_special_stage	; Save next stage ID
-	move.b	timeStonesSub,time_stones	; Save time stones retrieved
+	move.b	special_stage_id,current_special_stage	; Save next stage ID
+	move.b	time_stones_sub,time_stones		; Save time stones retrieved
 	
 	bset	#0,GAMAINFLAG			; Tell Sub CPU the stage is over
 
@@ -581,7 +581,7 @@ LoadTimeStonePal:
 	bne.s	.End				; If it hasn't run out, exit
 	
 	moveq	#0,d0				; Load palette
-	move.b	specStageID,d0
+	move.b	special_stage_id,d0
 	mulu.w	#$A,d0
 	lea	TimeStonePalettes(pc,d0.w),a1
 	lea	palette+($31*2).w,a2
@@ -620,7 +620,7 @@ TimeStonePalettes:
 
 LoadStageData:
 	moveq	#0,d0				; Run routine
-	move.b	specStageID,d0
+	move.b	special_stage_id,d0
 	add.w	d0,d0
 	move.w	.Index(pc,d0.w),d0
 	jmp	.Index(pc,d0.w)
@@ -1071,11 +1071,11 @@ BGScroll1:
 	bne.s	.End				; If so, branch
 	tst.b	scrollDisable			; Is scrolling disabled?
 	bne.s	.End				; If so, branch
-	cmpi.b	#1-1,specStageID		; Handle stage 1 scrolling
+	cmpi.b	#1-1,special_stage_id		; Handle stage 1 scrolling
 	beq.w	BGScroll_SS1Sect1
-	cmpi.b	#5-1,specStageID		; Handle stage 5 scrolling
+	cmpi.b	#5-1,special_stage_id		; Handle stage 5 scrolling
 	beq.w	BGScroll_SS5Sect1
-	cmpi.b	#6-1,specStageID		; Handle stage 6 scrolling
+	cmpi.b	#6-1,special_stage_id		; Handle stage 6 scrolling
 	beq.w	BGScroll_SS6Sect1
 
 .End:
@@ -1188,11 +1188,11 @@ BGScroll2:
 	bne.s	.End				; If so, branch
 	tst.b	scrollDisable			; Is scrolling disabled?
 	bne.s	.End				; If so, branch
-	cmpi.b	#1-1,specStageID		; Handle stage 1 scrolling
+	cmpi.b	#1-1,special_stage_id		; Handle stage 1 scrolling
 	beq.s	BGScroll_SS1Sect2
-	cmpi.b	#5-1,specStageID		; Handle stage 5 scrolling
+	cmpi.b	#5-1,special_stage_id		; Handle stage 5 scrolling
 	beq.s	BGScroll_SS5Sect2
-	cmpi.b	#6-1,specStageID		; Handle stage 6 scrolling
+	cmpi.b	#6-1,special_stage_id		; Handle stage 6 scrolling
 	beq.w	BGScroll_SS6Sect2
 
 .End:
@@ -1239,11 +1239,11 @@ BGScroll3:
 	bne.s	.End				; If so, branch
 	tst.b	scrollDisable			; Is scrolling disabled?
 	bne.s	.End				; If so, branch
-	cmpi.b	#1-1,specStageID		; Handle stage 1 scrolling
+	cmpi.b	#1-1,special_stage_id		; Handle stage 1 scrolling
 	beq.s	BGScroll_SS1Sect3
-	cmpi.b	#5-1,specStageID		; Handle stage 5 scrolling
+	cmpi.b	#5-1,special_stage_id		; Handle stage 5 scrolling
 	beq.s	BGScroll_SS5Sect3
-	cmpi.b	#6-1,specStageID		; Handle stage 6 scrolling
+	cmpi.b	#6-1,special_stage_id		; Handle stage 6 scrolling
 	beq.w	BGScroll_SS6Sect3
 
 .End:
@@ -1548,7 +1548,7 @@ CopyHScroll:
 	bne.s	.End				; If so, branch
 
 	moveq	#0,d0				; Run routine
-	move.b	specStageID,d0
+	move.b	special_stage_id,d0
 	add.w	d0,d0
 	move.w	.Index(pc,d0.w),d0
 	jmp	.Index(pc,d0.w)
@@ -1743,7 +1743,7 @@ PaletteCycle:
 	lea	palette.w,a6			; Get palette
 
 	moveq	#0,d0				; Run routine
-	move.b	specStageID,d0
+	move.b	special_stage_id,d0
 	add.w	d0,d0
 	move.w	.Index(pc,d0.w),d0
 	jmp	.Index(pc,d0.w)
@@ -2220,11 +2220,11 @@ Delay:
 ; ------------------------------------------------------------------------------
 
 CheckLineScroll:
-	cmpi.b	#1-1,specStageID		; Stage 1
+	cmpi.b	#1-1,special_stage_id		; Stage 1
 	beq.s	.End
-	cmpi.b	#5-1,specStageID		; Stage 5
+	cmpi.b	#5-1,special_stage_id		; Stage 5
 	beq.s	.End
-	cmpi.b	#6-1,specStageID		; Stage 6
+	cmpi.b	#6-1,special_stage_id		; Stage 6
 
 .End:
 	rts

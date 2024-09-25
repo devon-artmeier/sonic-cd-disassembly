@@ -197,7 +197,7 @@ BRMVERIFY		equ $08					; Backup RAM verify
 ;	reg - Z80 control port (optional)
 ; ------------------------------------------------------------------------------
 
-REQUEST_Z80 macro reg
+requestZ80 macro reg
 	if narg>0
 		move.w	#$100,\reg
 	else
@@ -212,7 +212,7 @@ REQUEST_Z80 macro reg
 ;	reg - Z80 control port (optional)
 ; ------------------------------------------------------------------------------
 
-WAIT_Z80 macro reg
+waitZ80 macro reg
 .Wait\@:
 	if narg>0
 		btst	#0,\reg
@@ -229,13 +229,13 @@ WAIT_Z80 macro reg
 ;	reg - Z80 control port (optional)
 ; ------------------------------------------------------------------------------
 
-STOP_Z80 macro reg
+stopZ80 macro reg
 	if narg>0
-		REQUEST_Z80 \reg
-		WAIT_Z80 \reg
+		requestZ80 \reg
+		waitZ80 \reg
 	else
-		REQUEST_Z80
-		WAIT_Z80
+		requestZ80
+		waitZ80
 	endif
 	endm
 
@@ -246,7 +246,7 @@ STOP_Z80 macro reg
 ;	reg - Z80 bus port (optional)
 ; ------------------------------------------------------------------------------
 
-START_Z80 macro reg
+startZ80 macro reg
 	if narg>0
 		move.w	#0,\reg
 	else
@@ -261,7 +261,7 @@ START_Z80 macro reg
 ;	reg - Z80 reset port (optional)
 ; ------------------------------------------------------------------------------
 
-RESET_Z80_ON macro reg
+resetZ80On macro reg
 	if narg>0
 		move.w	#0,\reg
 	else
@@ -277,7 +277,7 @@ RESET_Z80_ON macro reg
 ;	reg - Z80 reset port (optional)
 ; ------------------------------------------------------------------------------
 
-RESET_Z80_OFF macro reg
+resetZ80Off macro reg
 	if narg>0
 		move.w	#$100,\reg
 	else
@@ -292,7 +292,7 @@ RESET_Z80_OFF macro reg
 ;	ctrl - VDP control port (optional)
 ; ------------------------------------------------------------------------------
 
-WAIT_DMA macro ctrl
+waitDma macro ctrl
 .Wait\@:
 	if narg>0
 		btst	#1,\reg
@@ -327,7 +327,7 @@ VRAM_COPY_CMD		equ $000000C0				; VRAM DMA copy
 
 ; ------------------------------------------------------------------------------
 
-VDP_CMD macro ins, addr, type, rwd, dest
+vdpCmd macro ins, addr, type, rwd, dest
 	local cmd
 	cmd: = (\type\_\rwd\_CMD)|(((\addr)&$3FFF)<<16)|((\addr)/$4000)
 	if narg=5
@@ -348,7 +348,7 @@ VDP_CMD macro ins, addr, type, rwd, dest
 ;	dest - Destination (optional)
 ; ------------------------------------------------------------------------------
 
-VDP_CMD_LO macro ins, addr, type, rwd, dest
+vdpCmdLo macro ins, addr, type, rwd, dest
 	local cmd
 	cmd: = ((\type\_\rwd\_CMD)&$FFFF)|((\addr)/$4000)
 	if narg=5
@@ -369,7 +369,7 @@ VDP_CMD_LO macro ins, addr, type, rwd, dest
 ;	dest - Destination (optional)
 ; ------------------------------------------------------------------------------
 
-VDP_CMD_HI macro ins, addr, type, rwd, dest
+vdpCmdHi macro ins, addr, type, rwd, dest
 	local cmd
 	cmd: = ((\type\_\rwd\_CMD)>>16)|((\addr)&$3FFF)
 	if narg=5
@@ -390,15 +390,15 @@ VDP_CMD_HI macro ins, addr, type, rwd, dest
 ;	a6.l - VDP control port
 ; ------------------------------------------------------------------------------
 
-DMA_M68K_2 macro src, dest, size, type
+dma68k2 macro src, dest, size, type
 	move.l	#$93009400|((((\size)/2)&$FF00)>>8)|((((\size)/2)&$FF)<<16),(a6)
 	move.l	#$95009600|((((\src)/2)&$FF00)>>8)|((((\src)/2)&$FF)<<16),(a6)
 	move.w	#$9700|(((\src)>>17)&$7F),(a6)
-	VDP_CMD_HI move.w,\dest,\type,DMA,(a6)
-	VDP_CMD_LO move.w,\dest,\type,DMA,-(sp)
+	vdpCmdHi move.w,\dest,\type,DMA,(a6)
+	vdpCmdLo move.w,\dest,\type,DMA,-(sp)
 	move.w	(sp)+,(a6)
 
-	VDP_CMD move.l,\dest,\type,WRITE,(a6)
+	vdpCmd move.l,\dest,\type,WRITE,(a6)
 	move.w	\src,VDP_DATA
 	endm
 
@@ -413,9 +413,9 @@ DMA_M68K_2 macro src, dest, size, type
 ;	type - Type of VDP memory
 ; ------------------------------------------------------------------------------
 
-DMA_M68K macro src, dest, size, type
+dma68k macro src, dest, size, type
 	lea	VDP_CTRL,a6
-	DMA_M68K_2 \src,\dest,\size,\type
+	dma68k2 \src,\dest,\size,\type
 	endm
 
 ; ------------------------------------------------------------------------------
@@ -427,16 +427,16 @@ DMA_M68K macro src, dest, size, type
 ;	byte - Byte to fill VRAM with
 ; ------------------------------------------------------------------------------
 
-VRAM_FILL macro addr, size, byte, ctrl, data
+vramFill macro addr, size, byte, ctrl, data
 	lea	VDP_CTRL,a6
 	move.w	#$8F01,(a6)
 	move.l	#$93009400|((((\size)-1)&$FF00)>>8)|((((\size)-1)&$FF)<<16),(a6)
 	move.w	#$9780,(a6)
-	VDP_CMD move.l,\addr,VRAM,DMA,(a6)
+	vdpCmd move.l,\addr,VRAM,DMA,(a6)
 	move.w	#(\byte)<<8,VDP_DATA
-	WAIT_DMA 1(a6)
+	waitDma 1(a6)
 
-	VDP_CMD move.l,\addr,VRAM,WRITE,(a6)
+	vdpCmd move.l,\addr,VRAM,WRITE,(a6)
 	move.w	#((\byte)<<8)|(\byte),VDP_DATA
 	move.w	#$8F02,(a6)
 	endm
@@ -451,14 +451,14 @@ VRAM_FILL macro addr, size, byte, ctrl, data
 ;	size - Size of copy in bytes
 ; ------------------------------------------------------------------------------
 
-VRAM_COPY macro src, dest, size, ctrl
+vramCopy macro src, dest, size, ctrl
 	lea	VDP_CTRL,a6
 	move.w	#$8F01,(a6)
 	move.l	#$93009400|((((\size)-1)&$FF00)>>8)|((((\size)-1)&$FF)<<16),(a6)
 	move.l	#$95009600|(((\src)&$FF00)>>8)|(((\src)&$FF)<<16),(a6)
 	move.w	#$97C0,(a6)
-	VDP_CMD move.l,\dest,VRAM,COPY,(a6)
-	WAIT_DMA 1(a6)
+	vdpCmd move.l,\dest,VRAM,COPY,(a6)
+	waitDma 1(a6)
 	move.w	#$8F02,(a6)
 	endm
 
@@ -471,7 +471,7 @@ VRAM_COPY macro src, dest, size, ctrl
 ;	part - Buffer part ID
 ; ------------------------------------------------------------------------------
 
-COPYIMG macro src, buf, part
+copyImg macro src, buf, part
 	local off, size, vadr
 	
 	if (\part)=0
