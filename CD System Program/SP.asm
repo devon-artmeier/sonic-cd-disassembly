@@ -231,17 +231,17 @@ FileOperation:
 	
 	move.w	file.operation_mode(a5),d0			; Perform operation
 	add.w	d0,d0
-	move.w	.Opers(pc,d0.w),d0
-	jmp	.Opers(pc,d0.w)
+	move.w	.Operations(pc,d0.w),d0
+	jmp	.Operations(pc,d0.w)
 
 ; ------------------------------------------------------------------------------
 
-.Opers:
-	dc.w	FileOperation-.Opers				; None
-	dc.w	FileTableOperation-.Opers			; Read file table
-	dc.w	FileLoadOperation-.Opers			; Load file
-	dc.w	FmvLoadOperation-.Opers				; Load FMV
-	dc.w	MuteFmvLoadOperation-.Opers			; Load mute FMV
+.Operations:
+	dc.w	FileOperation-.Operations			; None
+	dc.w	FileTableOperation-.Operations			; Read file table
+	dc.w	FileLoadOperation-.Operations			; Load file
+	dc.w	FmvLoadOperation-.Operations			; Load FMV
+	dc.w	MuteFmvLoadOperation-.Operations		; Load mute FMV
 
 ; ------------------------------------------------------------------------------
 ; Set operation bookmark
