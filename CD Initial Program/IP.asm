@@ -14,7 +14,7 @@
 ; Security block
 ; ------------------------------------------------------------------------------
 
-	org	WORKRAM
+	org	WORK_RAM
 
 	if REGION=JAPAN
 		incbin	"CD Initial Program/Security/Japan.bin"
@@ -28,100 +28,100 @@
 ; Program
 ; ------------------------------------------------------------------------------
 
-	move.l	#VInterrupt,_LEVEL6+2.w		; Set V-INT address
-	move.w	#_LEVEL4,GAUSERHINT		; Set H-INT address
-	move.l	#HInterrupt,_LEVEL4+2.w
+	move.l	#VBlankIrq,_LEVEL6+2				; Set V-BLANK interrupt address
+	move.w	#_LEVEL4,MCD_USER_HBLANK			; Set H-BLANK interrupt address
+	move.l	#HBlankIrq,_LEVEL4+2
 
-.SendWordRAM:
-	bset	#1,GAMEMMODE			; Send Word RAM access to the Sub CPU
-	beq.s	.SendWordRAM
+.GiveWordRamAccess:
+	bset	#1,MCD_MEM_MODE					; Give Word RAM access to the Sub CPU
+	beq.s	.GiveWordRamAccess
 
-	lea	GACOMCMDS,a0			; Clear communication commands
+	lea	MCD_MAIN_COMMS,a0				; Clear communication registers
 	moveq	#0,d0
-	move.b	d0,GAMAINFLAG-GACOMCMDS(a0)
+	move.b	d0,MCD_MAIN_FLAG-MCD_MAIN_COMMS(a0)
 	move.l	d0,(a0)+
 	move.l	d0,(a0)+
 	move.l	d0,(a0)+
 	move.l	d0,(a0)+
 
-	lea	LoadIPX(pc),a0			; Copy main program loader
-	lea	WORKRAM+$1000,a1
-	move.w	#LoadIPXEnd-LoadIPX-1,d7
+	lea	LoadIpx(pc),a0					; Copy main program loader
+	lea	WORK_RAM+$1000,a1
+	move.w	#LoadIpxEnd-LoadIpx-1,d7
 
-.CopyIPXLoader:
+.CopyIpxLoader:
 	move.b	(a0)+,(a1)+
-	dbf	d7,.CopyIPXLoader
+	dbf	d7,.CopyIpxLoader
 
-	jmp	WORKRAM+$1000			; Go to main program loader
+	jmp	WORK_RAM+$1000					; Go to main program loader
 
 ; ------------------------------------------------------------------------------
 ; IPX loader
 ; ------------------------------------------------------------------------------
 
-LoadIPX:
-	obj	WORKRAM+$1000
+LoadIpx:
+	obj	WORK_RAM+$1000
 
-	moveq	#SCMD_IPX,d0			; Load IPX file
-	jsr	SubCPUCmd
+	moveq	#SCMD_IPX,d0					; Load IPX file
+	jsr	SubCpuCommand
 
-	movea.l	WORDRAM2M+mmdEntry,a0		; Get entry address
+	movea.l	WORD_RAM_2M+mmd.entry,a0			; Get entry address
 	
-	move.l	WORDRAM2M+mmdOrigin,d0		; Get origin address
-	beq.s	.GetHInt			; If it's not set, branch
+	move.l	WORD_RAM_2M+mmd.origin,d0			; Get origin address
+	beq.s	.GetHInt					; If it's not set, branch
 	
-	movea.l	d0,a2				; Copy file to origin address
-	lea	WORDRAM2M+mmdFile,a1
-	move.w	WORDRAM2M+mmdSize,d7
+	movea.l	d0,a2						; Copy file to origin address
+	lea	WORD_RAM_2M+mmd.file,a1
+	move.w	WORD_RAM_2M+mmd.size,d7
 
 .CopyFile:
 	move.l	(a1)+,(a2)+
 	dbf	d7,.CopyFile
 
 .GetHInt:
-	move.l	WORDRAM2M+mmdHInt,d0		; Get H-INT address
-	beq.s	.GetVInt			; If it's not set, branch
-	move.l	d0,_LEVEL4+2.w			; Set H-INT address
+	move.l	WORD_RAM_2M+mmd.hblank,d0			; Get H-BLANK interrupt address
+	beq.s	.GetVInt					; If it's not set, branch
+	move.l	d0,_LEVEL4+2					; Set H-BLANK interrupt address
 
 .GetVInt:
-	move.l	WORDRAM2M+mmdVInt,d0		; Get V-INT address
-	beq.s	.SendWordRAM			; If it's blank, branch
-	move.l	d0,_LEVEL6+2.w			; Set V-INT address
+	move.l	WORD_RAM_2M+mmd.vblank,d0			; Get V-BLANK interrupt address
+	beq.s	.GiveWordRamAccess				; If it's blank, branch
+	move.l	d0,_LEVEL6+2					; Set V-BLANK interrupt address
 
-.SendWordRAM:
-	bset	#1,GAMEMMODE			; Send Word RAM access to the Sub CPU
-	beq.s	.SendWordRAM
+.GiveWordRamAccess:
+	bset	#1,MCD_MEM_MODE					; Give Word RAM access to the Sub CPU
+	beq.s	.GiveWordRamAccess
 
-	jmp	(a0)				; Go to main program
+	jmp	(a0)						; Go to main program
 
 	objend
-LoadIPXEnd:
+LoadIpxEnd:
 
 ; ------------------------------------------------------------------------------
 ; Send Sub CPU command
 ; ------------------------------------------------------------------------------
 
-SubCPUCmd:
-	move.w	d0,GACOMCMD0			; Set command ID
+SubCpuCommand:
+	move.w	d0,MCD_MAIN_COMM_0				; Set command ID
 
 .WaitAck:
-	tst.w	GACOMSTAT0			; Has the Sub CPU received the command?
-	beq.s	.WaitAck			; If not, wait
+	tst.w	MCD_SUB_COMM_0					; Has the Sub CPU received the command?
+	beq.s	.WaitAck					; If not, wait
 	
-	move.w	#0,GACOMCMD0			; Mark as ready to send commands again
+	move.w	#0,MCD_MAIN_COMM_0				; Mark as ready to send commands again
 
 .WaitDone:
-	tst.w	GACOMSTAT0			; Is the Sub CPU done processing the command?
-	bne.s	.WaitDone			; If not, wait
+	tst.w	MCD_SUB_COMM_0					; Is the Sub CPU done processing the command?
+	bne.s	.WaitDone					; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
 ; V-INT
 ; ------------------------------------------------------------------------------
 
-VInterrupt:
-	bset	#0,GAIRQ2			; Trigger Sub CPU IRQ2
+VBlankIrq:
+	bset	#0,MCD_IRQ2					; Trigger Sub CPU IRQ2
 
-HInterrupt:
+HBlankIrq:
 	rte
 
 ; ------------------------------------------------------------------------------

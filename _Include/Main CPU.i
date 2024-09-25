@@ -140,7 +140,7 @@ VDP_HV			equ $C00008				; VDP H/V counter
 PSG_CTRL		equ $C00011				; PSG control port
 
 ; Work RAM
-WORK_RAM		equ $FFFF0000				; Work RAM start
+WORK_RAM		equ $FF0000				; Work RAM start
 WORK_RAM_SIZE		equ $10000				; Work RAM size
 WORK_RAM_END		equ WORK_RAM+WORK_RAM_SIZE		; Work RAM end
 

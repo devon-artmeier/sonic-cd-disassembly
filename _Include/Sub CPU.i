@@ -15,7 +15,7 @@ SUB_CPU			equ 1					; Sub CPU
 PRG_RAM			equ 0					; Program RAM start
 PRG_RAM_SIZE		equ $80000				; Program RAM size
 PRG_RAM_END		equ PRG_RAM+PRG_RAM_SIZE		; Program RAM end
-SP_START		equ PRGRAM+$6000			; System program start
+SP_START		equ PRG_RAM+$6000			; System program start
 
 ; Word RAM
 WORD_RAM_1M		equ $C0000				; Word RAM start (1M/1M)
@@ -61,10 +61,38 @@ PCM_WAVE_RAM		equ $FF2001				; Wave RAM
 ; Gate array
 MCD_REGS		equ $FFFF8000				; Mega CD registers base
 MCD_LED_CTRL		equ $FFFF8000				; LED control
+	MCDR_LEDR_BIT:		equ 0				; Red LED on flag
+	MCDR_LEDR:		equ 1<<MCDR_LEDR_BIT
+	MCDR_LEDG_BIT:		equ 1				; Green LED on flag
+	MCDR_LEDG:		equ 1<<MCDR_LEDG_BIT
 MCD_RESET		equ $FFFF8001				; Periphery reset
+	MCDR_RES0_BIT:		equ 0				; Reset flag
+	MCDR_RES0:		equ 1<<MCDR_RES0_BIT
+	MCDR_VER_BIT:		equ 4				; Version number
 MCD_PROTECT		equ $FFFF8002				; Write protection
 MCD_MEM_MODE		equ $FFFF8003				; Memory mode
+	MCDR_RET_BIT:		equ 0				; Main CPU Word RAM access flag
+	MCDR_RET:		equ 1<<MCDR_RET_BIT
+	MCDR_DMNA_BIT:		equ 1				; Sub CPU Word RAM access flag
+	MCDR_DMNA:		equ 1<<MCDR_DMNA_BIT
+	MCDR_MODE_BIT:		equ 2				; Word RAM mode
+	MCDR_MODE:		equ 1<<MCDR_MODE_BIT
+	MCDR_PM_BIT:		equ 3				; Word RAM write priority mode
+	MCDR_PM_OFF:		equ 0<<MCDR_PM_BIT		; Word RAM no priority mode
+	MCDR_PM_UNDER:		equ 1<<MCDR_PM_BIT		; Word RAM underwrite mode
+	MCDR_PM_OVER:		equ 2<<MCDR_PM_BIT		; Word RAM overwrite mode
 MCD_CDC_DEVICE		equ $FFFF8004				; CDC device destination
+	MCDR_CDC_MAIN_READ:	equ 2				; Main CPU read
+	MCDR_CDC_SUB_READ:	equ 3				; Sub CPU read
+	MCDR_CDC_PCM_DMA:	equ 4				; PCM wave RAM DMA
+	MCDR_CDC_PRG_DMA:	equ 5				; Program RAM DMA
+	MCDR_CDC_WORD_DMA:	equ 7				; Word RAM DMA
+	MCDR_UBR_BIT:		equ 5				; Upper byte ready flag
+	MCDR_UBR:		equ 1<<MCDR_UBR_BIT
+	MCDR_DSR_BIT:		equ 6				; Data set ready flag
+	MCDR_DSR:		equ 1<<MCDR_DSR_BIT
+	MCDR_EDT_BIT:		equ 7				; End of data transfer flag
+	MCDR_EDT:		equ 1<<MCDR_EDT_BIT
 MCD_CDC_REG_ADDR	equ $FFFF8005				; CDC register address
 MCD_CDC_REG_DATA	equ $FFFF8007				; CDC register data
 MCD_CDC_HOST		equ $FFFF8008				; CDC data
@@ -109,9 +137,37 @@ MCD_SUB_COMM_14		equ $FFFF802E				; Sub CPU communication register 14
 MCD_SUB_COMM_15		equ $FFFF802F				; Sub CPU communication register 15
 MCD_IRQ3_TIME		equ $FFFF8031 				; Interrupt 3 timer
 MCD_IRQ_MASK		equ $FFFF8033 				; Interrupt mask
+	MCDR_IEN1_BIT:		equ 1				; Graphics interrupt enable flag
+	MCDR_IEN1:		equ 1<<MCDR_IEN1_BIT
+	MCDR_IEN2_BIT:		equ 1				; Mega Drive interrupt enable flag
+	MCDR_IEN2:		equ 1<<MCDR_IEN2_BIT
+	MCDR_IEN3_BIT:		equ 1				; Timer interrupt enable flag
+	MCDR_IEN3:		equ 1<<MCDR_IEN3_BIT
+	MCDR_IEN4_BIT:		equ 1				; CDD interrupt enable flag
+	MCDR_IEN4:		equ 1<<MCDR_IEN4_BIT
+	MCDR_IEN5_BIT:		equ 1				; CDC interrupt enable flag
+	MCDR_IEN5:		equ 1<<MCDR_IEN5_BIT
+	MCDR_IEN6_BIT:		equ 1				; Subcode interrupt enable flag
+	MCDR_IEN6:		equ 1<<MCDR_IEN6_BIT
 MCD_FADER		equ $FFFF8034 				; Fader control/Spindle speed
+	MCDR_SSF_BIT:		equ 1				; Spindle speed flag (lower byte)
+	MCDR_SSF:		equ 1<<MCDR_SSF_BIT
+	MCDR_DEF_BIT:		equ 2				; De-emphasis flag (lower byte)
+	MCDR_DEF:		equ 1<<MCDR_DEF_BIT
+	MCDR_FD_BIT:		equ 4				; Fade volume data (lower byte)
+	MCDR_FD:		equ 1<<MCDR_FD_BIT
+	MCDR_EFDT_BIT:		equ 7				; End of fade data transfer (upper byte)
+	MCDR_EFDT:		equ 1<<MCDR_EFDT_BIT
 MCD_CDD_TYPE		equ $FFFF8036 				; CDD data type
+	MCDR_DM_BIT:		equ 0				; CDD data type flag
+	MCDR_DM:		equ 1<<MCDR_DM_BIT
 MCD_CDD_CTRL		equ $FFFF8037 				; CDD control
+	MCDR_DTS_BIT:		equ 0				; Data transfer status flag
+	MCDR_DTS:		equ 1<<MCDR_DTS_BIT
+	MCDR_DRS_BIT:		equ 1				; Data receive status
+	MCDR_DRS:		equ 1<<MCDR_DRS_BIT
+	MCDR_HOCK_BIT:		equ 2				; Host clock flag
+	MCDR_HOCK:		equ 1<<MCDR_HOCK_BIT
 MCD_CDD_STATUSES	equ $FFFF8038 				; CDD statuses
 MCD_CDD_STATUS_0	equ $FFFF8038 				; CDD status 0
 MCD_CDD_STATUS_1	equ $FFFF8039 				; CDD status 1
@@ -138,10 +194,20 @@ MCD_1BPP_COLOR		equ $FFFF804C 				; 1BPP conversion color
 MCD_1BPP_IN		equ $FFFF804E 				; 1BPP conversion input data
 MCD_1BPP_OUT		equ $FFFF8050 				; 1BPP conversion output data
 MCD_IMG_CTRL		equ $FFFF8058				; Image render control (2M)
+	MCDR_RPT_BIT:		equ 0				; Image source map repeat flag (lower byte)
+	MCDR_RPT:		equ 1<<MCDR_RPT_BIT
+	MCDR_STS_BIT:		equ 1				; Image source stamp size flag (lower byte)
+	MCDR_STS:		equ 1<<MCDR_STS_BIT
+	MCDR_SMS_BIT:		equ 2				; Image source size flag (lower byte)
+	MCDR_SMS:		equ 1<<MCDR_SMS_BIT
+	MCDR_GRON_BIT:		equ 7				; Image rendering flag (upper byte)
+	MCDR_GRON:		equ 1<<MCDR_GRON_BIT
 MCD_IMG_SRC_MAP		equ $FFFF805A 				; Image source map address (2M)
 MCD_IMG_STRIDE		equ $FFFF805C 				; Image buffer stride (2M)
 MCD_IMG_START		equ $FFFF805E 				; Image buffer address (2M)
 MCD_IMG_OFFSET		equ $FFFF8060 				; Image buffer pixel offset (2M)
+	MCDR_DOT_BIT:		equ 0				; Image buffer pixel offset
+	MCDR_LN_BIT:		equ 3				; Image buffer line offset
 MCD_IMG_WIDTH		equ $FFFF8062 				; Image buffer width (2M)
 MCD_IMG_HEIGHT		equ $FFFF8064 				; Image buffer height (2M)
 MCD_IMG_TRACE		equ $FFFF8066 				; Trace table address (2M)
@@ -283,5 +349,19 @@ _USERCALL2		equ $005F34
 _USERCALL3		equ $005F3A
 _USERMODE		equ $005EA6
 _WAITVSYNC		equ $005F10
+
+; ------------------------------------------------------------------------------
+; BIOS status flags
+; ------------------------------------------------------------------------------
+
+BIOS_NO_DISC_BIT	equ 12					; No disc flag
+BIOS_NO_DISC		equ 1<<BIOS_NO_DISC_BIT
+BIOS_TOC_READ_BIT	equ 13					; TOC read flag
+BIOS_TOC_READ		equ 1<<BIOS_TOC_READ_BIT
+BIOS_TRAY_OPEN_BIT	equ 14					; Tray open flag
+BIOS_TRAY_OPEN		equ 1<<BIOS_TRAY_OPEN_BIT
+BIOS_NOT_READY_BIT	equ 15					; Not ready flag
+BIOS_NOT_READY		equ 1<<BIOS_NOT_READY_BIT
+BIOS_BUSY_MASK		equ $F0
 
 ; ------------------------------------------------------------------------------

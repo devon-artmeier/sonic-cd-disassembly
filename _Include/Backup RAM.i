@@ -70,7 +70,7 @@ BURAMPARAMSZ	rs.b	0			; Size of structure
 ; Shared Word RAM variables
 ; ------------------------------------------------------------------------------
 
-	rsset	WORDRAM2M+$20
+	rsset	WORD_RAM_2M+$20
 commandID	rs.b	1			; Command ID
 cmdStatus	rs.b	1			; Command status
 buramD0		rs.w	1			; Backup RAM function returned d0

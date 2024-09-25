@@ -362,30 +362,30 @@ SCMD_COMINSOON	rs.b	1			; Load "Comin' Soon" screen
 
 ; ------------------------------------------------------------------------------
 
-	if def(SUBCPU)
+	if def(SUB_CPU)
 
 ; ------------------------------------------------------------------------------
 ; Addresses
 ; ------------------------------------------------------------------------------
 
 ; System program
-SPVariables	EQU	$7000			; Variables
-SaveDataTemp	EQU	$7400			; Temporary save data buffer
-SPIRQ2		EQU	$7700			; IRQ2 handler
-LoadFile	EQU	$7800			; Load file
-GetFileName	EQU	$7840			; Get file name
-FileFunc	EQU	$7880			; File engine function handler
-FileVars	EQU	$8C00			; File engine variables
+SpVariables		equ $7000			; Variables
+SaveDataTemp		equ $7400			; Temporary save data buffer
+MegaDriveIrq		equ $7700			; IRQ2 handler
+LoadFile		equ $7800			; Load file
+GetFileName		equ $7840			; Get file name
+FileFunction		equ $7880			; File engine function handler
+FileVariables		equ $8C00			; File engine variables
 
 ; System program extension
-SPX		EQU	$B800			; SPX start location
-SPXFileTable	EQU	SPX			; SPX file table
-SPXStart	EQU	SPX+$800		; SPX code start
-Stack		EQU	$10000			; Stack base
+Spx			equ $B800			; SPX start location
+SpxFileTable		equ SPX				; SPX file table
+SpxStart		equ SPX+$800			; SPX code start
+Stack			equ $10000			; Stack base
 
 ; FMV
-FMVPCMBUF	EQU	PRGRAM+$40000		; PCM data buffer
-FMVGFXBUF	EQU	WORDRAM1M		; Graphics data buffer
+FMV_PCM_BUFFER		equ PRG_RAM+$40000		; PCM data buffer
+FMV_GFX_BUFFER		equ WORD_RAM_1M			; Graphics data buffer
 
 ; ------------------------------------------------------------------------------
 ; Constants
@@ -393,102 +393,106 @@ FMVGFXBUF	EQU	WORDRAM1M		; Graphics data buffer
 
 ; File engine functions
 	rsreset
-FFUNC_INIT	rs.b	1			; Initialize
-FFUNC_OPER	rs.b	1			; Perform operation
-FFUNC_STATUS	rs.b	1			; Get status
-FFUNC_GETFILES	rs.b	1			; Get files
-FFUNC_LOADFILE	rs.b	1			; Load file
-FFUNC_FINDFILE	rs.b	1			; Find file
-FFUNC_LOADFMV	rs.b	1			; Load FMV
-FFUNC_RESET	rs.b	1			; Reset
-FFUNC_LOADFMVM	rs.b	1			; Load FMV (mute)
+FILE_INIT		rs.b 1					; Initialize
+FILE_OPERATION		rs.b 1					; Perform operation
+FILE_STATUS		rs.b 1					; Get status
+FILE_GET_FILES		rs.b 1					; Get files
+FILE_LOAD_FILE		rs.b 1					; Load file
+FILE_FIND_FILE		rs.b 1					; Find file
+FILE_FMV		rs.b 1					; Load FMV
+FILE_RESET		rs.b 1					; Reset
+FILE_MUTE_FMV		rs.b 1					; Load mute FMV
 
 ; File engine operation modes
 	rsreset
-FMODE_NONE	rs.b	1			; No function
-FMODE_GETFILES	rs.b	1			; Get files
-FMODE_LOADFILE	rs.b	1			; Load file
-FMODE_LOADFMV	rs.b	1			; Load FMV
-FMODE_LOADFMVM	rs.b	1			; Load FMV (mute)
+FILE_OPERATE_NONE	rs.b	1				; No function
+FILE_OPERATE_GET_FILES	rs.b	1				; Get files
+FILE_OPERATE_LOAD_FILE	rs.b	1				; Load file
+FILE_OPERATE_FMV	rs.b	1				; Load FMV
+FILE_OPERATE_FMV_MUTE	rs.b	1				; Load mute FMV
 
 ; File engine statuses
-FSTAT_OK	EQU	100			; OK
-FSTAT_GETFAIL	EQU	-1			; File get failed
-FSTAT_NOTFOUND	EQU	-2			; File not found
-FSTAT_LOADFAIL	EQU	-3			; File load failed
-FSTAT_READFAIL	EQU	-100			; Failed
-FSTAT_FMVFAIL	EQU	-111			; FMV load failed
+FILE_STATUS_OK		equ 100					; OK
+FILE_STATUS_GET_FAIL	equ -1					; File get failed
+FILE_STATUS_NOT_FOUND	equ -2					; File not found
+FILE_STATUS_LOAD_FAIL	equ -3					; File load failed
+FILE_STATUS_READ_FAIL	equ -100				; Failed
+FILE_STATUS_FMV_FAIL	equ -111				; FMV load failed
 
 ; FMV data types
-FMVT_PCM	EQU	0			; PCM data type
-FMVT_GFX	EQU	1			; Graphics data type
+FMV_DATA_PCM		equ 0					; PCM data type
+FMV_DATA_GFX		equ 1					; Graphics data type
 
 ; FMV flags
-FMVF_INIT	EQU	3			; Initialized flag
-FMVF_PBUF	EQU	4			; PCM buffer ID
-FMVF_READY	EQU	5			; Ready flag
-FMVF_SECT	EQU	7			; Reading data section 1 flag
+FMV_INIT_BIT		equ 3					; Initialized flag
+FMV_INIT		equ 1<<FMV_INIT_BIT
+FMV_PCM_BUFFER_ID_BIT	equ 4					; PCM buffer ID
+FMV_PCM_BUFFER_ID	equ 1<<FMV_PCM_BUFFER_ID_BIT
+FMV_READY_BIT		equ 5					; Ready flag
+FMV_READY		equ 1<<FMV_READY_BIT
+FMV_SECTION_1_BIT	equ 7					; Reading data section 1 flag
+FMV_SECTION_1		equ 1<<FMV_SECTION_1_BIT
 
 ; File data
-FILENAMESZ	EQU	12			; File name length
+FILE_NAME_SIZE		equ 12					; File name size
 
 ; ------------------------------------------------------------------------------
 ; SP variables
 ; ------------------------------------------------------------------------------
 
-	rsset	SPVariables
-curPCMDriver	rs.l	1			; Current PCM driver
-ssFlagsCopy	rs.b	1			; Special stage flags copy
-pcmDrvFlags	rs.b	1			; PCM driver flags
+	rsset	SpVariables
+curPCMDriver	rs.l	1					; Current PCM driver
+ssFlagsCopy	rs.b	1					; Special stage flags copy
+pcmDrvFlags	rs.b	1					; PCM driver flags
 		rs.b	$400-__rs
-SPVARSSZ	rs.b	1			; Size of structure
+SPVARSSZ	rs.b	1					; Size of structure
 
 ; ------------------------------------------------------------------------------
 ; File engine variables structure
 ; ------------------------------------------------------------------------------
 
 	rsreset
-feOperMark	rs.l	1			; Operation bookmark
-feSector	rs.l	1			; Sector to read from
-feSectorCnt	rs.l	1			; Number of sectors to read
-feReturnAddr	rs.l	1			; Return address for CD read functions
-feReadBuffer	rs.l	1			; Read buffer address
-feReadTime	rs.b	0			; Time of read sector
-feReadMin	rs.b	1			; Read sector minute
-feReadSec	rs.b	1			; Read sector second
-feReadFrame	rs.b	1			; Read sector frame
-		rs.b	1
-feDirSectors	rs.b	0			; Directory size in sectors
-feFileSize	rs.l	1			; File size buffer
-feOperMode	rs.w	1			; Operation mode
-feStatus	rs.w	1			; Status code
-feFileCount	rs.w	1			; File count
-feWaitTime	rs.w	1			; Wait timer
-feRetries	rs.w	1			; Retry counter
-feSectorsRead	rs.w	1			; Number of sectors read
-feCDC		rs.b	1			; CDC mode
-feSectorFrame	rs.b	1			; Sector frame
-feFileName	rs.b	FILENAMESZ		; File name buffer
-		rs.b	$100-__rs
-feFileList	rs.b	$2000			; File list
-feDirReadBuf	rs.b	$900			; Directory read buffer
-feFMVSectFrame	rs.w	1			; FMV sector frame
-feFMVDataType	rs.b	1			; FMV read data type
-feFMV		rs.b	1			; FMV flags
-feFMVFailCount	rs.b	1			; FMV fail counter
-FILEVARSSZ	rs.b	0			; Size of structure
+file.bookmark		rs.l 1					; Operation bookmark
+file.sector		rs.l 1					; Sector to read from
+file.sector_count	rs.l 1					; Number of sectors to read
+file.return		rs.l 1					; Return address for CD read functions
+file.read_buffer	rs.l 1					; Read buffer address
+file.read_time		rs.b 0					; Time of read sector
+file.read_minute	rs.b 1					; Read sector minute
+file.read_second	rs.b 1					; Read sector second
+file.read_frame		rs.b 1					; Read sector frame
+			rs.b 1
+file.dir_sector_count	rs.b 0					; Directory sector count
+file.size		rs.l 1					; File size buffer
+file.operation_mode	rs.w 1					; Operation mode
+file.status		rs.w 1					; Status code
+file.count		rs.w 1					; File count
+file.wait_time		rs.w 1					; Wait timer
+file.retries		rs.w 1					; Retry counter
+file.sectors_read	rs.w 1					; Number of sectors read
+file.cdc_device		rs.b 1					; CDC mode
+file.sector_frame	rs.b 1					; Sector frame
+file.name		rs.b FILE_NAME_SIZE			; File name buffer
+			rs.b $100-__rs
+file.list		rs.b $2000				; File list
+file.directory		rs.b $900				; Directory read buffer
+file.fmv_frame		rs.w 1					; FMV frame
+file.fmv_data_type	rs.b 1					; FMV read data type
+file.fmv_flags		rs.b 1					; FMV flags
+file.fmv_fail_count	rs.b 1					; FMV fail counter
+file.struct_size	rs.b 0					; Size of structure
 
 ; ------------------------------------------------------------------------------
 ; File entry structure
 ; ------------------------------------------------------------------------------
 
 	rsreset
-fileName	rs.b	FILENAMESZ		; File name
-		rs.b	$17-__rs
-fileFlags	rs.b	1			; File flags
-fileSector	rs.l	1			; File sector
-fileLength	rs.l	1			; File size
-FILEENTRYSZ	rs.b	0			; Size of structure
+file_entry.name		rs.b FILE_NAME_SIZE			; File name
+			rs.b $17-__rs
+file_entry.flags	rs.b 1					; File flags
+file_entry.sector	rs.l 1					; File sector
+file_entry.length	rs.l 1					; File size
+file_entry.struct_len	rs.b 0					; Size of structure
 	endif
 
 ; ------------------------------------------------------------------------------

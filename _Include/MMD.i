@@ -9,24 +9,24 @@
 ; Flags
 ; ------------------------------------------------------------------------------
 
-MMDSUB		EQU	6			; Sub CPU Word RAM access flag
-MMDSUBM		EQU	1<<MMDSUB		; Sub CPU Word RAM access flag mask
+MMD_SUB_BIT		equ 6					; Sub CPU Word RAM access flag
+MMD_SUB			equ 1<<MMD_SUB_BIT			; Sub CPU Word RAM access flag mask
 
 ; ------------------------------------------------------------------------------
 ; MMD header structure
 ; ------------------------------------------------------------------------------
 
 	rsreset
-mmdFlags	rs.b	1			; Flags
-		rs.b	1
-mmdOrigin	rs.l	1			; Origin address
-mmdSize		rs.w	1			; Size of file data
-mmdEntry	rs.l	1			; Entry address
-mmdHInt		rs.l	1			; H-BLANK interrupt address
-mmdVInt		rs.l	1			; V-BLANK interrupt address
-		rs.b	$100-__rs
-mmdFile		rs.b	0			; Start of file data
-MMDHEADSZ	rs.b	0			; Size of structure
+mmd.flags		rs.b 1					; Flags
+			rs.b 1
+mmd.origin		rs.l 1					; Origin address
+mmd.size		rs.w 1					; Size of file data
+mmd.entry		rs.l 1					; Entry address
+mmd.hblank		rs.l 1					; H-BLANK interrupt address
+mmd.vblank		rs.l 1					; V-BLANK interrupt address
+			rs.b $100-__rs
+mmd.file		rs.b 0					; Start of file data
+mmd.struct_size		rs.b 0					; Size of structure
 
 ; ------------------------------------------------------------------------------
 ; MMD header
@@ -36,28 +36,28 @@ MMDHEADSZ	rs.b	0			; Size of structure
 ;	origin - Origin address
 ;	size   - Size of file data (if origin is not Word RAM)
 ;	entry  - Entry address
-;	hint   - H-BLANK interrupt address
-;	vint   - V-BLANK interrupt address
+;	hblank - H-BLANK interrupt address
+;	vblank - V-BLANK interrupt address
 ; ------------------------------------------------------------------------------
 
-MMD macro flags, origin, size, entry, hint, vint
-	if (\origin)=WORDRAM2M
-		org	WORDRAM2M
+MMD macro flags, origin, size, entry, hblank, vblank
+	if (\origin)=WORD_RAM_2M
+		org	WORD_RAM_2M
 	else
-		org	(\origin)-MMDHEADSZ
+		org	(\origin)-mmd.struct_size
 	endif
 
 	dc.b	\flags, 0
-	if (\origin)=WORDRAM2M
+	if (\origin)=WORD_RAM_2M
 		dc.l	0
 		dc.w	0
 	else
 		dc.l	\origin
 		dc.w	(\size)/4-1
 	endif
-	dc.l	\entry, \hint, \vint
+	dc.l	\entry, \hblank, \vblank
 
-	ALIGN	MMDHEADSZ
+	ALIGN 	mmd.struct_size
 	endm
 
 ; ------------------------------------------------------------------------------
