@@ -75,7 +75,7 @@ SpxFile:
 	even
 
 ; ------------------------------------------------------------------------------
-; Main routine
+; Main
 ; ------------------------------------------------------------------------------
 
 Main:
@@ -190,7 +190,7 @@ Main:
 	dc.w	GetFileStatus-.Functions			; Get status
 	dc.w	StartFileTableRead-.Functions			; Read file table
 	dc.w	StartFileLoad-.Functions			; Load file
-	dc.w	StartFileFind-.Functions			; Find file
+	dc.w	FindFile-.Functions				; Find file
 	dc.w	StartFmvLoad-.Functions				; Load FMV
 	dc.w	ResetFileEngine-.Functions			; Reset file engine
 	dc.w	StartMuteFmvLoad-.Functions			; Load mute FMV
@@ -252,11 +252,11 @@ FileOperationBookmark:
 	rts
 
 ; ------------------------------------------------------------------------------
-; "Get files" operation
+; File table read operation operation
 ; ------------------------------------------------------------------------------
 
 FileTableOperation:
-	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device to "Sub CPU"
+	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device destination
 	move.l	#$10,file.sector(a5)				; Read from sector $10 (primary volume descriptor)
 	move.l	#1,file.sector_count(a5)			; Read 1 sector
 	
@@ -354,9 +354,9 @@ FileTableOperation:
 ; ------------------------------------------------------------------------------
 
 FileLoadOperation:
-	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device to "Sub CPU"
+	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device destination
 	lea	file.name(a5),a0				; Find file
-	bsr.w	StartFileFind
+	bsr.w	FindFile
 	bcs.w	.FileNotFound					; If it wasn't found, branch
 	
 	move.l	file_entry.sector(a0),file.sector(a5)		; Get file sector
@@ -419,7 +419,7 @@ GetFileStatus:
 	rts
 
 ; ------------------------------------------------------------------------------
-; Load a file
+; Start loading a file
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - File name
@@ -440,7 +440,7 @@ StartFileLoad:
 	rts
 
 ; ------------------------------------------------------------------------------
-; Find a file
+; Find file
 ; ------------------------------------------------------------------------------
 ; PARAMETERS
 ;	a0.l  - File name
@@ -449,7 +449,7 @@ StartFileLoad:
 ;	cc/cs - Found/Not found
 ; ------------------------------------------------------------------------------
 
-StartFileFind:
+FindFile:
 	move.l	a2,-(sp)					; Save registers
 	moveq	#0,d1						; Prepare to find file
 	movea.l	a0,a1
@@ -506,7 +506,7 @@ StartFileFind:
 	even
 
 ; ------------------------------------------------------------------------------
-; Read sectors from CD
+; Read disc sectors
 ; ------------------------------------------------------------------------------
 
 ReadSectors:
@@ -580,7 +580,7 @@ ReadSectors:
 	bra.w	.ReadFailed					; Give up
 
 .TransferData:
-	cmpi.b	#MCDR_CDC_MAIN_READ,file.cdc_device(a5)		; Is the CDC device set to "Main CPU"
+	cmpi.b	#MCDR_CDC_MAIN_READ,file.cdc_device(a5)		; Should the Main CPU read the sector data?
 	beq.w	.MainCpuRead					; If so, branch
 
 	move.w	#CDCTRN,d0					; Transfer data
@@ -670,7 +670,7 @@ CompareStrings:
 	rts
 
 ; ------------------------------------------------------------------------------
-; Load an FMV
+; Start loading an FMV
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - File name
@@ -693,14 +693,14 @@ StartFmvLoad:
 	rts
 
 ; ------------------------------------------------------------------------------
-; "Load FMV" operation
+; FMV load operation
 ; ------------------------------------------------------------------------------
 
 FmvLoadOperation:
-	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device to "Sub CPU"
+	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device destination
 	
 	lea	file.name(a5),a0				; Find file
-	bsr.w	StartFileFind
+	bsr.w	FindFile
 	bcs.w	.FileNotFound					; If it wasn't found, branch
 	
 	move.l	file_entry.sector(a0),file.sector(a5)		; Get file sector
@@ -730,7 +730,7 @@ FmvLoadOperation:
 	bra.s	.Done
 
 ; ------------------------------------------------------------------------------
-; Read FMV file data from CD
+; Read FMV file disc sectors
 ; ------------------------------------------------------------------------------
 
 ReadFmvSectors:
@@ -805,7 +805,7 @@ ReadFmvSectors:
 	bra.w	.ReadFailed					; Give up
 
 .TransferData:
-	cmpi.b	#MCDR_CDC_MAIN_READ,file.cdc_device(a5)		; Is the CDC device set to "Main CPU"
+	cmpi.b	#MCDR_CDC_MAIN_READ,file.cdc_device(a5)		; Should the Main CPU read the sector data?
 	beq.w	.MainCpuRead					; If so, branch
 
 	move.w	#CDCTRN,d0					; Transfer data
@@ -965,7 +965,7 @@ ReadFmvSectors:
 	bra.w	.ReadFailed					; If we have waited too long, branch
 
 ; ------------------------------------------------------------------------------
-; Load a mute FMV
+; Start loading a mute FMV
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	a0.l - File name
@@ -987,14 +987,14 @@ StartMuteFmvLoad:
 	rts
 
 ; ------------------------------------------------------------------------------
-; "Load mute FMV" operation
+; Mute FMV load operation
 ; ------------------------------------------------------------------------------
 
 MuteFmvLoadOperation:
-	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device
+	move.b	#MCDR_CDC_SUB_READ,file.cdc_device(a5)		; Set CDC device destination
 	
 	lea	file.name(a5),a0				; Find file
-	bsr.w	StartFileFind
+	bsr.w	FindFile
 	bcs.w	.FileNotFound					; If it wasn't found, branch
 	
 	move.l	file_entry.sector(a0),file.sector(a5)		; Get file sector
@@ -1025,7 +1025,7 @@ MuteFmvLoadOperation:
 	bra.s	.Done
 
 ; ------------------------------------------------------------------------------
-; Read mute FMV file data from CD
+; Read mute FMV disc sectors
 ; ------------------------------------------------------------------------------
 
 ReadMuteFmvSectors:
@@ -1100,7 +1100,7 @@ ReadMuteFmvSectors:
 	bra.w	.ReadFailed					; Give up
 
 .TransferData:
-	cmpi.b	#MCDR_CDC_MAIN_READ,file.cdc_device(a5)		; Is the CDC device set to "Main CPU"
+	cmpi.b	#MCDR_CDC_MAIN_READ,file.cdc_device(a5)		; Should the Main CPU read the sector data?
 	beq.w	.MainCpuRead					; If so, branch
 
 	move.w	#CDCTRN,d0					; Transfer data
