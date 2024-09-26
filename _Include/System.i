@@ -13,7 +13,7 @@
 
 ; System program
 SpVariables		equ $7000				; Variables
-SaveDataTemp		equ $7400				; Temporary save data buffer
+TempSaveData		equ $7400				; Temporary save data buffer
 MegaDriveIrq		equ $7700				; IRQ2 handler
 LoadFile		equ $7800				; Load file
 GetFileName		equ $7840				; Get file name

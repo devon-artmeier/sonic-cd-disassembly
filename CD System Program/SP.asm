@@ -114,7 +114,7 @@ Main:
 ; Temporary save data buffer
 ; ------------------------------------------------------------------------------
 
-	align SaveDataTemp
+	align TempSaveData
 	include	"Backup RAM/Initial Data.asm"
 
 ; ------------------------------------------------------------------------------

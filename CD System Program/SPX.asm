@@ -621,7 +621,7 @@ WriteBuramSaveData:
 ReadTempSaveData:
 	bsr.w	WaitWordRamAccess				; Wait for Word RAM access
 
-	lea	SaveDataTemp,a0					; Copy from temporary save data buffer
+	lea	TempSaveData,a0					; Copy from temporary save data buffer
 	lea	WORD_RAM_2M,a1
 	move.w	#save.struct_size/4-1,d7
 
@@ -638,7 +638,7 @@ ReadTempSaveData:
 WriteTempSaveData:
 	bsr.w	WaitWordRamAccess				; Wait for Word RAM access
 
-	lea	SaveDataTemp,a0					; Copy to temporary save data buffer
+	lea	TempSaveData,a0					; Copy to temporary save data buffer
 	lea	WORD_RAM_2M,a1
 	move.w	#save.struct_size/4-1,d7
 
