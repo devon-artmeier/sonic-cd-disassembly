@@ -119,7 +119,7 @@ SCMD_SFX_PROTO_WARP     equ $71
 SCMD_SONG_OPENING       equ $72
 SCMD_SONG_ENDING        equ $73
 SCMD_CDDA_STOP          equ $74
-SCMD_SPECIAL            equ $75
+SCMD_SPECIAL_STAGE      equ $75
 SCMD_SFX_FUTURE         equ $76
 SCMD_SFX_PAST           equ $77
 SCMD_SFX_ALRIGHT        equ $78
@@ -134,9 +134,9 @@ SCMD_SONG_PAST          equ $80
 SCMD_DA_GARDEN          equ $81
 SCMD_PCM_FADE           equ $82
 SCMD_PCM_STOP           equ $83
-SCMD_STAGE              equ $84
+SCMD_DEMO_11A           equ $84
 SCMD_VISUAL_MODE        equ $85
-SCMD_SPECIAL_RESET_2    equ $86
+SCMD_SPECIAL_INIT       equ $86
 SCMD_BURAM_READ         equ $87
 SCMD_BURAM_WRITE        equ $88
 SCMD_BURAM_INIT         equ $89

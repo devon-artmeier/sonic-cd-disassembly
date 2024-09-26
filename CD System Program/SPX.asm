@@ -36,12 +36,12 @@ fileName macro id, name
 ; Define a command
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
-;	name - Command name
 ;	id   - ID constant name
+;	name - Command name
 ; ------------------------------------------------------------------------------
 
 __command_id = 1
-spxCmd macro name, id
+command macro id, name
 	dc.w	(\name)-Commands
 	; Hack to get the constant name listed in the symbol file
 	obj __command_id
@@ -55,133 +55,133 @@ spxCmd macro name, id
 ; ------------------------------------------------------------------------------
 
 	org Spx
-Round11AFile:		fileName	FILE_ROUND_11A,		"R11A__.MMD;1"
-Round11BFile:		fileName	FILE_ROUND_11B,		"R11B__.MMD;1"
-Round11CFile:		fileName	FILE_ROUND_11C,		"R11C__.MMD;1"
-Round11DFile:		fileName	FILE_ROUND_11D,		"R11D__.MMD;1"
-MdInitFile:		fileName	FILE_MD_INIT,		"MDINIT.MMD;1"
-SoundTestFile:		fileName	FILE_SOUND_TEST,	"SOSEL_.MMD;1"
-StageSelectFile:	fileName	FILE_STAGE_SELECT,	"STSEL_.MMD;1"
-Round12AFile:		fileName	FILE_ROUND_12A,		"R12A__.MMD;1"
-Round12BFile:		fileName	FILE_ROUND_12B,		"R12B__.MMD;1"
-Round12CFile:		fileName	FILE_ROUND_12C,		"R12C__.MMD;1"
-Round12DFile:		fileName	FILE_ROUND_12D,		"R12D__.MMD;1"
-TitleMainFile:		fileName	FILE_TITLE_MAIN,	"TITLEM.MMD;1"
-TitleSubFile:		fileName	FILE_TITLE_SUB,		"TITLES.BIN;1"
-WarpFile:		fileName	FILE_WARP,		"WARP__.MMD;1"
-TimeAttackMainFile:	fileName	FILE_TIME_ATTACK_MAIN,	"ATTACK.MMD;1"
-TimeAttackSubFile:	fileName	FILE_TIME_ATTACK_SUB,	"ATTACK.BIN;1"
-IpxFile:		fileName	FILE_IPX,		"IPX___.MMD;1"
-PencilStmFile:		fileName	FILE_PENCIL_STM,	"PTEST.STM;1 "
-OpeningStmFile:		fileName	FILE_OPENING_STM,	"OPN.STM;1   "
-BadEndingStmFile:	fileName	FILE_BAD_END_STM,	"BADEND.STM;1"
-GoodEndingStmFile:	fileName	FILE_GOOD_END_STM,	"GOODEND.STM;1"
-OpeningMainFile:	fileName	FILE_OPENING_MAIN,	"OPEN_M.MMD;1"
-OpeningSubFile:		fileName	FILE_OPENING_SUB,	"OPEN_S.BIN;1"
-CominSoonFile:		fileName	FILE_COMIN_SOON,	"COME__.MMD;1"
-DaGardenMainFile:	fileName	FILE_DA_GARDEN_MAIN,	"PLANET_M.MMD;1"
-DaGardenSubFile:	fileName	FILE_DA_GARDEN_SUB,	"PLANET_S.BIN;1"
-Round31AFile:		fileName	FILE_ROUND_31A,		"R31A__.MMD;1"
-Round31BFile:		fileName	FILE_ROUND_31B,		"R31B__.MMD;1"
-Round31CFile:		fileName	FILE_ROUND_31C,		"R31C__.MMD;1"
-Round31DFile:		fileName	FILE_ROUND_31D,		"R31D__.MMD;1"
-Round32AFile:		fileName	FILE_ROUND_32A,		"R32A__.MMD;1"
-Round32BFile:		fileName	FILE_ROUND_32B,		"R32B__.MMD;1"
-Round32CFile:		fileName	FILE_ROUND_32C,		"R32C__.MMD;1"
-Round32DFile:		fileName	FILE_ROUND_32D,		"R32D__.MMD;1"
-Round33CFile:		fileName	FILE_ROUND_33C,		"R33C__.MMD;1"
-Round33DFile:		fileName	FILE_ROUND_33D,		"R33D__.MMD;1"
-Round13CFile:		fileName	FILE_ROUND_13C,		"R13C__.MMD;1"
-Round13DFile:		fileName	FILE_ROUND_13D,		"R13D__.MMD;1"
-Round41AFile:		fileName	FILE_ROUND_41A,		"R41A__.MMD;1"
-Round41BFile:		fileName	FILE_ROUND_41B,		"R41B__.MMD;1"
-Round41CFile:		fileName	FILE_ROUND_41C,		"R41C__.MMD;1"
-Round41DFile:		fileName	FILE_ROUND_41D,		"R41D__.MMD;1"
-Round42AFile:		fileName	FILE_ROUND_42A,		"R42A__.MMD;1"
-Round42BFile:		fileName	FILE_ROUND_42B,		"R42B__.MMD;1"
-Round42CFile:		fileName	FILE_ROUND_42C,		"R42C__.MMD;1"
-Round42DFile:		fileName	FILE_ROUND_42D,		"R42D__.MMD;1"
-Round43CFile:		fileName	FILE_ROUND_43C,		"R43C__.MMD;1"
-Round43DFile:		fileName	FILE_ROUND_43D,		"R43D__.MMD;1"
-Round51AFile:		fileName	FILE_ROUND_51A,		"R51A__.MMD;1"
-Round51BFile:		fileName	FILE_ROUND_51B,		"R51B__.MMD;1"
-Round51CFile:		fileName	FILE_ROUND_51C,		"R51C__.MMD;1"
-Round51DFile:		fileName	FILE_ROUND_51D,		"R51D__.MMD;1"
-Round52AFile:		fileName	FILE_ROUND_52A,		"R52A__.MMD;1"
-Round52BFile:		fileName	FILE_ROUND_52B,		"R52B__.MMD;1"
-Round52CFile:		fileName	FILE_ROUND_52C,		"R52C__.MMD;1"
-Round52DFile:		fileName	FILE_ROUND_52D,		"R52D__.MMD;1"
-Round53CFile:		fileName	FILE_ROUND_53C,		"R53C__.MMD;1"
-Round53DFile:		fileName	FILE_ROUND_53D,		"R53D__.MMD;1"
-Round61AFile:		fileName	FILE_ROUND_61A,		"R61A__.MMD;1"
-Round61BFile:		fileName	FILE_ROUND_61B,		"R61B__.MMD;1"
-Round61CFile:		fileName	FILE_ROUND_61C,		"R61C__.MMD;1"
-Round61DFile:		fileName	FILE_ROUND_61D,		"R61D__.MMD;1"
-Round62AFile:		fileName	FILE_ROUND_62A,		"R62A__.MMD;1"
-Round62BFile:		fileName	FILE_ROUND_62B,		"R62B__.MMD;1"
-Round62CFile:		fileName	FILE_ROUND_62C,		"R62C__.MMD;1"
-Round62DFile:		fileName	FILE_ROUND_62D,		"R62D__.MMD;1"
-Round63CFile:		fileName	FILE_ROUND_63C,		"R63C__.MMD;1"
-Round63DFile:		fileName	FILE_ROUND_63D,		"R63D__.MMD;1"
-Round71AFile:		fileName	FILE_ROUND_71A,		"R71A__.MMD;1"
-Round71BFile:		fileName	FILE_ROUND_71B,		"R71B__.MMD;1"
-Round71CFile:		fileName	FILE_ROUND_71C,		"R71C__.MMD;1"
-Round71DFile:		fileName	FILE_ROUND_71D,		"R71D__.MMD;1"
-Round72AFile:		fileName	FILE_ROUND_72A,		"R72A__.MMD;1"
-Round72BFile:		fileName	FILE_ROUND_72B,		"R72B__.MMD;1"
-Round72CFile:		fileName	FILE_ROUND_72C,		"R72C__.MMD;1"
-Round72DFile:		fileName	FILE_ROUND_72D,		"R72D__.MMD;1"
-Round73CFile:		fileName	FILE_ROUND_73C,		"R73C__.MMD;1"
-Round73DFile:		fileName	FILE_ROUND_73D,		"R73D__.MMD;1"
-Round81AFile:		fileName	FILE_ROUND_81A,		"R81A__.MMD;1"
-Round81BFile:		fileName	FILE_ROUND_81B,		"R81B__.MMD;1"
-Round81CFile:		fileName	FILE_ROUND_81C,		"R81C__.MMD;1"
-Round81DFile:		fileName	FILE_ROUND_81D,		"R81D__.MMD;1"
-Round82AFile:		fileName	FILE_ROUND_82A,		"R82A__.MMD;1"
-Round82BFile:		fileName	FILE_ROUND_82B,		"R82B__.MMD;1"
-Round82CFile:		fileName	FILE_ROUND_82C,		"R82C__.MMD;1"
-Round82DFile:		fileName	FILE_ROUND_82D,		"R82D__.MMD;1"
-Round83CFile:		fileName	FILE_ROUND_83C,		"R83C__.MMD;1"
-Round83DFile:		fileName	FILE_ROUND_83D,		"R83D__.MMD;1"
-SpecialStageMainFile:	fileName	FILE_SPECIAL_MAIN,	"SPMM__.MMD;1"
-SpecialStageSubFile:	fileName	FILE_SPECIAL_SUB,	"SPSS__.BIN;1"
-PcmDriverR1BFile:	fileName	FILE_PCM_1B,		"SNCBNK1B.BIN;1"
-PcmDriverR3BFile:	fileName	FILE_PCM_3B,		"SNCBNK3B.BIN;1"
-PcmDriverR4BFile:	fileName	FILE_PCM_4B,		"SNCBNK4B.BIN;1"
-PcmDriverR5BFile:	fileName	FILE_PCM_5B,		"SNCBNK5B.BIN;1"
-PcmDriverR6BFile:	fileName	FILE_PCM_6B,		"SNCBNK6B.BIN;1"
-PcmDriverR7BFile:	fileName	FILE_PCM_7B,		"SNCBNK7B.BIN;1"
-PcmDriverR8BFile:	fileName	FILE_PCM_8B,		"SNCBNK8B.BIN;1"
-PcmDriverBoss:		fileName	FILE_PCM_BOSS,		"SNCBNKB1.BIN;1"
-PcmDriverFinal:		fileName	FILE_PCM_FINAL,		"SNCBNKB2.BIN;1"
-DaGardenDataFile:	fileName	FILE_PLANET_DATA,	"PLANET_D.BIN;1"
-Demo11AFile:		fileName	FILE_DEMO_11A,		"DEMO11A.MMD;1"
-VisualModeFile:		fileName	FILE_VISUAL_MODE,	"VM____.MMD;1"
-BuramInitFile:		fileName	FILE_BURAM_INIT,	"BRAMINIT.MMD;1"
-BuramSubFile:		fileName	FILE_BURAM_SUB,		"BRAMSUB.BIN;1"
-BuramMainFile:		fileName	FILE_BURAM_MAIN,	"BRAMMAIN.MMD;1"
-ThankYouMainFile:	fileName	FILE_THANKS_MAIN,	"THANKS_M.MMD;1"
-ThankYouSubFile:	fileName	FILE_THANKS_SUB,	"THANKS_S.BIN;1"
-ThankYouDataFile:	fileName	FILE_THANKS_DATA,	"THANKS_D.BIN;1"
-EndingMainFile:		fileName	FILE_ENDING_MAIN,	"ENDING.MMD;1"
-BadEndingSubFile:	fileName	FILE_BAD_END_SUB,	"GOODEND.BIN;1" 
-GoodEndingSubFile:	fileName	FILE_GOOD_END_SUB,	"BADEND.BIN;1" 
-FunIsInfiniteFile:	fileName	FILE_FUN_IS_INFINITE,	"NISI.MMD;1"	
-Special8EndFile:	fileName	FILE_SPECIAL_8_END,	"SPEEND.MMD;1"
-McSonicFile:		fileName	FILE_MC_SONIC,		"DUMMY0.MMD;1"
-TailsFile:		fileName	FILE_TAILS,		"DUMMY1.MMD;1"
-BatmanSonicFile:	fileName	FILE_BATMAN,		"DUMMY2.MMD;1"
-CuteSonicFile:		fileName	FILE_CUTE_SONIC,	"DUMMY3.MMD;1"
-BestStaffTimesFile:	fileName	FILE_STAFF_TIMES,	"DUMMY4.MMD;1"
-DummyFile5:		fileName	FILE_DUMMY_5,		"DUMMY5.MMD;1"
-DummyFile6:		fileName	FILE_DUMMY_6,		"DUMMY6.MMD;1"
-DummyFile7:		fileName	FILE_DUMMY_7,		"DUMMY7.MMD;1"
-DummyFile8:		fileName	FILE_DUMMY_8,		"DUMMY8.MMD;1"
-DummyFile9:		fileName	FILE_DUMMY_9,		"DUMMY9.MMD;1"
-PencilTestMainFile:	fileName	FILE_PENCIL_MAIN,	"PTEST.MMD;1"
-PencilTestSubFile:	fileName	FILE_PENCIL_SUB,	"PTEST.BIN;1"
-Demo43CFile:		fileName	FILE_DEMO_43C,		"DEMO43C.MMD;1"
-Demo82AFile:		fileName	FILE_DEMO_82A,		"DEMO82A.MMD;1"
+Round11AFile:		fileName FILE_ROUND_11A,        "R11A__.MMD;1"
+Round11BFile:		fileName FILE_ROUND_11B,        "R11B__.MMD;1"
+Round11CFile:		fileName FILE_ROUND_11C,        "R11C__.MMD;1"
+Round11DFile:		fileName FILE_ROUND_11D,        "R11D__.MMD;1"
+MdInitFile:		fileName FILE_MD_INIT,          "MDINIT.MMD;1"
+SoundTestFile:		fileName FILE_SOUND_TEST,       "SOSEL_.MMD;1"
+StageSelectFile:	fileName FILE_STAGE_SELECT,     "STSEL_.MMD;1"
+Round12AFile:		fileName FILE_ROUND_12A,        "R12A__.MMD;1"
+Round12BFile:		fileName FILE_ROUND_12B,        "R12B__.MMD;1"
+Round12CFile:		fileName FILE_ROUND_12C,        "R12C__.MMD;1"
+Round12DFile:		fileName FILE_ROUND_12D,        "R12D__.MMD;1"
+TitleMainFile:		fileName FILE_TITLE_MAIN,       "TITLEM.MMD;1"
+TitleSubFile:		fileName FILE_TITLE_SUB,        "TITLES.BIN;1"
+WarpFile:		fileName FILE_WARP,             "WARP__.MMD;1"
+TimeAttackMainFile:	fileName FILE_TIME_ATTACK_MAIN, "ATTACK.MMD;1"
+TimeAttackSubFile:	fileName FILE_TIME_ATTACK_SUB,  "ATTACK.BIN;1"
+IpxFile:		fileName FILE_IPX,              "IPX___.MMD;1"
+PencilStmFile:		fileName FILE_PENCIL_STM,       "PTEST.STM;1 "
+OpeningStmFile:		fileName FILE_OPENING_STM,      "OPN.STM;1   "
+BadEndingStmFile:	fileName FILE_BAD_END_STM,      "BADEND.STM;1"
+GoodEndingStmFile:	fileName FILE_GOOD_END_STM,     "GOODEND.STM;1"
+OpeningMainFile:	fileName FILE_OPENING_MAIN,     "OPEN_M.MMD;1"
+OpeningSubFile:		fileName FILE_OPENING_SUB,      "OPEN_S.BIN;1"
+CominSoonFile:		fileName FILE_COMIN_SOON,       "COME__.MMD;1"
+DaGardenMainFile:	fileName FILE_DA_GARDEN_MAIN,   "PLANET_M.MMD;1"
+DaGardenSubFile:	fileName FILE_DA_GARDEN_SUB,    "PLANET_S.BIN;1"
+Round31AFile:		fileName FILE_ROUND_31A,        "R31A__.MMD;1"
+Round31BFile:		fileName FILE_ROUND_31B,        "R31B__.MMD;1"
+Round31CFile:		fileName FILE_ROUND_31C,        "R31C__.MMD;1"
+Round31DFile:		fileName FILE_ROUND_31D,        "R31D__.MMD;1"
+Round32AFile:		fileName FILE_ROUND_32A,        "R32A__.MMD;1"
+Round32BFile:		fileName FILE_ROUND_32B,        "R32B__.MMD;1"
+Round32CFile:		fileName FILE_ROUND_32C,        "R32C__.MMD;1"
+Round32DFile:		fileName FILE_ROUND_32D,        "R32D__.MMD;1"
+Round33CFile:		fileName FILE_ROUND_33C,        "R33C__.MMD;1"
+Round33DFile:		fileName FILE_ROUND_33D,        "R33D__.MMD;1"
+Round13CFile:		fileName FILE_ROUND_13C,        "R13C__.MMD;1"
+Round13DFile:		fileName FILE_ROUND_13D,        "R13D__.MMD;1"
+Round41AFile:		fileName FILE_ROUND_41A,        "R41A__.MMD;1"
+Round41BFile:		fileName FILE_ROUND_41B,        "R41B__.MMD;1"
+Round41CFile:		fileName FILE_ROUND_41C,        "R41C__.MMD;1"
+Round41DFile:		fileName FILE_ROUND_41D,        "R41D__.MMD;1"
+Round42AFile:		fileName FILE_ROUND_42A,        "R42A__.MMD;1"
+Round42BFile:		fileName FILE_ROUND_42B,        "R42B__.MMD;1"
+Round42CFile:		fileName FILE_ROUND_42C,        "R42C__.MMD;1"
+Round42DFile:		fileName FILE_ROUND_42D,        "R42D__.MMD;1"
+Round43CFile:		fileName FILE_ROUND_43C,        "R43C__.MMD;1"
+Round43DFile:		fileName FILE_ROUND_43D,        "R43D__.MMD;1"
+Round51AFile:		fileName FILE_ROUND_51A,        "R51A__.MMD;1"
+Round51BFile:		fileName FILE_ROUND_51B,        "R51B__.MMD;1"
+Round51CFile:		fileName FILE_ROUND_51C,        "R51C__.MMD;1"
+Round51DFile:		fileName FILE_ROUND_51D,        "R51D__.MMD;1"
+Round52AFile:		fileName FILE_ROUND_52A,        "R52A__.MMD;1"
+Round52BFile:		fileName FILE_ROUND_52B,        "R52B__.MMD;1"
+Round52CFile:		fileName FILE_ROUND_52C,        "R52C__.MMD;1"
+Round52DFile:		fileName FILE_ROUND_52D,        "R52D__.MMD;1"
+Round53CFile:		fileName FILE_ROUND_53C,        "R53C__.MMD;1"
+Round53DFile:		fileName FILE_ROUND_53D,        "R53D__.MMD;1"
+Round61AFile:		fileName FILE_ROUND_61A,        "R61A__.MMD;1"
+Round61BFile:		fileName FILE_ROUND_61B,        "R61B__.MMD;1"
+Round61CFile:		fileName FILE_ROUND_61C,        "R61C__.MMD;1"
+Round61DFile:		fileName FILE_ROUND_61D,        "R61D__.MMD;1"
+Round62AFile:		fileName FILE_ROUND_62A,        "R62A__.MMD;1"
+Round62BFile:		fileName FILE_ROUND_62B,        "R62B__.MMD;1"
+Round62CFile:		fileName FILE_ROUND_62C,        "R62C__.MMD;1"
+Round62DFile:		fileName FILE_ROUND_62D,        "R62D__.MMD;1"
+Round63CFile:		fileName FILE_ROUND_63C,        "R63C__.MMD;1"
+Round63DFile:		fileName FILE_ROUND_63D,        "R63D__.MMD;1"
+Round71AFile:		fileName FILE_ROUND_71A,        "R71A__.MMD;1"
+Round71BFile:		fileName FILE_ROUND_71B,        "R71B__.MMD;1"
+Round71CFile:		fileName FILE_ROUND_71C,        "R71C__.MMD;1"
+Round71DFile:		fileName FILE_ROUND_71D,        "R71D__.MMD;1"
+Round72AFile:		fileName FILE_ROUND_72A,        "R72A__.MMD;1"
+Round72BFile:		fileName FILE_ROUND_72B,        "R72B__.MMD;1"
+Round72CFile:		fileName FILE_ROUND_72C,        "R72C__.MMD;1"
+Round72DFile:		fileName FILE_ROUND_72D,        "R72D__.MMD;1"
+Round73CFile:		fileName FILE_ROUND_73C,        "R73C__.MMD;1"
+Round73DFile:		fileName FILE_ROUND_73D,        "R73D__.MMD;1"
+Round81AFile:		fileName FILE_ROUND_81A,        "R81A__.MMD;1"
+Round81BFile:		fileName FILE_ROUND_81B,        "R81B__.MMD;1"
+Round81CFile:		fileName FILE_ROUND_81C,        "R81C__.MMD;1"
+Round81DFile:		fileName FILE_ROUND_81D,        "R81D__.MMD;1"
+Round82AFile:		fileName FILE_ROUND_82A,        "R82A__.MMD;1"
+Round82BFile:		fileName FILE_ROUND_82B,        "R82B__.MMD;1"
+Round82CFile:		fileName FILE_ROUND_82C,        "R82C__.MMD;1"
+Round82DFile:		fileName FILE_ROUND_82D,        "R82D__.MMD;1"
+Round83CFile:		fileName FILE_ROUND_83C,        "R83C__.MMD;1"
+Round83DFile:		fileName FILE_ROUND_83D,        "R83D__.MMD;1"
+SpecialStageMainFile:	fileName FILE_SPECIAL_MAIN,     "SPMM__.MMD;1"
+SpecialStageSubFile:	fileName FILE_SPECIAL_SUB,      "SPSS__.BIN;1"
+PcmDriverR1BFile:	fileName FILE_PCM_1B,           "SNCBNK1B.BIN;1"
+PcmDriverR3BFile:	fileName FILE_PCM_3B,           "SNCBNK3B.BIN;1"
+PcmDriverR4BFile:	fileName FILE_PCM_4B,           "SNCBNK4B.BIN;1"
+PcmDriverR5BFile:	fileName FILE_PCM_5B,           "SNCBNK5B.BIN;1"
+PcmDriverR6BFile:	fileName FILE_PCM_6B,           "SNCBNK6B.BIN;1"
+PcmDriverR7BFile:	fileName FILE_PCM_7B,           "SNCBNK7B.BIN;1"
+PcmDriverR8BFile:	fileName FILE_PCM_8B,           "SNCBNK8B.BIN;1"
+PcmDriverBoss:		fileName FILE_PCM_BOSS,         "SNCBNKB1.BIN;1"
+PcmDriverFinal:		fileName FILE_PCM_FINAL,        "SNCBNKB2.BIN;1"
+DaGardenDataFile:	fileName FILE_PLANET_DATA,      "PLANET_D.BIN;1"
+Demo11AFile:		fileName FILE_DEMO_11A,         "DEMO11A.MMD;1"
+VisualModeFile:		fileName FILE_VISUAL_MODE,      "VM____.MMD;1"
+BuramInitFile:		fileName FILE_BURAM_INIT,       "BRAMINIT.MMD;1"
+BuramSubFile:		fileName FILE_BURAM_SUB,        "BRAMSUB.BIN;1"
+BuramMainFile:		fileName FILE_BURAM_MAIN,       "BRAMMAIN.MMD;1"
+ThankYouMainFile:	fileName FILE_THANKS_MAIN,      "THANKS_M.MMD;1"
+ThankYouSubFile:	fileName FILE_THANKS_SUB,       "THANKS_S.BIN;1"
+ThankYouDataFile:	fileName FILE_THANKS_DATA,      "THANKS_D.BIN;1"
+EndingMainFile:		fileName FILE_ENDING_MAIN,      "ENDING.MMD;1"
+BadEndingSubFile:	fileName FILE_BAD_END_SUB,      "GOODEND.BIN;1" 
+GoodEndingSubFile:	fileName FILE_GOOD_END_SUB,     "BADEND.BIN;1" 
+FunIsInfiniteFile:	fileName FILE_FUN_IS_INFINITE,  "NISI.MMD;1"
+Special8EndFile:	fileName FILE_SPECIAL_8_END,    "SPEEND.MMD;1"
+McSonicFile:		fileName FILE_MC_SONIC,         "DUMMY0.MMD;1"
+TailsFile:		fileName FILE_TAILS,            "DUMMY1.MMD;1"
+BatmanSonicFile:	fileName FILE_BATMAN,           "DUMMY2.MMD;1"
+CuteSonicFile:		fileName FILE_CUTE_SONIC,       "DUMMY3.MMD;1"
+BestStaffTimesFile:	fileName FILE_STAFF_TIMES,      "DUMMY4.MMD;1"
+DummyFile5:		fileName FILE_DUMMY_5,          "DUMMY5.MMD;1"
+DummyFile6:		fileName FILE_DUMMY_6,          "DUMMY6.MMD;1"
+DummyFile7:		fileName FILE_DUMMY_7,          "DUMMY7.MMD;1"
+DummyFile8:		fileName FILE_DUMMY_8,          "DUMMY8.MMD;1"
+DummyFile9:		fileName FILE_DUMMY_9,          "DUMMY9.MMD;1"
+PencilTestMainFile:	fileName FILE_PENCIL_MAIN,      "PTEST.MMD;1"
+PencilTestSubFile:	fileName FILE_PENCIL_SUB,       "PTEST.BIN;1"
+Demo43CFile:		fileName FILE_DEMO_43C,         "DEMO43C.MMD;1"
+Demo82AFile:		fileName FILE_DEMO_82A,         "DEMO82A.MMD;1"
 	even
 
 ; ------------------------------------------------------------------------------
@@ -205,7 +205,7 @@ BuramWriteParams:
 ; System program extension start
 ; ------------------------------------------------------------------------------
 
-	ALIGN	SpxStart
+	align SpxStart
 	lea	SpVariables,a0					; Clear variables
 	move.w	#SP_VARIABLES_SIZE/4-1,d7
 
@@ -240,222 +240,222 @@ BuramWriteParams:
 
 Commands:
 	dc.w	0
-	spxCmd	LoadStage,		SCMD_ROUND_11A
-	spxCmd	LoadStage,		SCMD_ROUND_11B
-	spxCmd	LoadStage,		SCMD_ROUND_11C
-	spxCmd	LoadStage,		SCMD_ROUND_11D
-	spxCmd	LoadMegaDriveInit,	SCMD_MD_INIT
-	spxCmd	LoadStageSelect,	SCMD_STAGE_SELECT
-	spxCmd	LoadStage,		SCMD_ROUND_12A
-	spxCmd	LoadStage,		SCMD_ROUND_12B
-	spxCmd	LoadStage,		SCMD_ROUND_12C
-	spxCmd	LoadStage,		SCMD_ROUND_12D
-	spxCmd	LoadTitleScreen,	SCMD_TITLE
-	spxCmd	LoadWarp,		SCMD_WARP
-	spxCmd	LoadTimeAttack,		SCMD_TIME_ATTACK
-	spxCmd	FadeOutCdda,		SCMD_FADE_CDDA
-	spxCmd	PlayRound1ASong,	SCMD_SONG_1A
-	spxCmd	PlayRound1BSong,	SCMD_SONG_1C
-	spxCmd	PlayRound1DSong,	SCMD_SONG_1D
-	spxCmd	PlayRound3ASong,	SCMD_SONG_3A
-	spxCmd	PlayRound3CSong,	SCMD_SONG_3C
-	spxCmd	PlayRound3DSong,	SCMD_SONG_3D
-	spxCmd	PlayRound4ASong,	SCMD_SONG_4A
-	spxCmd	PlayRound4CSong,	SCMD_SONG_4C
-	spxCmd	PlayRound4DSong,	SCMD_SONG_4D
-	spxCmd	PlayRound5ASong,	SCMD_SONG_5A
-	spxCmd	PlayRound5CSong,	SCMD_SONG_5C
-	spxCmd	PlayRound5DSong,	SCMD_SONG_5D
-	spxCmd	PlayRound6ASong,	SCMD_SONG_6A
-	spxCmd	PlayRound6CSong,	SCMD_SONG_6C
-	spxCmd	PlayRound6DSong,	SCMD_SONG_6D
-	spxCmd	PlayRound7ASong,	SCMD_SONG_7A
-	spxCmd	PlayRound7CSong,	SCMD_SONG_7C
-	spxCmd	PlayRound7DSong,	SCMD_SONG_7D
-	spxCmd	PlayRound8ASong,	SCMD_SONG_8A
-	spxCmd	PlayRound8CSong,	SCMD_SONG_8C
-	spxCmd	LoadIpx,		SCMD_IPX
-	spxCmd	LoadStage,		SCMD_DEMO_43C
-	spxCmd	LoadStage,		SCMD_DEMO_82A
-	spxCmd	LoadSoundTest,		SCMD_SOUND_TEST
-	spxCmd	LoadStage,		SCMD_INVALID
-	spxCmd	LoadStage,		SCMD_ROUND_31A
-	spxCmd	LoadStage,		SCMD_ROUND_31B
-	spxCmd	LoadStage,		SCMD_ROUND_31C
-	spxCmd	LoadStage,		SCMD_ROUND_31D
-	spxCmd	LoadStage,		SCMD_ROUND_32A
-	spxCmd	LoadStage,		SCMD_ROUND_32B
-	spxCmd	LoadStage,		SCMD_ROUND_32C
-	spxCmd	LoadStage,		SCMD_ROUND_32D
-	spxCmd	LoadStage,		SCMD_ROUND_33C
-	spxCmd	LoadStage,		SCMD_ROUND_33D
-	spxCmd	LoadStage,		SCMD_ROUND_13C
-	spxCmd	LoadStage,		SCMD_ROUND_13D
-	spxCmd	LoadStage,		SCMD_ROUND_41A
-	spxCmd	LoadStage,		SCMD_ROUND_41B
-	spxCmd	LoadStage,		SCMD_ROUND_41C
-	spxCmd	LoadStage,		SCMD_ROUND_41D
-	spxCmd	LoadStage,		SCMD_ROUND_42A
-	spxCmd	LoadStage,		SCMD_ROUND_42B
-	spxCmd	LoadStage,		SCMD_ROUND_42C
-	spxCmd	LoadStage,		SCMD_ROUND_42D
-	spxCmd	LoadStage,		SCMD_ROUND_43C
-	spxCmd	LoadStage,		SCMD_ROUND_43D
-	spxCmd	LoadStage,		SCMD_ROUND_51A
-	spxCmd	LoadStage,		SCMD_ROUND_51B
-	spxCmd	LoadStage,		SCMD_ROUND_51C
-	spxCmd	LoadStage,		SCMD_ROUND_51D
-	spxCmd	LoadStage,		SCMD_ROUND_52A
-	spxCmd	LoadStage,		SCMD_ROUND_52B
-	spxCmd	LoadStage,		SCMD_ROUND_52C
-	spxCmd	LoadStage,		SCMD_ROUND_52D
-	spxCmd	LoadStage,		SCMD_ROUND_53C
-	spxCmd	LoadStage,		SCMD_ROUND_53D
-	spxCmd	LoadStage,		SCMD_ROUND_61A
-	spxCmd	LoadStage,		SCMD_ROUND_61B
-	spxCmd	LoadStage,		SCMD_ROUND_61C
-	spxCmd	LoadStage,		SCMD_ROUND_61D
-	spxCmd	LoadStage,		SCMD_ROUND_62A
-	spxCmd	LoadStage,		SCMD_ROUND_62B
-	spxCmd	LoadStage,		SCMD_ROUND_62C
-	spxCmd	LoadStage,		SCMD_ROUND_62D
-	spxCmd	LoadStage,		SCMD_ROUND_63C
-	spxCmd	LoadStage,		SCMD_ROUND_63D
-	spxCmd	LoadStage,		SCMD_ROUND_71A
-	spxCmd	LoadStage,		SCMD_ROUND_71B
-	spxCmd	LoadStage,		SCMD_ROUND_71C
-	spxCmd	LoadStage,		SCMD_ROUND_71D
-	spxCmd	LoadStage,		SCMD_ROUND_72A
-	spxCmd	LoadStage,		SCMD_ROUND_72B
-	spxCmd	LoadStage,		SCMD_ROUND_72C
-	spxCmd	LoadStage,		SCMD_ROUND_72D
-	spxCmd	LoadStage,		SCMD_ROUND_73C
-	spxCmd	LoadStage,		SCMD_ROUND_73D
-	spxCmd	LoadStage,		SCMD_ROUND_81A
-	spxCmd	LoadStage,		SCMD_ROUND_81B
-	spxCmd	LoadStage,		SCMD_ROUND_81C
-	spxCmd	LoadStage,		SCMD_ROUND_81D
-	spxCmd	LoadStage,		SCMD_ROUND_82A
-	spxCmd	LoadStage,		SCMD_ROUND_82B
-	spxCmd	LoadStage,		SCMD_ROUND_82C
-	spxCmd	LoadStage,		SCMD_ROUND_82D
-	spxCmd	LoadStage,		SCMD_ROUND_83C
-	spxCmd	LoadStage,		SCMD_ROUND_83D
-	spxCmd	PlayRound8DSong,	SCMD_SONG_8D
-	spxCmd	PlayBossSong,		SCMD_SONG_BOSS
-	spxCmd	PlayFinalBossSong,	SCMD_SONG_FINAL
-	spxCmd	PlayTitleSong,		SCMD_SONG_TITLE
-	spxCmd	PlayTimeAttackSong,	SCMD_SONG_TIME_ATTACK
-	spxCmd	PlayResultsSong,	SCMD_SONG_RESULTS
-	spxCmd	PlaySpeedShoesSong,	SCMD_SONG_SPEED_SHOES
-	spxCmd	PlayInvincibleSong,	SCMD_SONG_INVINCIBLE
-	spxCmd	PlayGameOverSong,	SCMD_SONG_GAME_OVER
-	spxCmd	PlaySpecialStageSong,	SCMD_SONG_SPECIAL
-	spxCmd	PlayDaGardenSong,	SCMD_SONG_DA_GARDEN
-	spxCmd	PlayProtoWarpSound,	SCMD_SFX_PROTO_WARP
-	spxCmd	PlayOpeningSong,	SCMD_SONG_OPENING
-	spxCmd	PlayEndingSong,		SCMD_SONG_ENDING
-	spxCmd	StopCdda,		SCMD_CDDA_STOP
-	spxCmd	LoadSpecialStage,	SCMD_SPECIAL
-	spxCmd	PlayFutureVoiceSfx,	SCMD_SFX_FUTURE
-	spxCmd	PlayPastVoiceSfx,	SCMD_SFX_PAST
-	spxCmd	PlayAlrightSfx,		SCMD_SFX_ALRIGHT
-	spxCmd	PlayGiveUpSfx,		SCMD_SFX_OUTTA_HERE
-	spxCmd	PlayYesSfx,		SCMD_SFX_YES
-	spxCmd	PlayYeahSfx,		SCMD_SFX_YEAH
-	spxCmd	PlayAmyGiggleSfx,	SCMD_SFX_AMY_GIGGLE
-	spxCmd	PlayAmyYelpSfx,		SCMD_SFX_AMY_YELP
-	spxCmd	PlayStompSfx,		SCMD_SFX_STOMP
-	spxCmd	PlayBumperSfx,		SCMD_SFX_BUMPER
-	spxCmd	PlayPastSong,		SCMD_SONG_PAST
-	spxCmd	LoadDaGarden,		SCMD_DA_GARDEN
-	spxCmd	FadeOutPcm,		SCMD_PCM_FADE
-	spxCmd	StopPcm,		SCMD_PCM_STOP
-	spxCmd	LoadStage,		SCMD_STAGE
-	spxCmd	LoadVisualMode,		SCMD_VISUAL_MODE
-	spxCmd	ResetSpecStageFlags2,	SCMD_SPECIAL_RESET_2
-	spxCmd	ReadBuramSaveData,	SCMD_BURAM_READ
-	spxCmd	WriteBuramSaveData,	SCMD_BURAM_WRITE
-	spxCmd	LoadBuramInit,		SCMD_BURAM_INIT
-	spxCmd	ResetSpecStageFlags,	SCMD_SPECIAL_RESET
-	spxCmd	ReadTempSaveData,	SCMD_TEMP_READ
-	spxCmd	WriteTempSaveData,	SCMD_TEMP_WRITE
-	spxCmd	LoadThankYou,		SCMD_THANKS
-	spxCmd	LoadBuramManager,	SCMD_BURAM_MANAGER
-	spxCmd	ResetCddaVolumeCmd,	SCMD_VOLUME_RESET
-	spxCmd	PausePcm,		SCMD_PCM_PAUSE
-	spxCmd	UnpausePcm,		SCMD_PCM_UNPAUSE
-	spxCmd	PlayBreakSfx,		SCMD_SFX_BREAK
-	spxCmd	LoadBadEnding,		SCMD_BAD_END
-	spxCmd	LoadGoodEnding,		SCMD_GOOD_END
-	spxCmd	TestRound1ASong,	SCMD_TEST_R1A
-	spxCmd	TestRound1CSong,	SCMD_TEST_R1C
-	spxCmd	TestRound1DSong,	SCMD_TEST_R1D
-	spxCmd	TestRound3ASong,	SCMD_TEST_R3A
-	spxCmd	TestRound3CSong,	SCMD_TEST_R3C
-	spxCmd	TestRound3DSong,	SCMD_TEST_R3D
-	spxCmd	TestRound4ASong,	SCMD_TEST_R4A
-	spxCmd	TestRound4CSong,	SCMD_TEST_R4C
-	spxCmd	TestRound4DSong,	SCMD_TEST_R4D
-	spxCmd	TestRound5ASong,	SCMD_TEST_R5A
-	spxCmd	TestRound5CSong,	SCMD_TEST_R5C
-	spxCmd	TestRound5DSong,	SCMD_TEST_R5D
-	spxCmd	TestRound6ASong,	SCMD_TEST_R6A
-	spxCmd	TestRound6CSong,	SCMD_TEST_R6C
-	spxCmd	TestRound6DSong,	SCMD_TEST_R6D
-	spxCmd	TestRound7ASong,	SCMD_TEST_R7A
-	spxCmd	TestRound7CSong,	SCMD_TEST_R7C
-	spxCmd	TestRound7DSong,	SCMD_TEST_R7D
-	spxCmd	TestRound8ASong,	SCMD_TEST_R8A
-	spxCmd	TestRound8CSong,	SCMD_TEST_R8C
-	spxCmd	TestRound8DSong,	SCMD_TEST_R8D
-	spxCmd	TestBossSong,		SCMD_TEST_BOSS
-	spxCmd	TestFinalSong,		SCMD_TEST_FINAL
-	spxCmd	TestTitleSong,		SCMD_TEST_TITLE
-	spxCmd	TestTimeAttackSong,	SCMD_TEST_TIME_ATTACK
-	spxCmd	TestResultsSong,	SCMD_TEST_RESULTS
-	spxCmd	TestSpeedShoesSong,	SCMD_TEST_SPEED_SHOES
-	spxCmd	TestInvincibleSong,	SCMD_TEST_INVINCIBLE
-	spxCmd	TestGameOverSong,	SCMD_TEST_GAME_OVER
-	spxCmd	TestSpecialStageSong,	SCMD_TEST_SPECIAL
-	spxCmd	TestDaGardenSong,	SCMD_TEST_DA_GARDEN
-	spxCmd	TestProtoWarpSound,	SCMD_TEST_PROTO_WARP
-	spxCmd	TestOpeningSong,	SCMD_TEST_OPENING
-	spxCmd	TestEndingSong,		SCMD_TEST_ENDING
-	spxCmd	TestFutureVoiceSfx,	SCMD_TEST_FUTURE
-	spxCmd	TestPastVoiceSfx,	SCMD_TEST_PAST
-	spxCmd	TestAlrightSfx,		SCMD_TEST_ALRIGHT
-	spxCmd	TestGiveUpSfx,		SCMD_TEST_OUTTA_HERE
-	spxCmd	TestYesSfx,		SCMD_TEST_YES
-	spxCmd	TestYeahSfx,		SCMD_TEST_YEAH
-	spxCmd	TestAmyGiggleSfx,	SCMD_TEST_AMY_GIGGLE
-	spxCmd	TestAmyYelpSfx,		SCMD_TEST_AMY_YELP
-	spxCmd	TestStompSfx,		SCMD_TEST_STOMP
-	spxCmd	TestBumperSfx,		SCMD_TEST_BUMPER
-	spxCmd	TestRound1BSong,	SCMD_TEST_R1B
-	spxCmd	TestRound3BSong,	SCMD_TEST_R3B
-	spxCmd	TestRound4BSong,	SCMD_TEST_R4B
-	spxCmd	TestRound5BSong,	SCMD_TEST_R5B
-	spxCmd	TestRound6BSong,	SCMD_TEST_R6B
-	spxCmd	TestRound7BSong,	SCMD_TEST_R7B
-	spxCmd	TestRound8BSong,	SCMD_TEST_R8B
-	spxCmd	LoadFunIsInfinite,	SCMD_FUN_IS_INFINITE
-	spxCmd	LoadSpecialStage8End,	SCMD_SPECIAL_8_END
-	spxCmd	LoadMcSonic,		SCMD_MC_SONIC
-	spxCmd	LoadTails,		SCMD_TAILS
-	spxCmd	LoadBatman,		SCMD_BATMAN
-	spxCmd	LoadCuteSonic,		SCMD_CUTE_SONIC
-	spxCmd	LoadBestStaffTimes,	SCMD_STAFF_TIMES
-	spxCmd	LoadDummyFile1,		SCMD_DUMMY_1
-	spxCmd	LoadDummyFile2,		SCMD_DUMMY_2
-	spxCmd	LoadDummyFile3,		SCMD_DUMMY_3
-	spxCmd	LoadDummyFile4,		SCMD_DUMMY_4
-	spxCmd	LoadDummyFile5,		SCMD_DUMMY_5
-	spxCmd	LoadPencilTest,		SCMD_PENCIL_TEST
-	spxCmd	PauseCdda,		SCMD_CDDA_PAUSE
-	spxCmd	UnpauseCdda,		SCMD_CDDA_UNPAUSE
-	spxCmd	LoadOpening,		SCMD_OPENING
-	spxCmd	LoadCominSoon,		SCMD_COMIN_SOON
+	command SCMD_ROUND_11A,        LoadStage
+	command SCMD_ROUND_11B,        LoadStage
+	command SCMD_ROUND_11C,        LoadStage
+	command SCMD_ROUND_11D,        LoadStage
+	command SCMD_MD_INIT,          LoadMegaDriveInit,      
+	command SCMD_STAGE_SELECT,     LoadStageSelect
+	command SCMD_ROUND_12A,        LoadStage
+	command SCMD_ROUND_12B,        LoadStage
+	command SCMD_ROUND_12C,        LoadStage
+	command SCMD_ROUND_12D,        LoadStage
+	command SCMD_TITLE,            LoadTitleScreen
+	command SCMD_WARP,             LoadWarp,               
+	command SCMD_TIME_ATTACK,      LoadTimeAttack
+	command SCMD_FADE_CDDA,        FadeOutCdda
+	command SCMD_SONG_1A,          PlayRound1ASong
+	command SCMD_SONG_1C,          PlayRound1BSong
+	command SCMD_SONG_1D,          PlayRound1DSong
+	command SCMD_SONG_3A,          PlayRound3ASong
+	command SCMD_SONG_3C,          PlayRound3CSong
+	command SCMD_SONG_3D,          PlayRound3DSong
+	command SCMD_SONG_4A,          PlayRound4ASong
+	command SCMD_SONG_4C,          PlayRound4CSong
+	command SCMD_SONG_4D,          PlayRound4DSong
+	command SCMD_SONG_5A,          PlayRound5ASong
+	command SCMD_SONG_5C,          PlayRound5CSong
+	command SCMD_SONG_5D,          PlayRound5DSong
+	command SCMD_SONG_6A,          PlayRound6ASong
+	command SCMD_SONG_6C,          PlayRound6CSong
+	command SCMD_SONG_6D,          PlayRound6DSong
+	command SCMD_SONG_7A,          PlayRound7ASong
+	command SCMD_SONG_7C,          PlayRound7CSong
+	command SCMD_SONG_7D,          PlayRound7DSong
+	command SCMD_SONG_8A,          PlayRound8ASong
+	command SCMD_SONG_8C,          PlayRound8CSong
+	command SCMD_IPX,              LoadIpx,                
+	command SCMD_DEMO_43C,         LoadStage
+	command SCMD_DEMO_82A,         LoadStage
+	command SCMD_SOUND_TEST,       LoadSoundTest
+	command SCMD_INVALID,          LoadStage
+	command SCMD_ROUND_31A,        LoadStage
+	command SCMD_ROUND_31B,        LoadStage
+	command SCMD_ROUND_31C,        LoadStage
+	command SCMD_ROUND_31D,        LoadStage
+	command SCMD_ROUND_32A,        LoadStage
+	command SCMD_ROUND_32B,        LoadStage
+	command SCMD_ROUND_32C,        LoadStage
+	command SCMD_ROUND_32D,        LoadStage
+	command SCMD_ROUND_33C,        LoadStage
+	command SCMD_ROUND_33D,        LoadStage
+	command SCMD_ROUND_13C,        LoadStage
+	command SCMD_ROUND_13D,        LoadStage
+	command SCMD_ROUND_41A,        LoadStage
+	command SCMD_ROUND_41B,        LoadStage
+	command SCMD_ROUND_41C,        LoadStage
+	command SCMD_ROUND_41D,        LoadStage
+	command SCMD_ROUND_42A,        LoadStage
+	command SCMD_ROUND_42B,        LoadStage
+	command SCMD_ROUND_42C,        LoadStage
+	command SCMD_ROUND_42D,        LoadStage
+	command SCMD_ROUND_43C,        LoadStage
+	command SCMD_ROUND_43D,        LoadStage
+	command SCMD_ROUND_51A,        LoadStage
+	command SCMD_ROUND_51B,        LoadStage
+	command SCMD_ROUND_51C,        LoadStage
+	command SCMD_ROUND_51D,        LoadStage
+	command SCMD_ROUND_52A,        LoadStage
+	command SCMD_ROUND_52B,        LoadStage
+	command SCMD_ROUND_52C,        LoadStage
+	command SCMD_ROUND_52D,        LoadStage
+	command SCMD_ROUND_53C,        LoadStage
+	command SCMD_ROUND_53D,        LoadStage
+	command SCMD_ROUND_61A,        LoadStage
+	command SCMD_ROUND_61B,        LoadStage
+	command SCMD_ROUND_61C,        LoadStage
+	command SCMD_ROUND_61D,        LoadStage
+	command SCMD_ROUND_62A,        LoadStage
+	command SCMD_ROUND_62B,        LoadStage
+	command SCMD_ROUND_62C,        LoadStage
+	command SCMD_ROUND_62D,        LoadStage
+	command SCMD_ROUND_63C,        LoadStage
+	command SCMD_ROUND_63D,        LoadStage
+	command SCMD_ROUND_71A,        LoadStage
+	command SCMD_ROUND_71B,        LoadStage
+	command SCMD_ROUND_71C,        LoadStage
+	command SCMD_ROUND_71D,        LoadStage
+	command SCMD_ROUND_72A,        LoadStage
+	command SCMD_ROUND_72B,        LoadStage
+	command SCMD_ROUND_72C,        LoadStage
+	command SCMD_ROUND_72D,        LoadStage
+	command SCMD_ROUND_73C,        LoadStage
+	command SCMD_ROUND_73D,        LoadStage
+	command SCMD_ROUND_81A,        LoadStage
+	command SCMD_ROUND_81B,        LoadStage
+	command SCMD_ROUND_81C,        LoadStage
+	command SCMD_ROUND_81D,        LoadStage
+	command SCMD_ROUND_82A,        LoadStage
+	command SCMD_ROUND_82B,        LoadStage
+	command SCMD_ROUND_82C,        LoadStage
+	command SCMD_ROUND_82D,        LoadStage
+	command SCMD_ROUND_83C,        LoadStage
+	command SCMD_ROUND_83D,        LoadStage
+	command SCMD_SONG_8D,          PlayRound8DSong
+	command SCMD_SONG_BOSS,        PlayBossSong
+	command SCMD_SONG_FINAL,       PlayFinalBossSong,      
+	command SCMD_SONG_TITLE,       PlayTitleSong
+	command SCMD_SONG_TIME_ATTACK, PlayTimeAttackSong
+	command SCMD_SONG_RESULTS,     PlayResultsSong
+	command SCMD_SONG_SPEED_SHOES, PlaySpeedShoesSong
+	command SCMD_SONG_INVINCIBLE,  PlayInvincibleSong
+	command SCMD_SONG_GAME_OVER,   PlayGameOverSong
+	command SCMD_SONG_SPECIAL,     PlaySpecialStageSong
+	command SCMD_SONG_DA_GARDEN,   PlayDaGardenSong
+	command SCMD_SFX_PROTO_WARP,   PlayProtoWarpSound
+	command SCMD_SONG_OPENING,     PlayOpeningSong
+	command SCMD_SONG_ENDING,      PlayEndingSong
+	command SCMD_CDDA_STOP,        StopCdda,               
+	command SCMD_SPECIAL_STAGE,    LoadSpecialStage
+	command SCMD_SFX_FUTURE,       PlayFutureVoiceSfx
+	command SCMD_SFX_PAST,         PlayPastVoiceSfx
+	command SCMD_SFX_ALRIGHT,      PlayAlrightSfx
+	command SCMD_SFX_OUTTA_HERE,   PlayGiveUpSfx
+	command SCMD_SFX_YES,          PlayYesSfx
+	command SCMD_SFX_YEAH,         PlayYeahSfx
+	command SCMD_SFX_AMY_GIGGLE,   PlayAmyGiggleSfx
+	command SCMD_SFX_AMY_YELP,     PlayAmyYelpSfx
+	command SCMD_SFX_STOMP,        PlayStompSfx
+	command SCMD_SFX_BUMPER,       PlayBumperSfx
+	command SCMD_SONG_PAST,        PlayPastSong
+	command SCMD_DA_GARDEN,        LoadDaGarden
+	command SCMD_PCM_FADE,         FadeOutPcm
+	command SCMD_PCM_STOP,         StopPcm,                
+	command SCMD_DEMO_11A,         LoadStage
+	command SCMD_VISUAL_MODE,      LoadVisualMode
+	command SCMD_SPECIAL_INIT,     InitSpecialStageFlags
+	command SCMD_BURAM_READ,       ReadBuramSaveData,      
+	command SCMD_BURAM_WRITE,      WriteBuramSaveData
+	command SCMD_BURAM_INIT,       LoadBuramInit
+	command SCMD_SPECIAL_RESET,    ResetSpecialStageFlags
+	command SCMD_TEMP_READ,        ReadTempSaveData
+	command SCMD_TEMP_WRITE,       WriteTempSaveData,      
+	command SCMD_THANKS,           LoadThankYou
+	command SCMD_BURAM_MANAGER,    LoadBuramManager
+	command SCMD_VOLUME_RESET,     ResetCddaVolumeCmd
+	command SCMD_PCM_PAUSE,        PausePcm,               
+	command SCMD_PCM_UNPAUSE,      UnpausePcm
+	command SCMD_SFX_BREAK,        PlayBreakSfx
+	command SCMD_BAD_END,          LoadBadEnding
+	command SCMD_GOOD_END,         LoadGoodEnding
+	command SCMD_TEST_R1A,         TestRound1ASong
+	command SCMD_TEST_R1C,         TestRound1CSong
+	command SCMD_TEST_R1D,         TestRound1DSong
+	command SCMD_TEST_R3A,         TestRound3ASong
+	command SCMD_TEST_R3C,         TestRound3CSong
+	command SCMD_TEST_R3D,         TestRound3DSong
+	command SCMD_TEST_R4A,         TestRound4ASong
+	command SCMD_TEST_R4C,         TestRound4CSong
+	command SCMD_TEST_R4D,         TestRound4DSong
+	command SCMD_TEST_R5A,         TestRound5ASong
+	command SCMD_TEST_R5C,         TestRound5CSong
+	command SCMD_TEST_R5D,         TestRound5DSong
+	command SCMD_TEST_R6A,         TestRound6ASong
+	command SCMD_TEST_R6C,         TestRound6CSong
+	command SCMD_TEST_R6D,         TestRound6DSong
+	command SCMD_TEST_R7A,         TestRound7ASong
+	command SCMD_TEST_R7C,         TestRound7CSong
+	command SCMD_TEST_R7D,         TestRound7DSong
+	command SCMD_TEST_R8A,         TestRound8ASong
+	command SCMD_TEST_R8C,         TestRound8CSong
+	command SCMD_TEST_R8D,         TestRound8DSong
+	command SCMD_TEST_BOSS,        TestBossSong
+	command SCMD_TEST_FINAL,       TestFinalSong
+	command SCMD_TEST_TITLE,       TestTitleSong
+	command SCMD_TEST_TIME_ATTACK, TestTimeAttackSong
+	command SCMD_TEST_RESULTS,     TestResultsSong
+	command SCMD_TEST_SPEED_SHOES, TestSpeedShoesSong
+	command SCMD_TEST_INVINCIBLE,  TestInvincibleSong
+	command SCMD_TEST_GAME_OVER,   TestGameOverSong
+	command SCMD_TEST_SPECIAL,     TestSpecialStageSong
+	command SCMD_TEST_DA_GARDEN,   TestDaGardenSong
+	command SCMD_TEST_PROTO_WARP,  TestProtoWarpSound
+	command SCMD_TEST_OPENING,     TestOpeningSong
+	command SCMD_TEST_ENDING,      TestEndingSong
+	command SCMD_TEST_FUTURE,      TestFutureVoiceSfx
+	command SCMD_TEST_PAST,        TestPastVoiceSfx
+	command SCMD_TEST_ALRIGHT,     TestAlrightSfx
+	command SCMD_TEST_OUTTA_HERE,  TestGiveUpSfx
+	command SCMD_TEST_YES,         TestYesSfx
+	command SCMD_TEST_YEAH,        TestYeahSfx
+	command SCMD_TEST_AMY_GIGGLE,  TestAmyGiggleSfx
+	command SCMD_TEST_AMY_YELP,    TestAmyYelpSfx
+	command SCMD_TEST_STOMP,       TestStompSfx
+	command SCMD_TEST_BUMPER,      TestBumperSfx
+	command SCMD_TEST_R1B,         TestRound1BSong
+	command SCMD_TEST_R3B,         TestRound3BSong
+	command SCMD_TEST_R4B,         TestRound4BSong
+	command SCMD_TEST_R5B,         TestRound5BSong
+	command SCMD_TEST_R6B,         TestRound6BSong
+	command SCMD_TEST_R7B,         TestRound7BSong
+	command SCMD_TEST_R8B,         TestRound8BSong
+	command SCMD_FUN_IS_INFINITE,  LoadFunIsInfinite,      
+	command SCMD_SPECIAL_8_END,    LoadSpecialStage8End
+	command SCMD_MC_SONIC,         LoadMcSonic
+	command SCMD_TAILS,            LoadTails
+	command SCMD_BATMAN,           LoadBatman
+	command SCMD_CUTE_SONIC,       LoadCuteSonic
+	command SCMD_STAFF_TIMES,      LoadBestStaffTimes
+	command SCMD_DUMMY_1,          LoadDummyFile1
+	command SCMD_DUMMY_2,          LoadDummyFile2
+	command SCMD_DUMMY_3,          LoadDummyFile3
+	command SCMD_DUMMY_4,          LoadDummyFile4
+	command SCMD_DUMMY_5,          LoadDummyFile5
+	command SCMD_PENCIL_TEST,      LoadPencilTest
+	command SCMD_CDDA_PAUSE,       PauseCdda
+	command SCMD_CDDA_UNPAUSE,     UnpauseCdda
+	command SCMD_OPENING,          LoadOpening
+	command SCMD_COMIN_SOON,       LoadCominSoon
 CommandsEnd:
 
 ; ------------------------------------------------------------------------------
@@ -531,7 +531,7 @@ LoadThankYou:
 ; Reset special stage flags
 ; ------------------------------------------------------------------------------
 
-ResetSpecStageFlags:
+ResetSpecialStageFlags:
 	moveq	#0,d0
 	move.b	d0,time_stones_sub				; Reset time stones retrieved
 	move.b	d0,special_stage_id				; Reset stage ID
@@ -543,7 +543,7 @@ ResetSpecStageFlags:
 ; Reset special stage flags
 ; ------------------------------------------------------------------------------
 
-ResetSpecStageFlags2:
+InitSpecialStageFlags:
 	moveq	#0,d0
 	move.b	d0,time_stones_sub				; Reset time stones retrieved
 	move.b	d0,special_stage_id				; Reset stage ID
@@ -623,7 +623,7 @@ ReadTempSaveData:
 
 	lea	SaveDataTemp,a0					; Copy from temporary save data buffer
 	lea	WORD_RAM_2M,a1
-	move.w	#BURAMDATASZ/4-1,d7
+	move.w	#save.struct_size/4-1,d7
 
 .Read:
 	move.l	(a0)+,(a1)+
@@ -640,7 +640,7 @@ WriteTempSaveData:
 
 	lea	SaveDataTemp,a0					; Copy to temporary save data buffer
 	lea	WORD_RAM_2M,a1
-	move.w	#BURAMDATASZ/4-1,d7
+	move.w	#save.struct_size/4-1,d7
 
 .Write:
 	move.l	(a1)+,(a0)+
@@ -663,7 +663,7 @@ LoadStage:
 	lea	WORD_RAM_2M,a1
 	jsr	LoadFile
 
-	bsr.w	ResetCddaVolume				; Reset CD audio volume
+	bsr.w	ResetCddaVolume					; Reset CD audio volume
 	bclr	#MCDR_IEN3_BIT,MCD_IRQ_MASK			; Disable timer interrupt
 
 	move.l	(sp)+,d1					; Get PCM driver file based on command ID
@@ -687,46 +687,46 @@ LoadStage:
 ; ------------------------------------------------------------------------------
 
 .StageFiles:
-	dc.w	Round11AFile-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
 	dc.w	Round11AFile-.StageFiles			; Palmtree Panic Act 1 Present
 	dc.w	Round11BFile-.StageFiles			; Palmtree Panic Act 1 Past
 	dc.w	Round11CFile-.StageFiles			; Palmtree Panic Act 1 Good Future
 	dc.w	Round11DFile-.StageFiles			; Palmtree Panic Act 1 Bad Future
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
 	dc.w	Round12AFile-.StageFiles			; Palmtree Panic Act 2 Present
 	dc.w	Round12BFile-.StageFiles			; Palmtree Panic Act 2 Past
 	dc.w	Round12CFile-.StageFiles			; Palmtree Panic Act 2 Good Future
 	dc.w	Round12DFile-.StageFiles			; Palmtree Panic Act 2 Bad Future
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
 	dc.w	Demo43CFile-.StageFiles				; Tidal Tempest Act 3 Good Future demo
 	dc.w	Demo82AFile-.StageFiles				; Metallic Madness Act 2 Present demo
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
 	dc.w	Round31AFile-.StageFiles			; Collision Chaos Act 1 Present
 	dc.w	Round31BFile-.StageFiles			; Collision Chaos Act 1 Past
 	dc.w	Round31CFile-.StageFiles			; Collision Chaos Act 1 Good Future
@@ -789,100 +789,100 @@ LoadStage:
 	dc.w	Round82DFile-.StageFiles			; Metallic Madness Act 2 Bad Future 
 	dc.w	Round83CFile-.StageFiles			; Metallic Madness Act 3 Good Future 
 	dc.w	Round83DFile-.StageFiles			; Metallic Madness Act 3 Bad Future 
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
 	dc.w	Demo11AFile-.StageFiles				; Palmtree Panic Act 1 Present demo
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
-	dc.w	Round11AFile-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
+	dc.w	SpxFileNameTable-.StageFiles			; Invalid
 
 ; ------------------------------------------------------------------------------
 ; PCM drivers
 ; ------------------------------------------------------------------------------
 
 .PcmDrivers:
-	dc.l	Round11AFile				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 1 Present
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 1 Past
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 1 Good Future
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 1 Bad Future
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 2 Present
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 2 Past
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 2 Good Future
 	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 2 Bad Future
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
 	dc.l	PcmDriverBoss					; Tidal Tempest Act 3 Good Future demo
 	dc.l	PcmDriverR8BFile				; Metallic Madness Act 2 Present demo
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
 	dc.l	PcmDriverR3BFile				; Collision Chaos Act 1 Present
 	dc.l	PcmDriverR3BFile				; Collision Chaos Act 1 Past
 	dc.l	PcmDriverR3BFile				; Collision Chaos Act 1 Good Future
@@ -945,54 +945,54 @@ LoadStage:
 	dc.l	PcmDriverR8BFile				; Metallic Madness Act 2 Bad Future 
 	dc.l	PcmDriverBoss					; Metallic Madness Act 3 Good Future 
 	dc.l	PcmDriverBoss					; Metallic Madness Act 3 Bad Future 
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	PcmDriverR1BFile			; Palmtree Panic Act 1 Present demo
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
-	dc.l	Round11AFile				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	PcmDriverR1BFile				; Palmtree Panic Act 1 Present demo
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
+	dc.l	SpxFileNameTable				; Invalid
 
 ; ------------------------------------------------------------------------------
 ; Load Mega Drive initialization
@@ -1123,7 +1123,7 @@ LoadCuteSonic:
 	jsr	LoadFile
 	bsr.w	GiveWordRamAccess
 
-	bra.w	PlayRound1BSong				; Play Palmtree Panic Good Future music
+	bra.w	PlayRound1BSong					; Play Palmtree Panic Good Future music
 
 ; ------------------------------------------------------------------------------
 ; Load best staff times screen
@@ -1786,7 +1786,7 @@ PlayRound8CSong:
 
 LoopCdda:
 	bsr.w	ResetCddaVolume					; Reset CD audio volume
-	move.w	#MSCPLAYR,d0				; Play track on loop
+	move.w	#MSCPLAYR,d0					; Play track on loop
 	jsr	_CDBIOS
 	bra.w	FinishCommand
 
@@ -2519,6 +2519,6 @@ BuramStrings:
 
 ; ------------------------------------------------------------------------------
 
-	ALIGN	$FC00
+	align $FC00
 
 ; ------------------------------------------------------------------------------

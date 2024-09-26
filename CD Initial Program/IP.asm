@@ -7,15 +7,14 @@
 
 	include	"_Include/Common.i"
 	include	"_Include/Main CPU.i"
-	include	"_Include/System.i"
+	include	"_Include/System Commands.i"
 	include	"_Include/MMD.i"
-	include	"CD System Program/Command IDs.i"
 
 ; ------------------------------------------------------------------------------
 ; Security block
 ; ------------------------------------------------------------------------------
 
-	org	WORK_RAM
+	org WORK_RAM
 
 	if REGION=JAPAN
 		incbin	"CD Initial Program/Security/Japan.bin"
@@ -60,15 +59,14 @@
 ; ------------------------------------------------------------------------------
 
 LoadIpx:
-	obj	WORK_RAM+$1000
-
+	obj WORK_RAM+$1000
 	moveq	#SCMD_IPX,d0					; Load IPX file
 	jsr	SubCpuCommand
 
 	movea.l	WORD_RAM_2M+mmd.entry,a0			; Get entry address
 	
 	move.l	WORD_RAM_2M+mmd.origin,d0			; Get origin address
-	beq.s	.GetHInt					; If it's not set, branch
+	beq.s	.GetHBlank					; If it's not set, branch
 	
 	movea.l	d0,a2						; Copy file to origin address
 	lea	WORD_RAM_2M+mmd.file,a1
@@ -78,12 +76,12 @@ LoadIpx:
 	move.l	(a1)+,(a2)+
 	dbf	d7,.CopyFile
 
-.GetHInt:
+.GetHBlank:
 	move.l	WORD_RAM_2M+mmd.hblank,d0			; Get H-BLANK interrupt address
-	beq.s	.GetVInt					; If it's not set, branch
+	beq.s	.GetVBlank					; If it's not set, branch
 	move.l	d0,_LEVEL4+2					; Set H-BLANK interrupt address
 
-.GetVInt:
+.GetVBlank:
 	move.l	WORD_RAM_2M+mmd.vblank,d0			; Get V-BLANK interrupt address
 	beq.s	.GiveWordRamAccess				; If it's blank, branch
 	move.l	d0,_LEVEL6+2					; Set V-BLANK interrupt address
@@ -93,7 +91,6 @@ LoadIpx:
 	beq.s	.GiveWordRamAccess
 
 	jmp	(a0)						; Go to main program
-
 	objend
 LoadIpxEnd:
 

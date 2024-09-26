@@ -72,7 +72,7 @@ time_minutes		rs.b 1					; Minutes
 time_seconds		rs.b 1					; Seconds
 time_frames		rs.b 1					; Centiseconds
 score			rs.l 1					; Score
-nem_art_queue_flags	rs.b 1					; Nemesis art queue load flags
+nemesis_queue_flags	rs.b 1					; Nemesis queue flags
 palette_fade_flags	rs.b 1					; Palette fade flags
 shield			rs.b 1					; Shield flag
 invincible 		rs.b 1					; Invincible flag
@@ -196,7 +196,7 @@ anim_art_buffer 	rs.b $480				; Animated art buffer
 scroll_section_speeds	rs.b $200				; Scroll section speeds
 work_ram_file		rs.b 0					; Work RAM file data
 
-GLOBAL_VARS_SIZE	equ __rs-global_variables		; Size of global variables
-WORK_RAM_FILE_SIZE	equ (WORK_RAM+$B00)-WORK_RAM_FILE	; Size of Work RAM file
+GLOBAL_VARIABLES_SIZE	equ __rs-global_variables		; Size of global variables
+WORK_RAM_FILE_SIZE	equ (WORK_RAM+$FB00)-WORK_RAM_FILE	; Size of Work RAM file
 
 ; ------------------------------------------------------------------------------

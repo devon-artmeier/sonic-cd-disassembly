@@ -85,10 +85,33 @@ Z80_RESET		equ $A11200				; Z80 reset
 ; Mega CD registers
 MCD_REGS		equ $A12000				; Mega CD registers base
 MCD_IRQ2		equ $A12000				; IRQ2 request
+	MCDR_IFL2_BIT:		equ 0				; IRQ2 trigger flag
+	MCDR_IFL2:		equ 1<<MCDR_IFL2_BIT
+	MCDR_IEN2_BIT:		equ 7				; IRQ2 enabled flag
+	MCDR_IEN2:		equ 1<<MCDR_IEN2_BIT
 MCD_RESET		equ $A12001				; Reset
+	MCDR_SRES_BIT:		equ 0				; Reset flag
+	MCDR_SRES:		equ 1<<MCDR_SRES_BIT
+	MCDR_SBRQ_BIT:		equ 1				; Bus request flag
+	MCDR_SBRQ:		equ 1<<MCDR_SBRQ_BIT
 MCD_PROTECT		equ $A12002				; Program RAM write protection
 MCD_MEM_MODE		equ $A12003				; Memory mode
-MCD_CDC_MODE		equ $A12004				; CDC mode/Device destination
+	MCDR_RET_BIT:		equ 0				; Main CPU Word RAM access flag
+	MCDR_RET:		equ 1<<MCDR_RET_BIT
+	MCDR_DMNA_BIT:		equ 1				; Sub CPU Word RAM access flag
+	MCDR_DMNA:		equ 1<<MCDR_DMNA_BIT
+	MCDR_MODE_BIT:		equ 2				; Word RAM mode
+	MCDR_MODE:		equ 1<<MCDR_MODE_BIT
+MCD_CDC_DEVICE		equ $A12004				; CDC device destination
+	MCDR_CDC_MAIN_READ:	equ 2				; Main CPU read
+	MCDR_CDC_SUB_READ:	equ 3				; Sub CPU read
+	MCDR_CDC_PCM_DMA:	equ 4				; PCM wave RAM DMA
+	MCDR_CDC_PRG_DMA:	equ 5				; Program RAM DMA
+	MCDR_CDC_WORD_DMA:	equ 7				; Word RAM DMA
+	MCDR_DSR_BIT:		equ 6				; Data set ready flag
+	MCDR_DSR:		equ 1<<MCDR_DSR_BIT
+	MCDR_EDT_BIT:		equ 7				; End of data transfer flag
+	MCDR_EDT:		equ 1<<MCDR_EDT_BIT
 MCD_USER_HBLANK		equ $A12006				; User H-BLANK interrupt address
 MCD_CDC_HOST		equ $A12008				; CDC data
 MCD_STOPWATCH		equ $A1200C				; Stopwatch
@@ -197,7 +220,7 @@ BRMVERIFY		equ $08					; Backup RAM verify
 ;	reg - Z80 control port (optional)
 ; ------------------------------------------------------------------------------
 
-requestZ80 macro reg
+requestZ80Bus macro reg
 	if narg>0
 		move.w	#$100,\reg
 	else
@@ -206,13 +229,13 @@ requestZ80 macro reg
 	endm
 
 ; ------------------------------------------------------------------------------
-; Wait for Z80 bus acknowledgement
+; Wait for Z80 bus access
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	reg - Z80 control port (optional)
 ; ------------------------------------------------------------------------------
 
-waitZ80 macro reg
+waitZ80Bus macro reg
 .Wait\@:
 	if narg>0
 		btst	#0,\reg
@@ -223,30 +246,30 @@ waitZ80 macro reg
 	endm
 
 ; ------------------------------------------------------------------------------
-; Stop the Z80 and get bus access
+; Get Z80 bus access
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	reg - Z80 control port (optional)
 ; ------------------------------------------------------------------------------
 
-stopZ80 macro reg
+getZ80Bus macro reg
 	if narg>0
-		requestZ80 \reg
-		waitZ80 \reg
+		requestZ80Bus \reg
+		waitZ80Bus \reg
 	else
-		requestZ80
-		waitZ80
+		requestZ80Bus
+		waitZ80Bus
 	endif
 	endm
 
 ; ------------------------------------------------------------------------------
-; Start the Z80 and release bus access
+; Release Z80 bus access
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
 ;	reg - Z80 bus port (optional)
 ; ------------------------------------------------------------------------------
 
-startZ80 macro reg
+releaseZ80Bus macro reg
 	if narg>0
 		move.w	#0,\reg
 	else

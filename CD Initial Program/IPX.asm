@@ -9,100 +9,101 @@
 	include	"_Include/Main CPU.i"
 	include	"_Include/Main CPU Variables.i"
 	include	"_Include/System.i"
+	include	"_Include/System Commands.i"
 	include	"_Include/Backup RAM.i"
 	include	"_Include/Sound.i"
 	include	"_Include/MMD.i"
 	include	"Special Stage/_Global Variables.i"
 
 ; ------------------------------------------------------------------------------
-; MMD header
-; ------------------------------------------------------------------------------
 
-	MMD	0, &
-		WORKRAM, $1000, &
-		Start, 0, 0
+	mmd 0, WORK_RAM, $1000, Start, 0, 0
 
 ; ------------------------------------------------------------------------------
 ; Program start
 ; ------------------------------------------------------------------------------
 
 Start:
-	move.l	#VInterrupt,_LEVEL6+2.w		; Set V-INT address
-	bsr.w	GiveWordRAMAccess		; Give Sub CPU Word RAM Access
+	move.l	#VBlankIrq,_LEVEL6+2				; Set V-BLANK interrupt address
+	bsr.w	GiveWordRamAccess				; Give Sub CPU Word RAM Access
 	
-	lea	global_variables,a0		; Clear variables
-	move.w	#GLOBAL_VARS_SIZE/4-1,d7
+	lea	global_variables,a0				; Clear variables
+	move.w	#GLOBAL_VARIABLES_SIZE/4-1,d7
 
 .ClearVars:
 	move.l	#0,(a0)+
 	dbf	d7,.ClearVars
 
-	moveq	#SCMD_MDINIT,d0			; Run Mega Drive initialization
-	bsr.w	RunMMD
-	move.w	#SCMD_BURAMINIT,d0		; Run Backup RAM initialization
-	bsr.w	RunMMD
-	tst.b	d0				; Was it a succes?
-	beq.s	.GetSaveData			; If so, branch
-	bset	#0,save_disabled		; If not, disable saving to Backup RAM
+	moveq	#SCMD_MD_INIT,d0				; Run Mega Drive initialization
+	bsr.w	RunMmd
+	
+	move.w	#SCMD_BURAM_INIT,d0				; Run Backup RAM initialization
+	bsr.w	RunMmd
+	
+	tst.b	d0						; Was it a succes?
+	beq.s	.GetSaveData					; If so, branch
+	bset	#0,save_disabled				; If not, disable saving to Backup RAM
 
 .GetSaveData:
-	bsr.w	ReadSaveData			; Read save data
+	bsr.w	ReadSaveData					; Read save data
+
+; ------------------------------------------------------------------------------
 
 .GameLoop:
-	move.w	#SCMD_INITSS2,d0		; Initialize special stage flags
-	bsr.w	SubCPUCmd
+	move.w	#SCMD_SPECIAL_INIT,d0				; Initialize special stage flags
+	bsr.w	SubCpuCommand
 
 	moveq	#0,d0
-	move.l	d0,score			; Reset score
-	move.b	d0,time_attack_mode		; Reset time attack mode flag
-	move.b	d0,special_stage			; Reset special stage flag
-	move.b	d0,checkpoint			; Reset checkpoint
-	move.w	d0,rings			; Reset ring count
-	move.l	d0,time				; Reset time
-	move.b	d0,good_future			; Reset good future flag
-	move.b	d0,projector_destroyed		; Reset projector destroyed flag
-	move.b	#TIME_PRESENT,time_zone		; Set time zone to present
+	move.l	d0,score					; Reset score
+	move.b	d0,time_attack_mode				; Reset time attack mode flag
+	move.b	d0,special_stage				; Reset special stage flag
+	move.b	d0,checkpoint					; Reset checkpoint
+	move.w	d0,rings					; Reset ring count
+	move.l	d0,time						; Reset time
+	move.b	d0,good_future					; Reset good future flag
+	move.b	d0,projector_destroyed				; Reset projector destroyed flag
+	move.b	#TIME_PRESENT,time_zone				; Set time zone to present
 
-	moveq	#SCMD_TITLE,d0			; Run title screen
-	bsr.w	RunMMD
+	moveq	#SCMD_TITLE,d0					; Run title screen
+	bsr.w	RunMmd
 
-	ext.w	d1				; Run next scene
+	ext.w	d1						; Run next scene
 	add.w	d1,d1
 	move.w	.Scenes(pc,d1.w),d1
 	jsr	.Scenes(pc,d1.w)
 
-	bra.s	.GameLoop			; Loop
+	bra.s	.GameLoop					; Loop
 
 ; ------------------------------------------------------------------------------
 
 .Scenes:
-	dc.w	Demo-.Scenes			; Demo mode
-	dc.w	NewGame-.Scenes			; New game
-	dc.w	LoadGame-.Scenes		; Load game
-	dc.w	TimeAttack-.Scenes		; Time attack
-	dc.w	BuRAMManager-.Scenes		; Backup RAM manager
-	dc.w	DAGarden-.Scenes		; D.A. Garden
-	dc.w	VisualMode-.Scenes		; Visual mode
-	dc.w	SoundTest-.Scenes		; Sound test
-	dc.w	StageSelect-.Scenes		; Stage select
-	dc.w	BestStaffTimes-.Scenes		; Best staff times
+	dc.w	Demo-.Scenes					; Demo mode
+	dc.w	NewGame-.Scenes					; New game
+	dc.w	LoadGame-.Scenes				; Load game
+	dc.w	TimeAttack-.Scenes				; Time attack
+	dc.w	BuramManager-.Scenes				; Backup RAM manager
+	dc.w	DaGarden-.Scenes				; D.A. Garden
+	dc.w	VisualMode-.Scenes				; Visual mode
+	dc.w	SoundTest-.Scenes				; Sound test
+	dc.w	StageSelect-.Scenes				; Stage select
+	dc.w	BestStaffTimes-.Scenes				; Best staff times
 
 ; ------------------------------------------------------------------------------
 ; Best staff times
 ; ------------------------------------------------------------------------------
 
 BestStaffTimes:
-	move.w	#SCMD_STAFFTIMES,d0		; Run staff best times screen
-	bra.w	RunMMD
+	move.w	#SCMD_STAFF_TIMES,d0				; Run staff best times screen
+	bra.w	RunMmd
 
 ; ------------------------------------------------------------------------------
 ; Backup RAM manager
 ; ------------------------------------------------------------------------------
 
-BuRAMManager:
-	move.w	#SCMD_BURAMMGR,d0		; Run Backup RAM manager
-	bsr.w	RunMMD
-	bsr.w	ReadSaveData			; Read save data
+BuramManager:
+	move.w	#SCMD_BURAM_MANAGER,d0				; Run Backup RAM manager
+	bsr.w	RunMmd
+	bsr.w	ReadSaveData					; Read save data
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -110,12 +111,12 @@ BuRAMManager:
 ; ------------------------------------------------------------------------------
 
 SpecStage1Demo:
-	move.b	#1-1,special_stage_id_cmd		; Stage 1
-	move.b	#0,time_stones_cmd		; Reset time stones retrieved for this stage
-	bset	#0,special_stage_flags_cmd		; Temporary mode
+	move.b	#1-1,special_stage_id_cmd			; Stage 1
+	move.b	#0,time_stones_cmd				; Reset time stones retrieved for this stage
+	bset	#0,special_stage_flags				; Temporary mode
 	
-	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
-	bsr.w	RunMMD
+	moveq	#SCMD_SPECIAL_STAGE,d0				; Run special stage
+	bsr.w	RunMmd
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -123,12 +124,12 @@ SpecStage1Demo:
 ; ------------------------------------------------------------------------------
 
 SpecStage6Demo:
-	move.b	#6-1,special_stage_id_cmd		; Stage 6
-	move.b	#0,time_stones_cmd		; Reset time stones retrieved for this stage
-	bset	#0,special_stage_flags_cmd		; Temporary mode
+	move.b	#6-1,special_stage_id_cmd			; Stage 6
+	move.b	#0,time_stones_cmd				; Reset time stones retrieved for this stage
+	bset	#0,special_stage_flags				; Temporary mode
 	
-	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
-	bsr.w	RunMMD
+	moveq	#SCMD_SPECIAL_STAGE,d0				; Run special stage
+	bsr.w	RunMmd
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -136,194 +137,206 @@ SpecStage6Demo:
 ; ------------------------------------------------------------------------------
 
 LoadGame:
-	bsr.w	ReadSaveData			; Read save data
-	move.w	saved_stage,zone_act		; Get level from save data
-	move.b	#3,lives			; Reset life count to 3
-	move.b	#0,nem_art_queue_flags		; Reset PLC load flags
+	bsr.w	ReadSaveData					; Read save data
+	
+	move.w	saved_stage,zone_act				; Get level from save data
+	move.b	#3,lives					; Reset life count to 3
+	move.b	#0,nemesis_queue_flags				; Reset Nemesis queue flags
 
-	cmpi.b	#0,zone				; Are we in Palmtree Panic?
-	beq.w	RunR1				; If so, branch
-	cmpi.b	#1,zone				; Are we in Collision Chaos?
-	bls.w	RunR3				; If so, branch
-	cmpi.b	#2,zone				; Are we in Tidal Tempest?
-	bls.w	RunR4				; If so, branch
-	cmpi.b	#3,zone				; Are we in Quartz Quadrant?
-	bls.w	RunR5				; If so, branch
-	cmpi.b	#4,zone				; Are we in Wacky Workbench?
-	bls.w	RunR6				; If so, branch
-	cmpi.b	#5,zone				; Are we in Stardust Speedway?
-	bls.w	RunR7				; If so, branch
-	cmpi.b	#6,zone				; Are we in Metallic Madness?
-	bls.w	RunR8				; If so, branch
+	cmpi.b	#0,zone						; Are we in Palmtree Panic?
+	beq.w	RunRound1					; If so, branch
+	cmpi.b	#1,zone						; Are we in Collision Chaos?
+	bls.w	RunRound3					; If so, branch
+	cmpi.b	#2,zone						; Are we in Tidal Tempest?
+	bls.w	RunRound4					; If so, branch
+	cmpi.b	#3,zone						; Are we in Quartz Quadrant?
+	bls.w	RunRound5					; If so, branch
+	cmpi.b	#4,zone						; Are we in Wacky Workbench?
+	bls.w	RunRound6					; If so, branch
+	cmpi.b	#5,zone						; Are we in Stardust Speedway?
+	bls.w	RunRound7					; If so, branch
+	cmpi.b	#6,zone						; Are we in Metallic Madness?
+	bls.w	RunRound8					; If so, branch
 
 ; ------------------------------------------------------------------------------
 ; New game
 ; ------------------------------------------------------------------------------
 
 NewGame:
-RunR1:
+RunRound1:
 	moveq	#0,d0
-	move.b	d0,nem_art_queue_flags		; Reset PLC load flags
-	move.w	d0,zone				; Set level to Palmtree Panic Act 1
+	move.b	d0,nemesis_queue_flags				; Reset Nemesis queue flags
+	move.w	d0,zone						; Set stage to Palmtree Panic Act 1
 	move.w	d0,saved_stage
-	move.b	d0,good_future_zones		; Reset good futures achieved
-	move.b	d0,current_special_stage	; Reset special stage ID
-	move.b	d0,time_stones			; Reset time stones retrieved
+	move.b	d0,good_future_zones				; Reset good futures achieved
+	move.b	d0,current_special_stage			; Reset special stage ID
+	move.b	d0,time_stones					; Reset time stones retrieved
 
-	bsr.w	WriteSaveData			; Write save data
+	bsr.w	WriteSaveData					; Write save data
 	
-	bsr.w	RunR11				; Run act 1
-	bsr.w	RunR12				; Run act 2
-	bsr.w	RunR13				; Run act 3
+	bsr.w	RunRound11					; Run act 1
+	bsr.w	RunRound12					; Run act 2
+	bsr.w	RunRound13					; Run act 3
 
-	moveq	#3*1,d0				; Unlock zone in time attack
-	bsr.w	UnlockTimeAttackLevel
+	moveq	#3*1,d0						; Unlock zone in time attack
+	bsr.w	UnlockTimeAttackStage
 	bset	#6,title_flags
 	bset	#5,title_flags
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
 	
-	bclr	#0,good_future			; Was act 3 in the good future?
-	beq.s	RunR3				; If not, branch
-	bset	#0,good_future_zones		; Mark good future as achieved
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	
+	bclr	#0,good_future					; Was act 3 in the good future?
+	beq.s	RunRound3					; If not, branch
+	bset	#0,good_future_zones				; Mark good future as achieved
 
 ; ------------------------------------------------------------------------------
 
-RunR3:
-	bsr.w	WriteSaveData			; Write save data
+RunRound3:
+	bsr.w	WriteSaveData					; Write save data
 	
-	move.b	#0,amy_captured			; Reset Amy captured flag
-	bsr.w	RunR31				; Run act 1
-	move.b	#0,amy_captured			; Reset Amy captured flag
-	bsr.w	RunR32				; Run act 2
-	bsr.w	RunR33				; Run act 3
+	move.b	#0,amy_captured					; Reset Amy captured flag
+	bsr.w	RunRound31					; Run act 1
+	move.b	#0,amy_captured					; Reset Amy captured flag
+	bsr.w	RunRound32					; Run act 2
+	bsr.w	RunRound33					; Run act 3
 
-	moveq	#3*2,d0				; Unlock zone in time attack
-	bsr.w	UnlockTimeAttackLevel
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	moveq	#3*2,d0						; Unlock zone in time attack
+	bsr.w	UnlockTimeAttackStage
 	
-	bclr	#0,good_future			; Was act 3 in the good future?
-	beq.s	RunR4				; If not, branch
-	bset	#1,good_future_zones		; Mark good future as achieved
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	
+	bclr	#0,good_future					; Was act 3 in the good future?
+	beq.s	RunRound4					; If not, branch
+	bset	#1,good_future_zones				; Mark good future as achieved
 
 ; ------------------------------------------------------------------------------
 
-RunR4:
-	bsr.w	WriteSaveData			; Write save data
+RunRound4:
+	bsr.w	WriteSaveData					; Write save data
 	
-	bsr.w	RunR41				; Run act 1
-	bsr.w	RunR42				; Run act 2
-	bsr.w	RunR43				; Run act 3
+	bsr.w	RunRound41					; Run act 1
+	bsr.w	RunRound42					; Run act 2
+	bsr.w	RunRound43					; Run act 3
 
-	moveq	#3*3,d0				; Unlock zone in time attack
-	bsr.w	UnlockTimeAttackLevel
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	moveq	#3*3,d0						; Unlock zone in time attack
+	bsr.w	UnlockTimeAttackStage
 	
-	bclr	#0,good_future			; Was act 3 in the good future?
-	beq.s	RunR5				; If not, branch
-	bset	#2,good_future_zones		; Mark good future as achieved
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	
+	bclr	#0,good_future					; Was act 3 in the good future?
+	beq.s	RunRound5					; If not, branch
+	bset	#2,good_future_zones				; Mark good future as achieved
 
 ; ------------------------------------------------------------------------------
 
-RunR5:
-	bsr.w	WriteSaveData			; Write save data
+RunRound5:
+	bsr.w	WriteSaveData					; Write save data
 	
-	bsr.w	RunR51				; Run act 1
-	bsr.w	RunR52				; Run act 2
-	bsr.w	RunR53				; Run act 3
+	bsr.w	RunRound51					; Run act 1
+	bsr.w	RunRound52					; Run act 2
+	bsr.w	RunRound53					; Run act 3
 
-	moveq	#3*4,d0				; Unlock zone in time attack
-	bsr.w	UnlockTimeAttackLevel
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	moveq	#3*4,d0						; Unlock zone in time attack
+	bsr.w	UnlockTimeAttackStage
 	
-	bclr	#0,good_future			; Was act 3 in the good future?
-	beq.s	RunR6				; If not, branch
-	bset	#3,good_future_zones		; Mark good future as achieved
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	
+	bclr	#0,good_future					; Was act 3 in the good future?
+	beq.s	RunRound6					; If not, branch
+	bset	#3,good_future_zones				; Mark good future as achieved
 
 ; ------------------------------------------------------------------------------
 
-RunR6:
-	bsr.w	WriteSaveData			; Write save data
+RunRound6:
+	bsr.w	WriteSaveData					; Write save data
 	
-	bsr.w	RunR61				; Run act 1
-	bsr.w	RunR62				; Run act 2
-	bsr.w	RunR63				; Run act 3
+	bsr.w	RunRound61					; Run act 1
+	bsr.w	RunRound62					; Run act 2
+	bsr.w	RunRound63					; Run act 3
 
-	moveq	#3*5,d0				; Unlock zone in time attack
-	bsr.w	UnlockTimeAttackLevel
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	moveq	#3*5,d0						; Unlock zone in time attack
+	bsr.w	UnlockTimeAttackStage
 	
-	bclr	#0,good_future			; Was act 3 in the good future?
-	beq.s	RunR7				; If not, branch
-	bset	#4,good_future_zones		; Mark good future as achieved
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	
+	bclr	#0,good_future					; Was act 3 in the good future?
+	beq.s	RunRound7					; If not, branch
+	bset	#4,good_future_zones				; Mark good future as achieved
 
 ; ------------------------------------------------------------------------------
 
-RunR7:
-	bsr.w	WriteSaveData			; Write save data
+RunRound7:
+	bsr.w	WriteSaveData					; Write save data
 	
-	bsr.w	RunR71				; Run act 1
-	bsr.w	RunR72				; Run act 2
-	bsr.w	RunR73				; Run act 3
+	bsr.w	RunRound71					; Run act 1
+	bsr.w	RunRound72					; Run act 2
+	bsr.w	RunRound73					; Run act 3
 
-	moveq	#3*6,d0				; Unlock zone in time attack
-	bsr.w	UnlockTimeAttackLevel
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	moveq	#3*6,d0						; Unlock zone in time attack
+	bsr.w	UnlockTimeAttackStage
 	
-	bclr	#0,good_future			; Was act 3 in the good future?
-	beq.s	RunR8				; If not, branch
-	bset	#5,good_future_zones		; Mark good future as achieved
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	
+	bclr	#0,good_future					; Was act 3 in the good future?
+	beq.s	RunRound8					; If not, branch
+	bset	#5,good_future_zones				; Mark good future as achieved
 
 ; ------------------------------------------------------------------------------
 
-RunR8:
-	bsr.w	WriteSaveData			; Write save data
+RunRound8:
+	bsr.w	WriteSaveData					; Write save data
 	
-	bsr.w	RunR81				; Run act 1
-	bsr.w	RunR82				; Run act 2
-	bsr.w	RunR83				; Run act 3
+	bsr.w	RunRound81					; Run act 1
+	bsr.w	RunRound82					; Run act 2
+	bsr.w	RunRound83					; Run act 3
 
-	moveq	#3*7,d0				; Unlock zone in time attack
-	bsr.w	UnlockTimeAttackLevel
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	moveq	#3*7,d0						; Unlock zone in time attack
+	bsr.w	UnlockTimeAttackStage
 	
-	bclr	#0,good_future			; Was act 3 in the good future?
-	beq.s	GameDone			; If not, branch
-	bset	#6,good_future_zones		; Mark good future as achieved
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	
+	bclr	#0,good_future					; Was act 3 in the good future?
+	beq.s	GameDone					; If not, branch
+	bset	#6,good_future_zones				; Mark good future as achieved
 
 ; ------------------------------------------------------------------------------
 
 GameDone:
 	move.b	good_future_zones,good_future_zones_result	; Save good futures achieved
-	move.b	time_stones,time_stones_result	; Save time stones retrieved
+	move.b	time_stones,time_stones_result			; Save time stones retrieved
 
-	bsr.w	WriteSaveData			; Write save data
+	bsr.w	WriteSaveData					; Write save data
 	
-	cmpi.b	#%01111111,good_future_zones_result	; Were all of the good futures achievd?
-	beq.s	GoodEnding			; If so, branch
-	cmpi.b	#%01111111,time_stones_result	; Were all of the time stones retrieved?
-	beq.s	GoodEnding			; If so, branch
+	cmpi.b	#%01111111,good_future_zones_result		; Were all of the good futures achievd?
+	beq.s	GoodEnding					; If so, branch
+	cmpi.b	#%01111111,time_stones_result			; Were all of the time stones retrieved?
+	beq.s	GoodEnding					; If so, branch
 
 BadEnding:
-	move.b	#0,ending_id			; Set ending ID to bad ending
-	move.w	#SCMD_BADEND,d0			; Run bad ending file
-	bsr.w	RunMMD
-	tst.b	mmd_return_code			; Should we play it again?
-	bmi.s	BadEnding			; If so, loop
+	move.b	#0,ending_id					; Set ending ID to bad ending
+	
+	move.w	#SCMD_BAD_END,d0				; Run bad ending file
+	bsr.w	RunMmd
+	
+	tst.b	mmd_return_code					; Should we play it again?
+	bmi.s	BadEnding					; If so, loop
 	rts
 
 GoodEnding:
-	move.b	#$7F,ending_id			; Set ending ID to good ending
-	move.w	#SCMD_GOODEND,d0		; Run good ending file
-	bsr.w	RunMMD
-	tst.b	mmd_return_code			; Should we play it again?
-	bmi.s	GoodEnding			; If so, loop
+	move.b	#$7F,ending_id					; Set ending ID to good ending
+	
+	move.w	#SCMD_GOOD_END,d0				; Run good ending file
+	bsr.w	RunMmd
+	
+	tst.b	mmd_return_code					; Should we play it again?
+	bmi.s	GoodEnding					; If so, loop
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -331,11 +344,11 @@ GoodEnding:
 ; ------------------------------------------------------------------------------
 
 GameOver:
-	move.b	#0,act				; Reset act
-	move.w	zone_act,saved_stage		; Save zone and act ID
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
-	bclr	#0,good_future			; Reset good future flag
+	move.b	#0,act						; Reset act
+	move.w	zone_act,saved_stage				; Save zone and act ID
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
+	bclr	#0,good_future					; Reset good future flag
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -343,690 +356,596 @@ GameOver:
 ; ------------------------------------------------------------------------------
 
 good_future_zones_result:	
-	dc.b	0				; Good futures achieved
+	dc.b	0						; Good futures achieved
 time_stones_result:
-	dc.b	0				; Time stones retrieved
+	dc.b	0						; Time stones retrieved
 
 ; ------------------------------------------------------------------------------
 ; Run Palmtree Panic Act 1
 ; ------------------------------------------------------------------------------
 
-RunR11:
-	lea	R11SubCmds(pc),a0
+RunRound11:
+	lea	Round11Commands(pc),a0				; Run stage
 	move.w	#$000,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Palmtree Panic Act 2
 ; ------------------------------------------------------------------------------
 
-RunR12:
-	lea	R12SubCmds(pc),a0
+RunRound12:
+	lea	Round12Commands(pc),a0				; Run stage
 	move.w	#$001,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Palmtree Panic Act 3
 ; ------------------------------------------------------------------------------
 
-RunR13:
-	lea	R13SubCmds(pc),a0
+RunRound13:
+	lea	Round13Commands(pc),a0				; Run stage
 	move.w	#$002,zone_act
-	bra.w	RunBossLevel
+	bra.w	RunBossStage
 
 ; ------------------------------------------------------------------------------
 ; Run Collision Chaos Act 1
 ; ------------------------------------------------------------------------------
 
-RunR31:
-	lea	R31SubCmds(pc),a0
+RunRound31:
+	lea	Round31Commands(pc),a0				; Run stage
 	move.w	#$100,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Collision Chaos Act 2
 ; ------------------------------------------------------------------------------
 
-RunR32:
-	lea	R32SubCmds(pc),a0
+RunRound32:
+	lea	Round32Commands(pc),a0				; Run stage
 	move.w	#$101,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Collision Chaos Act 3
 ; ------------------------------------------------------------------------------
 
-RunR33:
-	lea	R33SubCmds(pc),a0
+RunRound33:
+	lea	Round33Commands(pc),a0				; Run stage
 	move.w	#$102,zone_act
-	bra.w	RunBossLevel
+	bra.w	RunBossStage
 
 ; ------------------------------------------------------------------------------
 ; Run Tidal Tempest Act 1
 ; ------------------------------------------------------------------------------
 
-RunR41:
-	lea	R41SubCmds(pc),a0
+RunRound41:
+	lea	Round41Commands(pc),a0				; Run stage
 	move.w	#$200,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Tidal Tempest Act 2
 ; ------------------------------------------------------------------------------
 
-RunR42:
-	lea	R42SubCmds(pc),a0
+RunRound42:
+	lea	Round42Commands(pc),a0				; Run stage
 	move.w	#$201,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Tidal Tempest Act 3
 ; ------------------------------------------------------------------------------
 
-RunR43:
-	lea	R43SubCmds(pc),a0
+RunRound43:
+	lea	Round43Commands(pc),a0				; Run stage
 	move.w	#$202,zone_act
-	bra.w	RunBossLevel
+	bra.w	RunBossStage
 
 ; ------------------------------------------------------------------------------
 ; Run Quartz Quadrant Act 1
 ; ------------------------------------------------------------------------------
 
-RunR51:
-	lea	R51SubCmds(pc),a0
+RunRound51:
+	lea	Round51Commands(pc),a0				; Run stage
 	move.w	#$300,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Quartz Quadrant Act 2
 ; ------------------------------------------------------------------------------
 
-RunR52:
-	lea	R52SubCmds(pc),a0
+RunRound52:
+	lea	Round52Commands(pc),a0				; Run stage
 	move.w	#$301,zone_act
-	bra.w	RunLevel
+	bra.w	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Quartz Quadrant Act 3
 ; ------------------------------------------------------------------------------
 
-RunR53:
-	lea	R53SubCmds(pc),a0
+RunRound53:
+	lea	Round53Commands(pc),a0				; Run stage
 	move.w	#$302,zone_act
-	bra.w	RunBossLevel
+	bra.w	RunBossStage
 
 ; ------------------------------------------------------------------------------
 ; Run Wacky Workbench Act 1
 ; ------------------------------------------------------------------------------
 
-RunR61:
-	lea	R61SubCmds(pc),a0
+RunRound61:
+	lea	Round61Commands(pc),a0				; Run stage
 	move.w	#$400,zone_act
-	bra.s	RunLevel
+	bra.s	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Wacky Workbench Act 2
 ; ------------------------------------------------------------------------------
 
-RunR62:
-	lea	R62SubCmds(pc),a0
+RunRound62:
+	lea	Round62Commands(pc),a0				; Run stage
 	move.w	#$401,zone_act
-	bra.s	RunLevel
+	bra.s	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Wacky Workbench Act 3
 ; ------------------------------------------------------------------------------
 
-RunR63:
-	lea	R63SubCmds(pc),a0
+RunRound63:
+	lea	Round63Commands(pc),a0				; Run stage
 	move.w	#$402,zone_act
-	bra.w	RunBossLevel
+	bra.w	RunBossStage
 
 ; ------------------------------------------------------------------------------
 ; Run Stardust Speedway Act 1
 ; ------------------------------------------------------------------------------
 
-RunR71:
-	lea	R71SubCmds(pc),a0
+RunRound71:
+	lea	Round71Commands(pc),a0				; Run stage
 	move.w	#$500,zone_act
-	bra.s	RunLevel
+	bra.s	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Stardust Speedway Act 2
 ; ------------------------------------------------------------------------------
 
-RunR72:
-	lea	R72SubCmds(pc),a0
+RunRound72:
+	lea	Round72Commands(pc),a0				; Run stage
 	move.w	#$501,zone_act
-	bra.s	RunLevel
+	bra.s	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Stardust Speedway Act 3
 ; ------------------------------------------------------------------------------
 
-RunR73:
-	lea	R73SubCmds(pc),a0
+RunRound73:
+	lea	Round73Commands(pc),a0				; Run stage
 	move.w	#$502,zone_act
-	bra.w	RunBossLevel
+	bra.w	RunBossStage
 
 ; ------------------------------------------------------------------------------
 ; Run Metallic Madness Act 1
 ; ------------------------------------------------------------------------------
 
-RunR81:
-	lea	R81SubCmds(pc),a0
+RunRound81:
+	lea	Round81Commands(pc),a0				; Run stage
 	move.w	#$600,zone_act
-	bra.s	RunLevel
+	bra.s	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Metallic Madness Act 2
 ; ------------------------------------------------------------------------------
 
-RunR82:
-	lea	R82SubCmds(pc),a0
+RunRound82:
+	lea	Round82Commands(pc),a0				; Run stage
 	move.w	#$601,zone_act
-	bra.s	RunLevel
+	bra.s	RunStage
 
 ; ------------------------------------------------------------------------------
 ; Run Metallic Madness Act 3
 ; ------------------------------------------------------------------------------
 
-RunR83:
-	lea	R83SubCmds(pc),a0
+RunRound83:
+	lea	Round83Commands(pc),a0				; Run stage
 	move.w	#$602,zone_act
-	bra.w	RunBossLevel
+	bra.w	RunBossStage
 
 ; ------------------------------------------------------------------------------
-; Run level
+; Run stage
 ; ------------------------------------------------------------------------------
 
-RunLevel:
-	moveq	#0,d0				; Get present file load command
+RunStage:
+	moveq	#0,d0						; Get present file load command
 	move.b	0(a0),d0
 
-.LevelLoop:
-	bsr.w	RunMMD				; Run level file
+.StageLoop:
+	bsr.w	RunMmd						; Run stage file
 
-	tst.b	lives				; Have we run out of lives?
-	beq.s	.LevelOver			; If so, branch
-	btst	#7,time_zone			; Are we time warping?
-	beq.s	.LevelOver			; If not, branch
+	tst.b	lives						; Have we run out of lives?
+	beq.s	.StageOver					; If so, branch
+	btst	#7,time_zone					; Are we time warping?
+	beq.s	.StageOver					; If not, branch
 
-	moveq	#SCMD_WARP,d0			; Run warp sequence file
-	bsr.w	RunMMD
+	moveq	#SCMD_WARP,d0					; Run warp sequence file
+	bsr.w	RunMmd
 
-	move.b	time_zone,d1			; Get new time zone
+	move.b	time_zone,d1					; Get new time zone
 
-	moveq	#0,d0				; Get past file load command
+	moveq	#0,d0						; Get past file load command
 	move.b	1(a0),d0
-	andi.b	#$7F,d1				; Are we in the past?
-	beq.s	.LevelLoop			; If so, branch
+	andi.b	#$7F,d1						; Are we in the past?
+	beq.s	.StageLoop					; If so, branch
 
-	move.b	0(a0),d0			; Get present file load command
-	subq.b	#1,d1				; Are we in the present?
-	beq.s	.LevelLoop			; If so, branch
+	move.b	0(a0),d0					; Get present file load command
+	subq.b	#1,d1						; Are we in the present?
+	beq.s	.StageLoop					; If so, branch
 
-	move.b	3(a0),d0			; Get bad future file load command
-	tst.b	good_future			; Are we in the good future?
-	beq.s	.LevelLoop			; If not, branch
+	move.b	3(a0),d0					; Get bad future file load command
+	tst.b	good_future					; Are we in the good future?
+	beq.s	.StageLoop					; If not, branch
 	
-	move.b	2(a0),d0			; Get good future file load command
-	bra.s	.LevelLoop			; Loop
+	move.b	2(a0),d0					; Get good future file load command
+	bra.s	.StageLoop					; Loop
 
-.LevelOver:
-	tst.b	lives				; Do we still have lives left?
-	bne.s	.CheckSpecStage			; If so, branch
-	move.l	(sp)+,d0			; If not, exit
+.StageOver:
+	tst.b	lives						; Do we still have lives left?
+	bne.s	.CheckSpecialStage				; If so, branch
+	move.l	(sp)+,d0					; If not, exit
 	bra.w	GameOver
 
-.CheckSpecStage:
-	tst.b	special_stage			; Are we going into a special stage?
-	bne.s	.SpecialStage			; If so, branch
+.CheckSpecialStage:
+	tst.b	special_stage					; Are we going into a special stage?
+	bne.s	.SpecialStage					; If so, branch
 	rts
 
 .SpecialStage:
 	move.b	current_special_stage,special_stage_id_cmd	; Set stage ID
-	move.b	time_stones,time_stones_cmd	; Copy time stones retrieved flags
-	bclr	#0,special_stage_flags_cmd		; Normal mode
+	move.b	time_stones,time_stones_cmd			; Copy time stones retrieved flags
+	bclr	#0,special_stage_flags				; Normal mode
 
-	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
-	bsr.w	RunMMD
+	moveq	#SCMD_SPECIAL_STAGE,d0				; Run special stage
+	bsr.w	RunMmd
 
-	move.b	#1,palette_clear_flags		; Fade from white in next level
-	cmpi.b	#%01111111,time_stones		; Do we have all of the time stones now?
-	bne.s	.End				; If not, branch
-	move.b	#1,good_future			; If so, set good future flag
+	move.b	#1,palette_clear_flags				; Fade from white in next stage
+	cmpi.b	#%01111111,time_stones				; Do we have all of the time stones now?
+	bne.s	.End						; If not, branch
+	move.b	#1,good_future					; If so, set good future flag
 
 .End:
 	rts
 
 ; ------------------------------------------------------------------------------
-; Run boss level
+; Run boss stage
 ; ------------------------------------------------------------------------------
 
-RunBossLevel:
-	moveq	#0,d0				; Get good future file load command
+RunBossStage:
+	moveq	#0,d0						; Get good future file load command
 	move.b	0(a0),d0
-	tst.b	good_future			; Are we in the good future?
-	bne.s	.RunLevel			; If so, branch
-	move.b	1(a0),d0			; Get bad future file load command
+	tst.b	good_future					; Are we in the good future?
+	bne.s	.RunStage					; If so, branch
+	move.b	1(a0),d0					; Get bad future file load command
 	
-.RunLevel:
-	bsr.w	RunMMD				; Run level file
+.RunStage:
+	bsr.w	RunMmd						; Run stage file
 
-	tst.b	lives				; Do we still have lives left?
-	bne.s	.NextLevel			; If so, branch
-	move.l	(sp)+,d0			; If not, exit
+	tst.b	lives						; Do we still have lives left?
+	bne.s	.NextStage					; If so, branch
+	move.l	(sp)+,d0					; If not, exit
 	bra.w	GameOver
 
-.NextLevel:
-	addq.b	#1,saved_stage			; Next level
-	cmpi.b	#7,saved_stage			; Are we at the end of the game?
-	bcs.s	.End				; If not, branch
-	subq.b	#1,saved_stage			; Cap level ID
+.NextStage:
+	addq.b	#1,saved_stage					; Next stage
+	cmpi.b	#7,saved_stage					; Are we at the end of the game?
+	bcs.s	.End						; If not, branch
+	subq.b	#1,saved_stage					; Cap stage ID
 
 .End:
-	move.b	#0,checkpoint			; Reset checkpoint
+	move.b	#0,checkpoint					; Reset checkpoint
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Unlock time attack zone
 ; ------------------------------------------------------------------------------
 ; PARAMETERS
-;	d0.b - Level ID
+;	d0.b - Stage ID
 ; ------------------------------------------------------------------------------
 
-UnlockTimeAttackLevel:
-	cmp.b	time_attack_unlock,d0		; Is this level already unlocked?
-	bls.s	.End				; If so, branch
-	move.b	d0,time_attack_unlock		; If not, unlock it
+UnlockTimeAttackStage:
+	cmp.b	time_attack_unlock,d0				; Is this stage already unlocked?
+	bls.s	.End						; If so, branch
+	move.b	d0,time_attack_unlock				; If not, unlock it
 
 .End:
 	rts
 
 ; ------------------------------------------------------------------------------
-; Level loading Sub CPU commands
+; Stage loading Sub CPU commands
 ; ------------------------------------------------------------------------------
 
 ; Palmtree Panic
-R11SubCmds:
-	dc.b	SCMD_R11A, SCMD_R11B, SCMD_R11C, SCMD_R11D
-R12SubCmds:
-	dc.b	SCMD_R12A, SCMD_R12B, SCMD_R12C, SCMD_R12D
-R13SubCmds:
-	dc.b	SCMD_R13C, SCMD_R13D
+Round11Commands:
+	dc.b	SCMD_ROUND_11A, SCMD_ROUND_11B, SCMD_ROUND_11C, SCMD_ROUND_11D
+Round12Commands:
+	dc.b	SCMD_ROUND_12A, SCMD_ROUND_12B, SCMD_ROUND_12C, SCMD_ROUND_12D
+Round13Commands:
+	dc.b	SCMD_ROUND_13C, SCMD_ROUND_13D
 
 ; Collision Chaos
-R31SubCmds:
-	dc.b	SCMD_R31A, SCMD_R31B, SCMD_R31C, SCMD_R31D
-R32SubCmds:
-	dc.b	SCMD_R32A, SCMD_R32B, SCMD_R32C, SCMD_R32D
-R33SubCmds:
-	dc.b	SCMD_R33C, SCMD_R33D
+Round31Commands:
+	dc.b	SCMD_ROUND_31A, SCMD_ROUND_31B, SCMD_ROUND_31C, SCMD_ROUND_31D
+Round32Commands:
+	dc.b	SCMD_ROUND_32A, SCMD_ROUND_32B, SCMD_ROUND_32C, SCMD_ROUND_32D
+Round33Commands:
+	dc.b	SCMD_ROUND_33C, SCMD_ROUND_33D
 
 ; Tidal Tempest
-R41SubCmds:
-	dc.b	SCMD_R41A, SCMD_R41B, SCMD_R41C, SCMD_R41D
-R42SubCmds:
-	dc.b	SCMD_R42A, SCMD_R42B, SCMD_R42C, SCMD_R42D
-R43SubCmds:
-	dc.b	SCMD_R43C, SCMD_R43D
+Round41Commands:
+	dc.b	SCMD_ROUND_41A, SCMD_ROUND_41B, SCMD_ROUND_41C, SCMD_ROUND_41D
+Round42Commands:
+	dc.b	SCMD_ROUND_42A, SCMD_ROUND_42B, SCMD_ROUND_42C, SCMD_ROUND_42D
+Round43Commands:
+	dc.b	SCMD_ROUND_43C, SCMD_ROUND_43D
 
 ; Quartz Quadrant
-R51SubCmds:
-	dc.b	SCMD_R51A, SCMD_R51B, SCMD_R51C, SCMD_R51D
-R52SubCmds:
-	dc.b	SCMD_R52A, SCMD_R52B, SCMD_R52C, SCMD_R52D
-R53SubCmds:
-	dc.b	SCMD_R53C, SCMD_R53D
+Round51Commands:
+	dc.b	SCMD_ROUND_51A, SCMD_ROUND_51B, SCMD_ROUND_51C, SCMD_ROUND_51D
+Round52Commands:
+	dc.b	SCMD_ROUND_52A, SCMD_ROUND_52B, SCMD_ROUND_52C, SCMD_ROUND_52D
+Round53Commands:
+	dc.b	SCMD_ROUND_53C, SCMD_ROUND_53D
 
 ; Wacky Workbench
-R61SubCmds:
-	dc.b	SCMD_R61A, SCMD_R61B, SCMD_R61C, SCMD_R61D
-R62SubCmds:
-	dc.b	SCMD_R62A, SCMD_R62B, SCMD_R62C, SCMD_R62D
-R63SubCmds:
-	dc.b	SCMD_R63C, SCMD_R63D
+Round61Commands:
+	dc.b	SCMD_ROUND_61A, SCMD_ROUND_61B, SCMD_ROUND_61C, SCMD_ROUND_61D
+Round62Commands:
+	dc.b	SCMD_ROUND_62A, SCMD_ROUND_62B, SCMD_ROUND_62C, SCMD_ROUND_62D
+Round63Commands:
+	dc.b	SCMD_ROUND_63C, SCMD_ROUND_63D
 
 ; Stardust Speedway
-R71SubCmds:
-	dc.b	SCMD_R71A, SCMD_R71B, SCMD_R71C, SCMD_R71D
-R72SubCmds:
-	dc.b	SCMD_R72A, SCMD_R72B, SCMD_R72C, SCMD_R72D
-R73SubCmds:
-	dc.b	SCMD_R73C, SCMD_R73D
+Round71Commands:
+	dc.b	SCMD_ROUND_71A, SCMD_ROUND_71B, SCMD_ROUND_71C, SCMD_ROUND_71D
+Round72Commands:
+	dc.b	SCMD_ROUND_72A, SCMD_ROUND_72B, SCMD_ROUND_72C, SCMD_ROUND_72D
+Round73Commands:
+	dc.b	SCMD_ROUND_73C, SCMD_ROUND_73D
 
 ; Metallic Madness
-R81SubCmds:
-	dc.b	SCMD_R81A, SCMD_R81B, SCMD_R81C, SCMD_R81D
-R82SubCmds:
-	dc.b	SCMD_R82A, SCMD_R82B, SCMD_R82C, SCMD_R82D
-R83SubCmds:
-	dc.b	SCMD_R83C, SCMD_R83D
+Round81Commands:
+	dc.b	SCMD_ROUND_81A, SCMD_ROUND_81B, SCMD_ROUND_81C, SCMD_ROUND_81D
+Round82Commands:
+	dc.b	SCMD_ROUND_82A, SCMD_ROUND_82B, SCMD_ROUND_82C, SCMD_ROUND_82D
+Round83Commands:
+	dc.b	SCMD_ROUND_83C, SCMD_ROUND_83D
+
+; ------------------------------------------------------------------------------
+; Stage selection entry
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	id          - ID constant name
+;	cmd         - Command ID
+;	stage       - Stage ID
+;	time_zone   - Time zone
+;	good_future - Good Future flag
+; ------------------------------------------------------------------------------
+
+__stage_select_id: = 0
+selectEntry macro id, cmd, stage, time_zone, good_future
+	dc.w	\cmd, \stage
+	dc.b	\time_zone, \good_future
+	
+	\id\: equ __stage_select_id
+	__stage_select_id: = __stage_select_id+1
+	endm
 
 ; ------------------------------------------------------------------------------
 ; Stage select
 ; ------------------------------------------------------------------------------
 
 StageSelect:
-	moveq	#SCMD_STAGESEL,d0		; Run stage select file
-	bsr.w	RunMMD
+	moveq	#SCMD_STAGE_SELECT,d0				; Run stage select file
+	bsr.w	RunMmd
 
-	mulu.w	#6,d0				; Get selected stage data
-	move.w	StageSels+2(pc,d0.w),zone_act	; Set level
-	move.b	StageSels+4(pc,d0.w),time_zone	; Time zone
-	move.b	StageSels+5(pc,d0.w),good_future	; Good future flag
-	move.w	StageSels(pc,d0.w),d0		; File load Sub CPU command
+	mulu.w	#6,d0						; Get selected stage data
+	move.w	StageSelections+2(pc,d0.w),zone_act		; Set stage
+	move.b	StageSelections+4(pc,d0.w),time_zone		; Time zone
+	move.b	StageSelections+5(pc,d0.w),good_future		; Good future flag
+	move.w	StageSelections(pc,d0.w),d0			; File load command
 	
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
 
-	cmpi.w	#SCMD_SPECSTAGE,d0		; Have we selected the special stage?
-	beq.w	SpecStage1Demo			; If so, branch
+	cmpi.w	#SCMD_SPECIAL_STAGE,d0				; Have we selected the special stage?
+	beq.w	SpecStage1Demo					; If so, branch
 	
-	bsr.w	RunMMD				; Run level file
+	bsr.w	RunMmd						; Run stage file
 	rts
 
 ; ------------------------------------------------------------------------------
 
-StageSels:
-	; Palmtree Panic
-	dc.w	SCMD_R11A, $000			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R11B, $000			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R11C, $000			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R11D, $000			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-	dc.w	SCMD_R12A, $001			; Act 2 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R12B, $001			; Act 2 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R12C, $001			; Act 2 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R12D, $001			; Act 2 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	; Warp sequence
-	dc.w	SCMD_WARP, $000
-	dc.b	TIME_PAST, 0
-
-	; Opening FMV
-	dc.w	SCMD_OPENING, $000
-	dc.b	TIME_PAST, 0
-	
-	; "Comin' Soon" screen
-	dc.w	SCMD_COMINSOON, $000
-	dc.b	TIME_PAST, 0
-	
-	; Collision Chaos
-	dc.w	SCMD_R31A, $100			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R31B, $100			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R31C, $100			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R31D, $100			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R32A, $101			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R32B, $101			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R32C, $101			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R32D, $101			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R33C, $102			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R33D, $102			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	; Palmtree Panic Act 3
-	dc.w	SCMD_R13C, $002			; Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R13D, $002			; Bad future
-	dc.b	TIME_FUTURE, 0
-	
-	; Tidal Tempest
-	dc.w	SCMD_R41A, $200			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R41B, $200			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R41C, $200			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R41D, $200			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R42A, $201			; Act 2 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R42B, $201			; Act 2 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R42C, $201			; Act 2 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R42D, $201			; Act 2 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R43C, $202			; Act 3 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R43D, $202			; Act 3 Bad future
-	dc.b	TIME_FUTURE, 0
-	
-	; Quartz Quadrant
-	dc.w	SCMD_R51A, $300			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R51B, $300			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R51C, $300			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R51D, $300			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R52A, $301			; Act 2 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R52B, $301			; Act 2 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R52C, $301			; Act 2 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R52D, $301			; Act 2 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R53C, $302			; Act 3 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R53D, $302			; Act 3 Bad future
-	dc.b	TIME_FUTURE, 0
-	
-	; Wacky Workbench
-	dc.w	SCMD_R61A, $400			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R61B, $400			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R61C, $400			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R61D, $400			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R62A, $401			; Act 2 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R62B, $401			; Act 2 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R62C, $401			; Act 2 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R62D, $401			; Act 2 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R63C, $402			; Act 3 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R63D, $402			; Act 3 Bad future
-	dc.b	TIME_FUTURE, 0
-	
-	; Stardust Speedway
-	dc.w	SCMD_R71A, $500			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R71B, $500			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R71C, $500			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R71D, $500			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R72A, $501			; Act 2 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R72B, $501			; Act 2 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R72C, $501			; Act 2 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R72D, $501			; Act 2 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R73C, $502			; Act 3 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R73D, $502			; Act 3 Bad future
-	dc.b	TIME_FUTURE, 0
-	
-	; Metallic Madness
-	dc.w	SCMD_R81A, $600			; Act 1 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R81B, $600			; Act 1 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R81C, $600			; Act 1 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R81D, $600			; Act 1 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R82A, $601			; Act 2 Present
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R82B, $601			; Act 2 Past
-	dc.b	TIME_PAST, 0
-	dc.w	SCMD_R82C, $601			; Act 2 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R82D, $601			; Act 2 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	dc.w	SCMD_R83C, $602			; Act 3 Good future
-	dc.b	TIME_FUTURE, 1
-	dc.w	SCMD_R83D, $602			; Act 3 Bad future
-	dc.b	TIME_FUTURE, 0
-
-	; Special Stage 1 demo
-	dc.w	SCMD_SPECSTAGE, $000
-	dc.b	TIME_PAST, 0
-	
-	; Unused
-	dc.w	SCMD_R11A, $000
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R11A, $000
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R11A, $000
-	dc.b	TIME_PRESENT, 0
-	dc.w	SCMD_R11A, $000
-	dc.b	TIME_PRESENT, 0
+StageSelections:
+	selectEntry SELECT_ROUND_11A,     SCMD_ROUND_11A,      $000, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_11B,     SCMD_ROUND_11B,      $000, TIME_PAST,    0
+	selectEntry SELECT_ROUND_11C,     SCMD_ROUND_11C,      $000, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_11D,     SCMD_ROUND_11D,      $000, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_12A,     SCMD_ROUND_12A,      $001, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_12B,     SCMD_ROUND_12B,      $001, TIME_PAST,    0
+	selectEntry SELECT_ROUND_12C,     SCMD_ROUND_12C,      $001, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_12D,     SCMD_ROUND_12D,      $001, TIME_FUTURE,  0
+	selectEntry SELECT_WARP,          SCMD_WARP,           $000, TIME_PAST,    0
+	selectEntry SELECT_OPENING,       SCMD_OPENING,        $000, TIME_PAST,    0
+	selectEntry SELECT_COMIN_SOON,    SCMD_COMIN_SOON,     $000, TIME_PAST,    0
+	selectEntry SELECT_ROUND_31A,     SCMD_ROUND_31A,      $100, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_31B,     SCMD_ROUND_31B,      $100, TIME_PAST,    0
+	selectEntry SELECT_ROUND_31C,     SCMD_ROUND_31C,      $100, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_31D,     SCMD_ROUND_31D,      $100, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_32A,     SCMD_ROUND_32A,      $101, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_32B,     SCMD_ROUND_32B,      $101, TIME_PAST,    0
+	selectEntry SELECT_ROUND_32C,     SCMD_ROUND_32C,      $101, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_32D,     SCMD_ROUND_32D,      $101, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_33C,     SCMD_ROUND_33C,      $102, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_33D,     SCMD_ROUND_33D,      $102, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_13C,     SCMD_ROUND_13C,      $002, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_13D,     SCMD_ROUND_13D,      $002, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_41A,     SCMD_ROUND_41A,      $200, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_41B,     SCMD_ROUND_41B,      $200, TIME_PAST,    0
+	selectEntry SELECT_ROUND_41C,     SCMD_ROUND_41C,      $200, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_41D,     SCMD_ROUND_41D,      $200, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_42A,     SCMD_ROUND_42A,      $201, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_42B,     SCMD_ROUND_42B,      $201, TIME_PAST,    0
+	selectEntry SELECT_ROUND_42C,     SCMD_ROUND_42C,      $201, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_42D,     SCMD_ROUND_42D,      $201, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_43C,     SCMD_ROUND_43C,      $202, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_43D,     SCMD_ROUND_43D,      $202, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_51A,     SCMD_ROUND_51A,      $300, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_51B,     SCMD_ROUND_51B,      $300, TIME_PAST,    0
+	selectEntry SELECT_ROUND_51C,     SCMD_ROUND_51C,      $300, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_51D,     SCMD_ROUND_51D,      $300, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_52A,     SCMD_ROUND_52A,      $301, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_52B,     SCMD_ROUND_52B,      $301, TIME_PAST,    0
+	selectEntry SELECT_ROUND_52C,     SCMD_ROUND_52C,      $301, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_52D,     SCMD_ROUND_52D,      $301, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_53C,     SCMD_ROUND_53C,      $302, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_53D,     SCMD_ROUND_53D,      $302, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_61A,     SCMD_ROUND_61A,      $400, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_61B,     SCMD_ROUND_61B,      $400, TIME_PAST,    0
+	selectEntry SELECT_ROUND_61C,     SCMD_ROUND_61C,      $400, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_61D,     SCMD_ROUND_61D,      $400, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_62A,     SCMD_ROUND_62A,      $401, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_62B,     SCMD_ROUND_62B,      $401, TIME_PAST,    0
+	selectEntry SELECT_ROUND_62C,     SCMD_ROUND_62C,      $401, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_62D,     SCMD_ROUND_62D,      $401, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_63C,     SCMD_ROUND_63C,      $402, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_63D,     SCMD_ROUND_63D,      $402, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_71A,     SCMD_ROUND_71A,      $500, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_71B,     SCMD_ROUND_71B,      $500, TIME_PAST,    0
+	selectEntry SELECT_ROUND_71C,     SCMD_ROUND_71C,      $500, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_71D,     SCMD_ROUND_71D,      $500, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_72A,     SCMD_ROUND_72A,      $501, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_72B,     SCMD_ROUND_72B,      $501, TIME_PAST,    0
+	selectEntry SELECT_ROUND_72C,     SCMD_ROUND_72C,      $501, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_72D,     SCMD_ROUND_72D,      $501, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_73C,     SCMD_ROUND_73C,      $502, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_73D,     SCMD_ROUND_73D,      $502, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_81A,     SCMD_ROUND_81A,      $600, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_81B,     SCMD_ROUND_81B,      $600, TIME_PAST,    0
+	selectEntry SELECT_ROUND_81C,     SCMD_ROUND_81C,      $600, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_81D,     SCMD_ROUND_81D,      $600, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_82A,     SCMD_ROUND_82A,      $601, TIME_PRESENT, 0
+	selectEntry SELECT_ROUND_82B,     SCMD_ROUND_82B,      $601, TIME_PAST,    0
+	selectEntry SELECT_ROUND_82C,     SCMD_ROUND_82C,      $601, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_82D,     SCMD_ROUND_82D,      $601, TIME_FUTURE,  0
+	selectEntry SELECT_ROUND_83C,     SCMD_ROUND_83C,      $602, TIME_FUTURE,  1
+	selectEntry SELECT_ROUND_83D,     SCMD_ROUND_83D,      $602, TIME_FUTURE,  0
+	selectEntry SELECT_SPECIAL_STAGE, SCMD_SPECIAL_STAGE,  $000, TIME_PAST,    0
+	selectEntry SELECT_UNUSED_1,      SCMD_ROUND_11A,      $000, TIME_PRESENT, 0
+	selectEntry SELECT_UNUSED_2,      SCMD_ROUND_11A,      $000, TIME_PRESENT, 0
+	selectEntry SELECT_UNUSED_3,      SCMD_ROUND_11A,      $000, TIME_PRESENT, 0
+	selectEntry SELECT_UNUSED_4,      SCMD_ROUND_11A,      $000, TIME_PRESENT, 0
 
 ; ------------------------------------------------------------------------------
 ; Demo mode
 ; ------------------------------------------------------------------------------
 
 Demo:
-	moveq	#(.DemosEnd-.Demos)/2-1,d1	; Maximum demo ID
+	moveq	#(.DemosEnd-.Demos)/2-1,d1			; Maximum demo ID
 	
-	lea	demo_id,a6			; Get current demo ID
+	lea	demo_id,a6					; Get current demo ID
 	moveq	#0,d0
 	move.b	(a6),d0
 
-	addq.b	#1,(a6)				; Advance demo ID
-	cmp.b	(a6),d1				; Are we past the max ID?
-	bcc.s	.RunDemo			; If not, branch
-	move.b	#0,(a6)				; Wrap demo ID
+	addq.b	#1,(a6)						; Advance demo ID
+	cmp.b	(a6),d1						; Are we past the max ID?
+	bcc.s	.RunDemo					; If not, branch
+	move.b	#0,(a6)						; Wrap demo ID
 
 .RunDemo:
-	add.w	d0,d0				; Run demo
+	add.w	d0,d0						; Run demo
 	move.w	.Demos(pc,d0.w),d0
 	jmp	.Demos(pc,d0.w)
 
 ; ------------------------------------------------------------------------------
 
 .Demos:
-	dc.w	Demo_OpenFMV-.Demos		; Opening FMV
-	dc.w	Demo_R11A-.Demos		; Palmtree Panic Act 1 Present
-	dc.w	Demo_SpecStg1-.Demos		; Special Stage 1
-	dc.w	Demo_R43C-.Demos		; Tidal Tempest Act 3 Good Future
-	dc.w	Demo_SpecStg6-.Demos		; Special Stage 6
-	dc.w	Demo_R82A-.Demos		; Metallic Madness Act 2 Present
+	dc.w	RunOpeningDemo-.Demos
+	dc.w	RunDemo11A-.Demos
+	dc.w	RunSpecialDemo1-.Demos
+	dc.w	RunDemo43C-.Demos
+	dc.w	RunSpecialDemo6-.Demos
+	dc.w	RunDemo82A-.Demos
 .DemosEnd:
 
 ; ------------------------------------------------------------------------------
 ; Palmtree Panic Act 1 Present demo
 ; ------------------------------------------------------------------------------
 
-Demo_R11A:
-	move.b	#0,nem_art_queue_flags			; Reset PLC load flags
-	move.w	#$000,zone_act			; Set level to Palmtree Panic Act 1
-	move.b	#TIME_PRESENT,time_zone		; Set time zone to present
-	move.b	#0,good_future			; Reset good future flag
+RunDemo11A:
+	move.b	#0,nemesis_queue_flags				; Reset Nemesis queue flags
+	move.w	#$000,zone_act					; Set stage to Palmtree Panic Act 1
+	move.b	#TIME_PRESENT,time_zone				; Set time zone to present
+	move.b	#0,good_future					; Reset good future flag
 	
-	move.w	#SCMD_R11ADEMO,d0		; Run demo file
-	bsr.w	RunMMD
-	move.w	#0,demo_mode			; Reset demo mode flag
+	move.w	#SCMD_DEMO_11A,d0				; Run demo file
+	bsr.w	RunMmd
+	move.w	#0,demo_mode					; Reset demo mode flag
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Tidal Tempest Act 3 Good Future
 ; ------------------------------------------------------------------------------
 
-Demo_R43C:
-	move.b	#0,nem_art_queue_flags			; Reset PLC load flags
-	move.w	#$202,zone_act			; Set level to Tidal Tempest Act 3
-	move.b	#TIME_FUTURE,time_zone		; Set time zone to present
-	move.b	#1,good_future			; Set good future flag
+RunDemo43C:
+	move.b	#0,nemesis_queue_flags				; Reset Nemesis queue flags
+	move.w	#$202,zone_act					; Set stage to Tidal Tempest Act 3
+	move.b	#TIME_FUTURE,time_zone				; Set time zone to present
+	move.b	#1,good_future					; Set good future flag
 	
-	move.w	#SCMD_R43CDEMO,d0		; Run demo file
-	bsr.w	RunMMD
-	move.w	#0,demo_mode			; Reset demo mode flag
+	move.w	#SCMD_DEMO_43C,d0				; Run demo file
+	bsr.w	RunMmd
+	move.w	#0,demo_mode					; Reset demo mode flag
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Metallic Madness Act 2 Present
 ; ------------------------------------------------------------------------------
 
-Demo_R82A:
-	move.b	#0,nem_art_queue_flags			; Reset PLC load flags
-	move.w	#$601,zone_act			; Set level to Metallic Madness Act 2
-	move.b	#TIME_PRESENT,time_zone		; Set time zone to present
-	move.b	#0,good_future			; Reset good future flag
+RunDemo82A:
+	move.b	#0,nemesis_queue_flags				; Reset Nemesis queue flags
+	move.w	#$601,zone_act					; Set stage to Metallic Madness Act 2
+	move.b	#TIME_PRESENT,time_zone				; Set time zone to present
+	move.b	#0,good_future					; Reset good future flag
 	
-	move.w	#SCMD_R82ADEMO,d0		; Run demo file
-	bsr.w	RunMMD
-	move.w	#0,demo_mode			; Reset demo mode flag
+	move.w	#SCMD_DEMO_82A,d0				; Run demo file
+	bsr.w	RunMmd
+	move.w	#0,demo_mode					; Reset demo mode flag
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Special Stage 1 demo
 ; ------------------------------------------------------------------------------
 
-Demo_SpecStg1:
-	move.w	#SCMD_INITSS,d0			; Initialize special stage flags
-	bsr.w	SubCPUCmd
-	bra.w	SpecStage1Demo			; Run demo file
+RunSpecialDemo1:
+	move.w	#SCMD_SPECIAL_RESET,d0				; Reset special stage flags
+	bsr.w	SubCpuCommand
+	bra.w	SpecStage1Demo					; Run demo file
 
 ; ------------------------------------------------------------------------------
 ; Special Stage 6 demo
 ; ------------------------------------------------------------------------------
 
-Demo_SpecStg6:
-	move.w	#SCMD_INITSS,d0			; Initialize special stage flags
-	bsr.w	SubCPUCmd
-	bra.w	SpecStage6Demo			; Run demo file
+RunSpecialDemo6:
+	move.w	#SCMD_SPECIAL_RESET,d0				; Reset special stage flags
+	bsr.w	SubCpuCommand
+	bra.w	SpecStage6Demo					; Run demo file
 
 ; ------------------------------------------------------------------------------
 ; Opening FMV
 ; ------------------------------------------------------------------------------
 
-Demo_OpenFMV:
-	move.w	#SCMD_OPENING,d0		; Run opening FMV file
-	bsr.w	RunMMD
-	tst.b	mmd_return_code			; Should we play it again?
-	bmi.s	Demo_OpenFMV			; If so, loop
+RunOpeningDemo:
+	move.w	#SCMD_OPENING,d0				; Run opening FMV
+	bsr.w	RunMmd
+
+	tst.b	mmd_return_code					; Should we play it again?
+	bmi.s	RunOpeningDemo					; If so, loop
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -1034,47 +953,49 @@ Demo_OpenFMV:
 ; ------------------------------------------------------------------------------
 
 SoundTest:
-	moveq	#SCMD_SNDTEST,d0		; Run sound test file
-	bsr.w	RunMMD
+	moveq	#SCMD_SOUND_TEST,d0				; Run sound test
+	bsr.w	RunMmd
 
-	add.w	d0,d0				; Exit sound test
+	add.w	d0,d0						; Exit sound test
 	move.w	.Exits(pc,d0.w),d0
 	jmp	.Exits(pc,d0.w)
 
 ; ------------------------------------------------------------------------------
 
 .Exits:
-	dc.w	SoundTest_Exit-.Exits		; Exit sound test
-	dc.w	SoundTest_SpecStg8-.Exits	; Special Stage 8
-	dc.w	SoundTest_FunIsInf-.Exits	; Fun is infinite
-	dc.w	SoundTest_MCSonic-.Exits	; M.C. Sonic
-	dc.w	SoundTest_Tails-.Exits		; Tails
-	dc.w	SoundTest_Batman-.Exits		; Batman Sonic
-	dc.w	SoundTest_CuteSonic-.Exits	; Cute Sonic
+	dc.w	ExitSoundTest-.Exits				; Exit sound test
+	dc.w	RunSpecialStage8-.Exits				; Special Stage 8
+	dc.w	RunFunIsInfinite-.Exits				; Fun is infinite
+	dc.w	RunMcSonic-.Exits				; M.C. Sonic
+	dc.w	RunTails-.Exits					; Tails
+	dc.w	RunBatman-.Exits				; Batman Sonic
+	dc.w	RunCuteSonic-.Exits				; Cute Sonic
 
 ; ------------------------------------------------------------------------------
 ; Exit sound test
 ; ------------------------------------------------------------------------------
 
-SoundTest_Exit:
+ExitSoundTest:
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Special Stage 8
 ; ------------------------------------------------------------------------------
 
-SoundTest_SpecStg8:
-	move.b	#8-1,special_stage_id_cmd		; Stage 8
-	move.b	#0,time_stones_cmd			; Reset time stones retrieved for this stage
-	bset	#0,special_stage_flags_cmd		; Temporary mode
-	bset	#2,special_stage_flags_cmd		; Secret mode
+RunSpecialStage8:
+	move.b	#8-1,special_stage_id_cmd			; Stage 8
+	move.b	#0,time_stones_cmd				; Reset time stones retrieved
+	bset	#0,special_stage_flags				; Temporary mode
+	bset	#2,special_stage_flags				; Secret mode
 	
-	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
-	bsr.w	RunMMD
-	tst.b	special_stage_lost		; Was the stage beaten?
-	bne.s	.End				; If not, branch
-	move.w	#SCMD_SS8CREDS,d0		; If so, run credits
-	bsr.w	RunMMD
+	moveq	#SCMD_SPECIAL_STAGE,d0				; Run special stage
+	bsr.w	RunMmd
+	
+	tst.b	special_stage_lost				; Was the stage beaten?
+	bne.s	.End						; If not, branch
+	
+	move.w	#SCMD_SPECIAL_8_END,d0				; If so, run credits
+	bsr.w	RunMmd
 
 .End:
 	rts
@@ -1083,160 +1004,167 @@ SoundTest_SpecStg8:
 ; "Fun is infinite" easter egg
 ; ------------------------------------------------------------------------------
 
-SoundTest_FunIsInf:
-	move.w	#SCMD_FUNISINF,d0
-	bra.w	RunMMD
+RunFunIsInfinite:
+	move.w	#SCMD_FUN_IS_INFINITE,d0			; Run easter egg
+	bra.w	RunMmd
 
 ; ------------------------------------------------------------------------------
 ; M.C. Sonic easter egg
 ; ------------------------------------------------------------------------------
 
-SoundTest_MCSonic:
-	move.w	#SCMD_MCSONIC,d0
-	bra.w	RunMMD
+RunMcSonic:
+	move.w	#SCMD_MC_SONIC,d0				; Run easter egg
+	bra.w	RunMmd
 
 ; ------------------------------------------------------------------------------
 ; Tails easter egg
 ; ------------------------------------------------------------------------------
 
-SoundTest_Tails:
-	move.w	#SCMD_TAILS,d0
-	bra.w	RunMMD
+RunTails:
+	move.w	#SCMD_TAILS,d0					; Run easter egg
+	bra.w	RunMmd
 
 ; ------------------------------------------------------------------------------
 ; Batman Sonic easter egg
 ; ------------------------------------------------------------------------------
 
-SoundTest_Batman:
-	move.w	#SCMD_BATMAN,d0
-	bra.w	RunMMD
+RunBatman:
+	move.w	#SCMD_BATMAN,d0					; Run easter egg
+	bra.w	RunMmd
 
 ; ------------------------------------------------------------------------------
 ; Cute Sonic easter egg
 ; ------------------------------------------------------------------------------
 
-SoundTest_CuteSonic:
-	move.w	#SCMD_CUTESONIC,d0
-	bra.w	RunMMD
+RunCuteSonic:
+	move.w	#SCMD_CUTE_SONIC,d0				; Run easter egg
+	bra.w	RunMmd
 
 ; ------------------------------------------------------------------------------
 ; Visual Mode
 ; ------------------------------------------------------------------------------
 
 VisualMode:
-	move.w	#SCMD_VISMODE,d0		; Run Visual Mode file
-	bsr.w	RunMMD
+	move.w	#SCMD_VISUAL_MODE,d0				; Run Visual Mode
+	bsr.w	RunMmd
 
-	add.w	d0,d0				; Play FMV
+	add.w	d0,d0						; Play FMV
 	move.w	.FMVs(pc,d0.w),d0
 	jmp	.FMVs(pc,d0.w)
 
 ; ------------------------------------------------------------------------------
 
 .FMVs:
-	dc.w	VisualMode_Exit-.FMVs		; Exit Visual Mode
-	dc.w	VisualMode_OpenFMV-.FMVs	; Opening FMV
-	dc.w	VisualMode_GoodEnd-.FMVs	; Good ending FMV
-	dc.w	VisualMode_BadEnd-.FMVs		; Bad ending FMV
-	dc.w	VisualMode_PencilTest-.FMVs	; Pencil test FMV
+	dc.w	ExitVisualMode-.FMVs				; Exit Visual Mode
+	dc.w	VisualModeOpening-.FMVs				; Opening
+	dc.w	VisualModeGoodEnding-.FMVs			; Good ending
+	dc.w	VisualModeBadEnding-.FMVs			; Bad ending
+	dc.w	VisualModePencilTest-.FMVs			; Pencil test
 
 ; ------------------------------------------------------------------------------
 ; Play opening FMV
 ; ------------------------------------------------------------------------------
 
-VisualMode_OpenFMV:
-	move.w	#SCMD_OPENING,d0		; Run opening FMV file
-	bsr.w	RunMMD
-	tst.b	mmd_return_code			; Should we play it again?
-	bmi.s	VisualMode_OpenFMV		; If so, loop
+VisualModeOpening:
+	move.w	#SCMD_OPENING,d0				; Run opening
+	bsr.w	RunMmd
+	
+	tst.b	mmd_return_code					; Should we play it again?
+	bmi.s	VisualModeOpening				; If so, loop
 
-	bra.s	VisualMode			; Go back to menu
+	bra.s	VisualMode					; Go back to menu
 
 ; ------------------------------------------------------------------------------
 ; Exit Visual Mode
 ; ------------------------------------------------------------------------------
 
-VisualMode_Exit:
+ExitVisualMode:
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Play pencil test FMV
 ; ------------------------------------------------------------------------------
 
-VisualMode_PencilTest:
-	move.w	#SCMD_PENCILTEST,d0		; Run pencil test FMV file
-	bsr.w	RunMMD
-	tst.b	mmd_return_code			; Should we play it again?
-	bmi.s	VisualMode_PencilTest		; If so, loop
+VisualModePencilTest:
+	move.w	#SCMD_PENCIL_TEST,d0				; Run pencil test
+	bsr.w	RunMmd
+	
+	tst.b	mmd_return_code					; Should we play it again?
+	bmi.s	VisualModePencilTest				; If so, loop
 
-	bra.s	VisualMode			; Go back to menu
+	bra.s	VisualMode					; Go back to menu
 
 ; ------------------------------------------------------------------------------
 ; Play good ending FMV
 ; ------------------------------------------------------------------------------
 
-VisualMode_GoodEnd:
-	move.b	#$7F,ending_id			; Set ending ID to good ending
-	move.w	#SCMD_GOODEND,d0		; Run good ending file
-	bsr.w	RunMMD
-	tst.b	mmd_return_code			; Should we play it again?
-	bmi.s	VisualMode_GoodEnd		; If so, loop
+VisualModeGoodEnding:
+	move.b	#$7F,ending_id					; Set ending ID to good ending
 	
-	move.w	#SCMD_THANKYOU,d0		; Run "Thank You" file
-	bsr.w	RunMMD
+	move.w	#SCMD_GOOD_END,d0				; Run good ending
+	bsr.w	RunMmd
+	
+	tst.b	mmd_return_code					; Should we play it again?
+	bmi.s	VisualModeGoodEnding				; If so, loop
+	
+	move.w	#SCMD_THANKS,d0					; Run "Thank You" screen
+	bsr.w	RunMmd
 
-	bra.s	VisualMode			; Go back to menu
+	bra.s	VisualMode					; Go back to menu
 
 ; ------------------------------------------------------------------------------
 ; Play bad ending FMV
 ; ------------------------------------------------------------------------------
 
-VisualMode_BadEnd:
-	move.b	#0,ending_id			; Set ending ID to bad ending
-	move.w	#SCMD_BADEND,d0			; Run bad ending file
-	bsr.w	RunMMD
-	tst.b	mmd_return_code			; Should we play it again?
-	bmi.s	VisualMode_BadEnd		; If so, loop
+VisualModeBadEnding:
+	move.b	#0,ending_id					; Set ending ID to bad ending
+	
+	move.w	#SCMD_BAD_END,d0				; Run bad ending
+	bsr.w	RunMmd
+	
+	tst.b	mmd_return_code					; Should we play it again?
+	bmi.s	VisualModeBadEnding				; If so, loop
 
-	bra.s	VisualMode			; Go back to menu
+	bra.s	VisualMode					; Go back to menu
 
 ; ------------------------------------------------------------------------------
 ; D.A. Garden
 ; ------------------------------------------------------------------------------
 
-DAGarden:
-	move.w	#SCMD_DAGARDEN,d0		; Run D.A. Garden file
-	bra.w	RunMMD
+DaGarden:
+	move.w	#SCMD_DA_GARDEN,d0				; Run D.A. Garden
+	bra.w	RunMmd
 
 ; ------------------------------------------------------------------------------
 ; Time Attack
 ; ------------------------------------------------------------------------------
 
 TimeAttack:
-	moveq	#SCMD_TIMEATK,d0		; Run time attack menu file
-	bsr.w	RunMMD
-	move.w	d0,time_attack_stage		; Set level
-	beq.w	.End				; If we are exiting, branch
+	moveq	#SCMD_TIME_ATTACK,d0				; Run time attack menu file
+	bsr.w	RunMmd
+	
+	move.w	d0,time_attack_stage				; Set stage
+	beq.w	.End						; If we are exiting, branch
 
-	move.b	.Selections(pc,d0.w),d0		; Get stage selection ID
-	bmi.s	TimeAttack_SS			; If we are entering a special stage, branch
+	move.b	.Selections(pc,d0.w),d0				; Get stage selection ID
+	bmi.s	TimeAttackSpecialStage				; If we are entering a special stage, branch
 
-	mulu.w	#6,d0				; Get selected stage data
-	lea	StageSels(pc),a6
-	move.w	2(a6,d0.w),zone_act		; Set level
-	move.b	4(a6,d0.w),time_zone		; Time zone
-	move.b	5(a6,d0.w),good_future		; Good future flag
-	move.w	(a6,d0.w),d0			; File load Sub CPU command
+	mulu.w	#6,d0						; Get selected stage data
+	lea	StageSelections(pc),a6
+	move.w	2(a6,d0.w),zone_act				; Set stage
+	move.b	4(a6,d0.w),time_zone				; Time zone
+	move.b	5(a6,d0.w),good_future				; Good future flag
+	move.w	(a6,d0.w),d0					; File load command
 	
-	move.b	#1,time_attack_mode		; Set time attack mode flag
-	move.b	#0,projector_destroyed		; Reset projector destroyed flag
+	move.b	#1,time_attack_mode				; Set time attack mode flag
+	move.b	#0,projector_destroyed				; Reset projector destroyed flag
 	
-	bsr.w	RunMMD				; Run level file
+	bsr.w	RunMmd						; Run stage file
 	
-	move.b	#0,checkpoint			; Reset checkpoint
-	move.l	time,time_attack_time		; Save time attack time
+	move.b	#0,checkpoint					; Reset checkpoint
+	move.l	time,time_attack_time				; Save time attack time
 	
-	bra.s	TimeAttack			; Loop back to menu
+	bra.s	TimeAttack					; Loop back to menu
 
 .End:
 	rts
@@ -1244,72 +1172,73 @@ TimeAttack:
 ; ------------------------------------------------------------------------------
 
 .Selections:
-	dc.b	0				; Invalid
+	dc.b	SELECT_ROUND_11A
 
-	dc.b	0				; Palmtree Panic Act 1
-	dc.b	4				; Palmtree Panic Act 2
-	dc.b	$16				; Palmtree Panic Act 3
+	dc.b	SELECT_ROUND_11A
+	dc.b	SELECT_ROUND_12A
+	dc.b	SELECT_ROUND_13D
 	
-	dc.b	$B				; Collision Chaos Act 1
-	dc.b	$F				; Collision Chaos Act 2
-	dc.b	$14				; Collision Chaos Act 3
+	dc.b	SELECT_ROUND_31A
+	dc.b	SELECT_ROUND_32A
+	dc.b	SELECT_ROUND_33D
 	
-	dc.b	$17				; Tidal Tempest Act 1
-	dc.b	$1B				; Tidal Tempest Act 2
-	dc.b	$20				; Tidal Tempest Act 3
+	dc.b	SELECT_ROUND_41A
+	dc.b	SELECT_ROUND_42A
+	dc.b	SELECT_ROUND_43D
 	
-	dc.b	$21				; Quartz Quadrant Act 1
-	dc.b	$25				; Quartz Quadrant Act 2
-	dc.b	$2A				; Quartz Quadrant Act 3
+	dc.b	SELECT_ROUND_51A
+	dc.b	SELECT_ROUND_52A
+	dc.b	SELECT_ROUND_53D
 	
-	dc.b	$2B				; Wacky Workbench Act 1
-	dc.b	$2F				; Wacky Workbench Act 2
-	dc.b	$34				; Wacky Workbench Act 3
+	dc.b	SELECT_ROUND_61A
+	dc.b	SELECT_ROUND_62A
+	dc.b	SELECT_ROUND_63D
 	
-	dc.b	$35				; Stardust Speedway Act 1
-	dc.b	$39				; Stardust Speedway Act 2
-	dc.b	$3E				; Stardust Speedway Act 3
+	dc.b	SELECT_ROUND_71A
+	dc.b	SELECT_ROUND_72A
+	dc.b	SELECT_ROUND_73D
 	
-	dc.b	$3F				; Metallic Madness Act 1
-	dc.b	$43				; Metallic Madness Act 2
-	dc.b	$48				; Metallic Madness Act 3
+	dc.b	SELECT_ROUND_81A
+	dc.b	SELECT_ROUND_82A
+	dc.b	SELECT_ROUND_83D
 
-	dc.b	-1				; Special Stage 1
-	dc.b	-2				; Special Stage 2
-	dc.b	-3				; Special Stage 3
-	dc.b	-4				; Special Stage 4
-	dc.b	-5				; Special Stage 5
-	dc.b	-6				; Special Stage 6
-	dc.b	-7				; Special Stage 7
+	dc.b	-1
+	dc.b	-2
+	dc.b	-3
+	dc.b	-4
+	dc.b	-5
+	dc.b	-6
+	dc.b	-7
 	even
 
 ; ------------------------------------------------------------------------------
 
-TimeAttack_SS:
-	neg.b	d0				; Set special stage ID
+TimeAttackSpecialStage:
+	neg.b	d0						; Set special stage ID
 	ext.w	d0
 	subq.w	#1,d0
 	move.b	d0,special_stage_id_cmd
-	move.b	#0,time_stones_cmd		; Reset time stones retrieved for this stage
-	bset	#1,special_stage_flags_cmd		; Time attack mode
-
-	moveq	#SCMD_SPECSTAGE,d0		; Run special stage
-	bsr.w	RunMMD
 	
-	bra.w	TimeAttack			; Loop back to menu
+	move.b	#0,time_stones_cmd				; Reset time stones retrieved for this stage
+	bset	#1,special_stage_flags				; Time attack mode
+
+	moveq	#SCMD_SPECIAL_STAGE,d0				; Run special stage
+	bsr.w	RunMmd
+	
+	bra.w	TimeAttack					; Loop back to menu
 
 ; ------------------------------------------------------------------------------
 ; Run MMD file
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
-;	d0.w - File load Sub CPU command ID
+;	d0.w - File load command ID
 ; ------------------------------------------------------------------------------
 
-RunMMD:
-	move.l	a0,-(sp)			; Save a0
-	move.w	d0,GACOMCMD0			; Set Sub CPU command ID
+RunMmd:
+	move.l	a0,-(sp)					; Save registers
+	move.w	d0,MCD_MAIN_COMM_0				; Set command ID
 
-	lea	work_ram_file,a1		; Clear work RAM file buffer
+	lea	work_ram_file,a1				; Clear work RAM file buffer
 	moveq	#0,d0
 	move.w	#WORK_RAM_FILE_SIZE/16-1,d7
 
@@ -1319,99 +1248,99 @@ RunMMD:
 	endr
 	dbf	d7,.ClearFileBuffer
 
-	bsr.w	WaitWordRAMAccess		; Wait for Word RAM access
+	bsr.w	WaitWordRamAccess				; Wait for Word RAM access
 
-	move.l	WORDRAM2M+mmdEntry,d0		; Get entry address
-	beq.w	.End				; If it's not set, exit
+	move.l	WORD_RAM_2M+mmd.entry,d0			; Get entry address
+	beq.w	.End						; If it's not set, exit
 	movea.l	d0,a0
 
-	move.l	WORDRAM2M+mmdOrigin,d0		; Get origin address
-	beq.s	.GetHInt			; If it's not set, branch
+	move.l	WORD_RAM_2M+mmd.origin,d0			; Get origin address
+	beq.s	.GetHBlank					; If it's not set, branch
 	
-	movea.l	d0,a2				; Copy file to origin address
-	lea	WORDRAM2M+mmdFile,a1
-	move.w	WORDRAM2M+mmdSize,d7
+	movea.l	d0,a2						; Copy file to origin address
+	lea	WORD_RAM_2M+mmd.file,a1
+	move.w	WORD_RAM_2M+mmd.size,d7
 
 .CopyFile:
 	move.l	(a1)+,(a2)+
 	dbf	d7,.CopyFile
 
-.GetHInt:
-	move	sr,-(sp)			; Save status register
+.GetHBlank:
+	move	sr,-(sp)					; Save status register
 
-	move.l	WORDRAM2M+mmdHInt,d0		; Get H-INT address
-	beq.s	.GetVInt			; If it's not set, branch
-	move.l	d0,_LEVEL4+2.w			; Set H-INT address
+	move.l	WORD_RAM_2M+mmd.hblank,d0			; Get H-BLANK interrupt address
+	beq.s	.GetVBlank					; If it's not set, branch
+	move.l	d0,_LEVEL4+2					; Set H-BLANK interrupt address
 
-.GetVInt:
-	move.l	WORDRAM2M+mmdVInt,d0		; Get V-INT address
-	beq.s	.CheckFlags			; If it's not set, branch
-	move.l	d0,_LEVEL6+2.w			; Set V-INT address
+.GetVBlank:
+	move.l	WORD_RAM_2M+mmd.vblank,d0			; Get V-BLANK interrupt address
+	beq.s	.CheckFlags					; If it's not set, branch
+	move.l	d0,_LEVEL6+2					; Set V-BLANK interrupt address
 
 .CheckFlags:
-	btst	#MMDSUB,WORDRAM2M+mmdFlags	; Should the Sub CPU have Word RAM access?
-	beq.s	.NoSubWordRAM			; If not, branch
-	bsr.w	GiveWordRAMAccess		; Give Sub CPU Word RAM access
+	btst	#MMD_SUB_BIT,WORD_RAM_2M+mmd.flags		; Should the Sub CPU have Word RAM access?
+	beq.s	.NoSubWordRam					; If not, branch
+	bsr.w	GiveWordRamAccess				; Give Sub CPU Word RAM access
 
-.NoSubWordRAM:
-	move	(sp)+,sr			; Restore status register
+.NoSubWordRam:
+	move	(sp)+,sr					; Restore status register
 
-.WaitSubCPU:
-	move.w	GACOMSTAT0,d0			; Has the Sub CPU received the command?
-	beq.s	.WaitSubCPU			; If not, wait
-	cmp.w	GACOMSTAT0,d0
-	bne.s	.WaitSubCPU			; If not, wait
+.WaitSubCpu:
+	move.w	MCD_SUB_COMM_0,d0				; Has the Sub CPU received the command?
+	beq.s	.WaitSubCpu					; If not, wait
+	cmp.w	MCD_SUB_COMM_0,d0
+	bne.s	.WaitSubCpu					; If not, wait
 
-	move.w	#0,GACOMCMD0			; Mark as ready to send commands again
+	move.w	#0,MCD_MAIN_COMM_0				; Mark as ready to send commands again
 
-.WaitSubCPUDone:
-	move.w	GACOMSTAT0,d0			; Is the Sub CPU done processing the command?
-	bne.s	.WaitSubCPUDone			; If not, wait
-	move.w	GACOMSTAT0,d0
-	bne.s	.WaitSubCPUDone			; If not, wait
+.WaitSubCpuDone:
+	move.w	MCD_SUB_COMM_0,d0				; Is the Sub CPU done processing the command?
+	bne.s	.WaitSubCpuDone					; If not, wait
+	move.w	MCD_SUB_COMM_0,d0
+	bne.s	.WaitSubCpuDone					; If not, wait
 
-	jsr	(a0)				; Run file
-	move.b	d0,mmd_return_code		; Set return code
+	jsr	(a0)						; Run file
+	move.b	d0,mmd_return_code				; Set return code
 
-	bsr.w	StopZ80				; Stop the Z80
-	move.b	#FMC_STOP,FMDrvQueue2		; Stop FM sound
-	bsr.w	StartZ80			; Start the Z80
+	bsr.w	StopZ80						; Stop the Z80
+	move.b	#FMC_STOP,FMDrvQueue2				; Stop FM sound
+	bsr.w	StartZ80					; Start the Z80
 
-	move.b	#0,ipx_vsync			; Clear VSync flag
-	move.l	#BlankInt,_LEVEL4+2.w		; Reset H-INT address
-	move.l	#VInterrupt,_LEVEL6+2.w		; Reset V-INT address
-	move.w	#$8134,ipx_vdp_reg_81		; Reset VDP register 1 cache
+	move.b	#0,ipx_vsync					; Clear VSync flag
+	move.l	#HBlankIrq,_LEVEL4+2				; Reset H-BLANK interrupt address
+	move.l	#VBlankIrq,_LEVEL6+2				; Reset V-BLANK interrupt address
+	move.w	#$8134,ipx_vdp_reg_81				; Reset VDP register 1 cache
 	
-	bset	#0,screen_disabled		; Set screen disable flag
-	bsr.w	VSync				; VSync
+	bset	#0,screen_disabled				; Set screen disable flag
+	bsr.w	VSync						; VSync
 	
-	bsr.w	GiveWordRAMAccess		; Give Sub CPU Word RAM access
+	bsr.w	GiveWordRamAccess				; Give Sub CPU Word RAM access
 
 .End:
-	movea.l	(sp)+,a0			; Restore a0
+	movea.l	(sp)+,a0					; Restore a0
 	rts
 
 ; ------------------------------------------------------------------------------
 
 screen_disabled:
-	dc.b	0				; Screen disable flag
+	dc.b	0						; Screen disable flag
 mmd_return_code:
-	dc.b	0				; MMD return code
+	dc.b	0						; MMD return code
 
 ; ------------------------------------------------------------------------------
 ; V-BLANK interrupt handler
 ; ------------------------------------------------------------------------------
 
-VInterrupt:
-	bset	#0,GAIRQ2			; Trigger IRQ2 on Sub CPU
+VBlankIrq:
+	bset	#MCDR_IFL2_BIT,MCD_IRQ2				; Trigger IRQ2 on Sub CPU
 	
-	bclr	#0,ipx_vsync			; Clear VSync flag
-	bclr	#0,screen_disabled		; Clear screen disable flag
-	beq.s	BlankInt			; If it wasn't set branch
+	bclr	#0,ipx_vsync					; Clear VSync flag
+	bclr	#0,screen_disabled				; Clear screen disable flag
+	beq.s	HBlankIrq					; If it wasn't set branch
 	
-	move.w	#$8134,VDPCTRL			; If it was set, disable the screen
+	move.w	#$8134,VDP_CTRL					; If it was set, disable the screen
 
-BlankInt:
+HBlankIrq:
 	rte
 
 ; ------------------------------------------------------------------------------
@@ -1419,61 +1348,61 @@ BlankInt:
 ; ------------------------------------------------------------------------------
 
 ReadSaveData:
-	bsr.w	GetBuRAMData			; Get Backup RAM data
+	bsr.w	GetBuramData					; Get Backup RAM data
 
-	move.w	WORDRAM2M+svZone,saved_stage	; Read save data
-	move.b	WORDRAM2M+svGoodFutures,good_future_zones
-	move.b	WORDRAM2M+svTitleFlags,title_flags
-	move.b	WORDRAM2M+svTmAtkUnlock,time_attack_unlock
-	move.b	WORDRAM2M+svUnknown,unknown_buram_var
-	move.b	WORDRAM2M+svSpecStage,current_special_stage
-	move.b	WORDRAM2M+svTimeStones,time_stones
+	move.w	buram_zone,saved_stage				; Read save data
+	move.b	buram_good_futures,good_future_zones
+	move.b	buram_title_flags,title_flags
+	move.b	buram_attack_unlock,time_attack_unlock
+	move.b	buram_unknown,unknown_buram_var
+	move.b	buram_special_stage,current_special_stage
+	move.b	buram_time_stones,time_stones
 
-	bsr.w	GiveWordRAMAccess		; Give Sub CPU Word RAM access
+	bsr.w	GiveWordRamAccess				; Give Sub CPU Word RAM access
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Get Backup RAM data
 ; ------------------------------------------------------------------------------
 
-GetBuRAMData:
-	bsr.w	GiveWordRAMAccess		; Give Sub CPU Word RAM access
+GetBuramData:
+	bsr.w	GiveWordRamAccess				; Give Sub CPU Word RAM access
 	
-	move.w	#SCMD_RDTEMPSAVE,d0		; Read temporary save data
-	btst	#0,save_disabled			; Is saving to Backup RAM disabled?
-	bne.s	.Read				; If so, branch
-	move.w	#SCMD_READSAVE,d0		; Read Backup RAM save data
+	move.w	#SCMD_TEMP_READ,d0				; Read temporary save data
+	btst	#0,save_disabled				; Is saving to Backup RAM disabled?
+	bne.s	.Read						; If so, branch
+	move.w	#SCMD_BURAM_READ,d0				; Read Backup RAM save data
 	
 .Read:
-	bsr.w	SubCPUCmd			; Run command
-	bra.w	WaitWordRAMAccess		; Wait for Word RAM access
+	bsr.w	SubCpuCommand					; Run command
+	bra.w	WaitWordRamAccess				; Wait for Word RAM access
 
 ; ------------------------------------------------------------------------------
 ; Write save data
 ; ------------------------------------------------------------------------------
 
 WriteSaveData:
-	bsr.s	GetBuRAMData			; Get Backup RAM data
+	bsr.s	GetBuramData					; Get Backup RAM data
 
-	move.w	saved_stage,WORDRAM2M+svZone	; Write save data
-	move.b	good_future_zones,WORDRAM2M+svGoodFutures
-	move.b	title_flags,WORDRAM2M+svTitleFlags
-	move.b	time_attack_unlock,WORDRAM2M+svTmAtkUnlock
-	move.b	unknown_buram_var,WORDRAM2M+svUnknown
-	move.b	current_special_stage,WORDRAM2M+svSpecStage
-	move.b	time_stones,WORDRAM2M+svTimeStones
+	move.w	saved_stage,buram_zone				; Write save data
+	move.b	good_future_zones,buram_good_futures
+	move.b	title_flags,buram_title_flags
+	move.b	time_attack_unlock,buram_attack_unlock
+	move.b	unknown_buram_var,buram_unknown
+	move.b	current_special_stage,buram_special_stage
+	move.b	time_stones,buram_time_stones
 
-	bsr.w	GiveWordRAMAccess		; Give Sub CPU Word RAM access
+	bsr.w	GiveWordRamAccess				; Give Sub CPU Word RAM access
 
-	move.w	#SCMD_WRTEMPSAVE,d0		; Write temporary save data
-	btst	#0,save_disabled			; Is saving to Backup RAM disabled?
-	bne.s	.Read				; If so, branch
-	move.w	#SCMD_WRITESAVE,d0		; Write Backup RAM save data
+	move.w	#SCMD_TEMP_WRITE,d0				; Write temporary save data
+	btst	#0,save_disabled				; Is saving to Backup RAM disabled?
+	bne.s	.Read						; If so, branch
+	move.w	#SCMD_BURAM_WRITE,d0				; Write Backup RAM save data
 	
 .Read:
-	bsr.w	SubCPUCmd			; Run command
-	bsr.w	WaitWordRAMAccess		; Wait for Word RAM access
-	bra.w	GiveWordRAMAccess		; Give Sub CPU Word RAM access
+	bsr.w	SubCpuCommand					; Run command
+	bsr.w	WaitWordRamAccess				; Wait for Word RAM access
+	bra.w	GiveWordRamAccess				; Give Sub CPU Word RAM access
 	
 ; ------------------------------------------------------------------------------
 ; Send the Sub CPU a command
@@ -1482,41 +1411,41 @@ WriteSaveData:
 ;	d0.w - Command ID
 ; ------------------------------------------------------------------------------
 
-SubCPUCmd:
-	move.w	d0,GACOMCMD0			; Set command ID
+SubCpuCommand:
+	move.w	d0,MCD_MAIN_COMM_0				; Set command ID
 
-.WaitSubCPU:
-	move.w	GACOMSTAT0,d0			; Has the Sub CPU received the command?
-	beq.s	.WaitSubCPU			; If not, wait
-	cmp.w	GACOMSTAT0,d0
-	bne.s	.WaitSubCPU			; If not, wait
+.WaitSubCpu:
+	move.w	MCD_SUB_COMM_0,d0				; Has the Sub CPU received the command?
+	beq.s	.WaitSubCpu					; If not, wait
+	cmp.w	MCD_SUB_COMM_0,d0
+	bne.s	.WaitSubCpu					; If not, wait
 
-	move.w	#0,GACOMCMD0			; Mark as ready to send commands again
+	move.w	#0,MCD_MAIN_COMM_0				; Mark as ready to send commands again
 
-.WaitSubCPUDone:
-	move.w	GACOMSTAT0,d0			; Is the Sub CPU done processing the command?
-	bne.s	.WaitSubCPUDone			; If not, wait
-	move.w	GACOMSTAT0,d0
-	bne.s	.WaitSubCPUDone			; If not, wait
+.WaitSubCpuDone:
+	move.w	MCD_SUB_COMM_0,d0				; Is the Sub CPU done processing the command?
+	bne.s	.WaitSubCpuDone					; If not, wait
+	move.w	MCD_SUB_COMM_0,d0
+	bne.s	.WaitSubCpuDone					; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Wait for Word RAM access
 ; ------------------------------------------------------------------------------
 
-WaitWordRAMAccess:
-	btst	#0,GAMEMMODE			; Do we have Word RAM access?
-	beq.s	WaitWordRAMAccess		; If not, wait
+WaitWordRamAccess:
+	btst	#MCDR_RET_BIT,MCD_MEM_MODE			; Do we have Word RAM access?
+	beq.s	WaitWordRamAccess				; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Give Sub CPU Word RAM access
 ; ------------------------------------------------------------------------------
 
-GiveWordRAMAccess:
-	bset	#1,GAMEMMODE			; Give Sub CPU Word RAM access
-	btst	#1,GAMEMMODE			; Has it been given?
-	beq.s	GiveWordRAMAccess		; If not, wait
+GiveWordRamAccess:
+	bset	#MCDR_DMNA_BIT,MCD_MEM_MODE			; Give Sub CPU Word RAM access
+	btst	#MCDR_DMNA_BIT,MCD_MEM_MODE			; Has it been given?
+	beq.s	GiveWordRamAccess				; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -1524,9 +1453,9 @@ GiveWordRAMAccess:
 ; ------------------------------------------------------------------------------
 
 StopZ80:
-	move	sr,savedSR			; Save status register
-	move	#$2700,sr			; Disable interrupts
-	Z80STOP					; Stop the Z80
+	move	sr,saved_sr					; Save status register
+	move	#$2700,sr					; Disable interrupts
+	getZ80Bus						; Get Z80 bus access
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -1534,8 +1463,8 @@ StopZ80:
 ; ------------------------------------------------------------------------------
 
 StartZ80:
-	Z80START				; Start the Z80
-	move	savedSR,sr			; Restore status register
+	releaseZ80Bus						; Release Z80 bus
+	move	saved_sr,sr					; Restore status register
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -1543,12 +1472,12 @@ StartZ80:
 ; ------------------------------------------------------------------------------
 
 VSync:
-	bset	#0,ipx_vsync			; Set VSync flag
-	move	#$2500,sr			; Enable V-INT
+	bset	#0,ipx_vsync					; Set VSync flag
+	move	#$2500,sr					; Enable V-BLANK interrupt
 
 .Wait:
-	btst	#0,ipx_vsync			; Has the V-INT handler run?
-	bne.s	.Wait				; If not, wait
+	btst	#0,ipx_vsync					; Has the V-BLANK handler run?
+	bne.s	.Wait						; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -1558,34 +1487,34 @@ VSync:
 ;	d0.w - Command ID
 ; ------------------------------------------------------------------------------
 
-SubCPUCmdCopy:
-	move.w	d0,GACOMCMD0			; Send the command
+SubCpuCommandCopy:
+	move.w	d0,MCD_MAIN_COMM_0				; Send the command
 
-.WaitSubCPU:
-	move.w	GACOMSTAT0,d0			; Has the Sub CPU received the command?
-	beq.s	.WaitSubCPU			; If not, wait
-	cmp.w	GACOMSTAT0,d0
-	bne.s	.WaitSubCPU			; If not, wait
+.WaitSubCpu:
+	move.w	MCD_SUB_COMM_0,d0				; Has the Sub CPU received the command?
+	beq.s	.WaitSubCpu					; If not, wait
+	cmp.w	MCD_SUB_COMM_0,d0
+	bne.s	.WaitSubCpu					; If not, wait
 
-	move.w	#0,GACOMCMD0			; Mark as ready to send commands again
+	move.w	#0,MCD_MAIN_COMM_0				; Mark as ready to send commands again
 
-.WaitSubCPUDone:
-	move.w	GACOMSTAT0,d0			; Is the Sub CPU done processing the command?
-	bne.s	.WaitSubCPUDone			; If not, wait
-	move.w	GACOMSTAT0,d0
-	bne.s	.WaitSubCPUDone			; If not, wait
+.WaitSubCpuDone:
+	move.w	MCD_SUB_COMM_0,d0				; Is the Sub CPU done processing the command?
+	bne.s	.WaitSubCpuDone					; If not, wait
+	move.w	MCD_SUB_COMM_0,d0
+	bne.s	.WaitSubCpuDone					; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Saved status register
 ; ------------------------------------------------------------------------------
 
-savedSR:
+saved_sr:
 	dc.w	0
 
 ; ------------------------------------------------------------------------------
 
-	jmp	0.w				; Unreferenced
+	jmp	0						; Unreferenced
 	ALIGN	global_variables
 
 ; ------------------------------------------------------------------------------

@@ -108,20 +108,20 @@ Main:
 ; Variables
 ; ------------------------------------------------------------------------------
 
-	ALIGN	SpVariables
+	align SpVariables
 
 ; ------------------------------------------------------------------------------
 ; Temporary save data buffer
 ; ------------------------------------------------------------------------------
 
-	ALIGN	SaveDataTemp
+	align SaveDataTemp
 	include	"Backup RAM/Initial Data.asm"
 
 ; ------------------------------------------------------------------------------
 ; IRQ2
 ; ------------------------------------------------------------------------------
 
-	ALIGN	MegaDriveIrq
+	align MegaDriveIrq
 	movem.l	d0-a6,-(sp)					; Save registers
 	move.w	#FILE_OPERATION,d0				; Perform file engine operation
 	jsr	FileFunction.l
@@ -136,7 +136,7 @@ Main:
 ;	a1.l - File read destination buffer
 ; ------------------------------------------------------------------------------
 
-	ALIGN	LoadFile
+	align LoadFile
 	move.w	#FILE_LOAD_FILE,d0				; Start file loading
 	jsr	FileFunction.l
 
@@ -165,7 +165,7 @@ Main:
 ;	a0.l - Pointer to file name
 ; ------------------------------------------------------------------------------
 
-	ALIGN	GetFileName
+	align GetFileName
 	mulu.w	#FILE_NAME_SIZE+1,d0				; Get file name pointer
 	lea	SpxFileNameTable,a0
 	adda.w	d0,a0
@@ -178,7 +178,7 @@ Main:
 ;	d0.w - File engine function ID
 ; ------------------------------------------------------------------------------
 
-	ALIGN	FileFunction
+	align FileFunction
 	movem.l	a0-a6,-(sp)					; Save registers
 	lea	FileVariables,a5				; Perform function
 	add.w	d0,d0

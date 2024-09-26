@@ -40,7 +40,7 @@ mmd.struct_size		rs.b 0					; Size of structure
 ;	vblank - V-BLANK interrupt address
 ; ------------------------------------------------------------------------------
 
-MMD macro flags, origin, size, entry, hblank, vblank
+mmd macro flags, origin, size, entry, hblank, vblank
 	if (\origin)=WORD_RAM_2M
 		org	WORD_RAM_2M
 	else
