@@ -16,95 +16,94 @@
 ; Variables
 ; ------------------------------------------------------------------------------
 
-	rsset	WORKRAM+$FF00A000
-VARSSTART	rs.b	0			; Start of variables
-decompBuffer	rs.b	$2D00			; Decompression buffer
-vsyncFlag	rs.b	1			; VSync flag
-		RSEVEN
-vintRoutine	rs.w	1			; V-INT routine ID
-timer		rs.w	1			; Timer
-vintCounter	rs.w	1			; V-INT counter
-savedSR		rs.w	1			; Saved status register
-lagCounter	rs.l	1			; Lag counter
-rngSeed		rs.l	1			; Random number generator seed
-		rs.b	$2EEE
-VARSLEN		EQU	__rs-VARSSTART		; Size of variables area
+	rsset WORK_RAM+$FF00A000
+VARIABLES		rs.b 0					; Start of variables
+nem_code_table		rs.b 0					; Nemesis code table
+decomp_buffer		rs.b $2D00				; Decompression buffer
+vsync_flag		rs.b 1					; VSync flag
+			rs.b 1
+vblank_routine		rs.w 1					; V-BLANK routine ID
+timer			rs.w 1					; Timer
+frame_count		rs.w 1					; Frame count
+saved_sr		rs.w 1					; Saved status register
+lag_count		rs.l 1					; Lag frame count
+rng_seed		rs.l 1					; Random number generator seed
+			rs.b $2EEE
+VARIABLES_SIZE		equ __rs-VARIABLES			; Size of variables area
 
-fmSndQueue1	EQU	$FFFFF00B		; Sound queue 1
-fmSndQueue2	EQU	$FFFFF00C		; Sound queue 2
+fm_queue_1		equ WORK_RAM+$FF00F00B			; Sound queue 1
+fm_queue_2		equ WORK_RAM+$FF00F00C			; Sound queue 2
 
-ctrlData	EQU	GACOMCMDE		; Controller data
-ctrlHold	EQU	ctrlData		; Controller held buttons data
-ctrlTap		EQU	ctrlData+1		; Controller tapped buttons data
+ctrl_data		equ MCD_MAIN_COMM_14			; Controller data
+ctrl_hold		equ ctrl_data				; Controller held buttons data
+ctrl_tap		equ ctrl_data+1				; Controller tapped buttons data
 
 ; ------------------------------------------------------------------------------
 ; MMD header
 ; ------------------------------------------------------------------------------
 
-	MMD	0, &
-		work_ram_file, $3000, &
-		Start, 0, VInterrupt
+	mmd 0, work_ram_file, $3000, Start, 0, VBlankIrq
 
 ; ------------------------------------------------------------------------------
 ; Program start
 ; ------------------------------------------------------------------------------
 
 Start:
-	move.l	#VInterrupt,_LEVEL6+2.w		; Set V-INT address
+	move.l	#VBlankIrq,_LEVEL6+2				; Set V-BLANK address
 
-	moveq	#0,d0				; Clear communication commands
-	move.l	d0,GACOMCMD0
-	move.l	d0,GACOMCMD4
-	move.l	d0,GACOMCMD8
-	move.l	d0,GACOMCMDC
+	moveq	#0,d0						; Clear communication registers
+	move.l	d0,MCD_MAIN_COMM_0
+	move.l	d0,MCD_MAIN_COMM_4
+	move.l	d0,MCD_MAIN_COMM_8
+	move.l	d0,MCD_MAIN_COMM_12
 
-	bsr.w	WaitSubCPUStart			; Wait for the Sub CPU program to start
-	bsr.w	GiveWordRAMAccess		; Give Word RAM access
-	bsr.w	WaitSubCPUInit			; Wait for the Sub CPU program to finish initializing
+	bsr.w	WaitSubCpuStart					; Wait for the Sub CPU program to start
+	bsr.w	GiveWordRamAccess				; Give Word RAM access
+	bsr.w	WaitSubCpuInit					; Wait for the Sub CPU program to finish initializing
 	
-	lea	VARSSTART.w,a0			; Clear variables
-	move.w	#VARSLEN/4-1,d7
+	lea	VARIABLES,a0					; Clear variables
+	move.w	#VARIABLES_SIZE/4-1,d7
 
 .ClearVars:
 	move.l	#0,(a0)+
 	dbf	d7,.ClearVars
 
-	move.w	#0,vintRoutine			; Reset V-INT routine ID
+	move.w	#0,vblank_routine				; Reset V-BLANK routine ID
 	
-	bsr.w	InitBuRAM			; Initialize Backup RAM
-	cmpi.w	#-1,d0				; Is internal Backup RAM unformatted?
-	beq.w	InternalUnformatted		; If so, branch
-	cmpi.w	#-2,d0				; Is the RAM cartridge unformatted?
-	beq.w	CartUnformatted			; If so, branch
+	bsr.w	InitBuram					; Initialize Backup RAM
+	cmpi.w	#-1,d0						; Is internal Backup RAM unformatted?
+	beq.w	Unformatted					; If so, branch
+	cmpi.w	#-2,d0						; Is the Backup RAM cartridge unformatted?
+	beq.w	CartUnformatted					; If so, branch
 
-	bsr.w	InitBuRAMParams			; Set up Backup RAM parameters
-	bsr.w	SearchBuRAM			; Check if there's already save data stored
-	bne.s	.NotFound			; If not, branch
+	bsr.w	InitBuramParams					; Set up Backup RAM parameters
+	bsr.w	SearchBuram					; Check if there's already save data stored
+	bne.s	.NotFound					; If not, branch
 
-	bsr.w	ReadBuRAM			; Read save data from Backup RAM
-	bne.w	BuRAMCorrupted			; If it failed to read, branch
+	bsr.w	ReadBuram					; Read save data from Backup RAM
+	bne.w	BuramCorrupted					; If it failed to read, branch
 	
-	move.b	#0,save_disabled		; Enable Backup RAM saving
-	bsr.w	JmpTo_ReadSaveData		; Read save data
-	bra.w	.Success			; Exit
+	move.b	#0,save_disabled				; Enable Backup RAM saving
+	bsr.w	CallReadSaveData				; Read save data
+	bra.w	.Success					; Exit
 
 .NotFound:
-	bsr.w	InitSaveData			; Initialize save data
-	bsr.w	WriteBuRAM			; Write it to Backup RAM
-	beq.s	.WriteSave			; If it was successful, branch
+	bsr.w	InitSaveData					; Initialize save data
+	bsr.w	WriteBuram					; Write it to Backup RAM
+	beq.s	.WriteSave					; If it was successful, branch
 	
-	move.b	#1,save_disabled		; Disable Backup RAM saving
-	bsr.w	JmpTo_WriteSaveData		; Write temporary save data
-	bsr.w	DeleteBuRAM			; Delete save data from Backup RAM
-	bra.w	BuRAMFull			; Display Backup RAM full message
+	move.b	#1,save_disabled				; Disable Backup RAM saving
+	bsr.w	CallWriteSaveData				; Write temporary save data
+	bsr.w	DeleteBuram					; Delete save data from Backup RAM
+	bra.w	BuramFull					; Display Backup RAM full message
 
 .WriteSave:
-	move.b	#0,save_disabled		; Enable Backup RAM saving
-	bsr.w	JmpTo_WriteSaveData		; Write save data
+	move.b	#0,save_disabled				; Enable Backup RAM saving
+	bsr.w	CallWriteSaveData				; Write save data
 
 .Success:
-	bsr.w	Finish				; Finish operations
-	moveq	#0,d0				; Mark as successful
+	bsr.w	Finish						; Finish operations
+	moveq	#0,d0						; Mark as successful
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -117,44 +116,44 @@ Start:
 ; Backup RAM corrupted error
 ; ------------------------------------------------------------------------------
 
-BuRAMCorrupted:
-	moveq	#0,d0				; Show message
+BuramCorrupted:
+	moveq	#0,d0						; Show message
 	bsr.w	ShowMessage
-	bra.w	ErrorLoop			; Enter infinite loop
+	bra.w	ErrorLoop					; Enter infinite loop
 
 ; ------------------------------------------------------------------------------
 ; Unformatted internal Backup RAM error
 ; ------------------------------------------------------------------------------
 
-InternalUnformatted:
-	moveq	#1,d0				; Show message
+Unformatted:
+	moveq	#1,d0						; Show message
 	bsr.w	ShowMessage
-	bra.w	ErrorLoop			; Enter infinite loop
+	bra.w	ErrorLoop					; Enter infinite loop
 
 ; ------------------------------------------------------------------------------
 ; Unformatted RAM cartridge error
 ; ------------------------------------------------------------------------------
 
 CartUnformatted:
-	moveq	#2,d0				; Show message
+	moveq	#2,d0						; Show message
 	bsr.w	ShowMessage
-	bra.w	ErrorLoop			; Enter infinite loop
+	bra.w	ErrorLoop					; Enter infinite loop
 
 ; ------------------------------------------------------------------------------
 ; Backup RAM full warning
 ; ------------------------------------------------------------------------------
 
-BuRAMFull:
-	moveq	#3,d0				; Shoe message
+BuramFull:
+	moveq	#3,d0						; Show message
 	bsr.w	ShowMessage
 
 .WaitUser:
-	move.b	ctrlTap,d0			; Get tapped buttons
-	andi.b	#$F0,ctrlTap			; Were A, B, C, or start pressed?
-	beq.s	.WaitUser			; If not, wait
+	move.b	ctrl_tap,d0					; Get tapped buttons
+	andi.b	#$F0,ctrl_tap					; Were A, B, C, or start pressed?
+	beq.s	.WaitUser					; If not, wait
 
-	bsr.w	Finish				; Finish operations
-	moveq	#1,d0				; Mark as failed
+	bsr.w	Finish						; Finish operations
+	moveq	#1,d0						; Mark as failed
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -176,37 +175,37 @@ ErrorLoop:
 ; ------------------------------------------------------------------------------
 
 ShowMessage:
-	move.l	d0,-(sp)			; Save message ID
+	move.l	d0,-(sp)					; Save message ID
 
-	bsr.w	InitMD				; Initialize Mega Drive hardware
-	bclr	#6,ipx_vdp_reg_81+1			; Disable display
-	move.w	ipx_vdp_reg_81,VDPCTRL
+	bsr.w	InitMD						; Initialize Mega Drive hardware
+	bclr	#6,ipx_vdp_reg_81+1				; Disable display
+	move.w	ipx_vdp_reg_81,VDP_CTRL
 
-	VDPCMD	move.l,$BC00,VRAM,WRITE,VDPCTRL	; Disable sprites
-	lea	VDPDATA,a6
+	vdpCmd move.l,$BC00,VRAM,WRITE,VDP_CTRL			; Disable sprites
+	lea	VDP_DATA,a6
 	moveq	#0,d0
 	move.l	d0,(a6)
 	move.l	d0,(a6)
 
-	if REGION=USA				; Load art
+	if REGION=USA						; Load art
 		move.l	#$00010203,d0
 	else
 		move.l	#$00000102,d0
 	endif
 	jsr	LoadMessageArt
 
-	move.l	(sp)+,d0			; Restore message ID
+	move.l	(sp)+,d0					; Restore message ID
 	add.w	d0,d0
 
-	move.l	d0,-(sp)			; Load first tilemap
+	move.l	d0,-(sp)					; Draw first tilemap
 	jsr	DrawMessageTilemap
 	move.l	(sp)+,d0
 
-	addq.w	#1,d0				; Load second tilemap
+	addq.w	#1,d0						; Draw second tilemap
 	jsr	DrawMessageTilemap
 	
-	bset	#6,ipx_vdp_reg_81+1			; Enable display
-	move.w	ipx_vdp_reg_81,VDPCTRL
+	bset	#6,ipx_vdp_reg_81+1				; Enable display
+	move.w	ipx_vdp_reg_81,VDP_CTRL
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -214,20 +213,20 @@ ShowMessage:
 ; ------------------------------------------------------------------------------
 
 Finish:
-	nop
-	bset	#7,GAMAINFLAG			; Tell Sub CPU we are done
+	nop							; Tell Sub CPU we are done
+	bset	#7,MCD_MAIN_FLAG
 
-.WaitSubCPU:
-	bsr.w	GiveWordRAMAccess		; Give Sub CPU Word RAM access
-	btst	#7,GASUBFLAG			; Is the Sub CPU done?
-	beq.s	.WaitSubCPU
+.WaitSubCpu:
+	bsr.w	GiveWordRamAccess				; Give Sub CPU Word RAM access
+	btst	#7,MCD_SUB_FLAG					; Is the Sub CPU done?
+	beq.s	.WaitSubCpu
 
-	moveq	#0,d0				; Clear communication commands
-	move.l	d0,GACOMCMD0
-	move.l	d0,GACOMCMD4
-	move.l	d0,GACOMCMD8
-	move.l	d0,GACOMCMDC
-	move.b	d0,GAMAINFLAG
+	moveq	#0,d0						; Clear communication registers
+	move.l	d0,MCD_MAIN_COMM_0
+	move.l	d0,MCD_MAIN_COMM_4
+	move.l	d0,MCD_MAIN_COMM_8
+	move.l	d0,MCD_MAIN_COMM_12
+	move.b	d0,MCD_MAIN_FLAG
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -243,55 +242,55 @@ Finish:
 ;	d0.w - Command ID
 ; ------------------------------------------------------------------------------
 
-SubBuRAMCmd:
-	move.w	#1,GACOMCMD2			; Send command
+SubBuramCmd:
+	move.w	#1,MCD_MAIN_COMM_2				; Send command
 
-.WaitSubCPU:
-	tst.w	GACOMSTAT2			; Has the Sub CPU acknowledged it?
-	beq.s	.WaitSubCPU
+.WaitSubCpu:
+	tst.w	MCD_SUB_COMM_2					; Has the Sub CPU acknowledged it?
+	beq.s	.WaitSubCpu
 	
-	move.w	#0,GACOMCMD2			; Tell Sub CPU we are ready to send more commands
+	move.w	#0,MCD_MAIN_COMM_2				; Tell Sub CPU we are ready to send more commands
 
-.WaitSubCPU2:
-	tst.w	GACOMSTAT2			; Is the Sub CPU ready for more commands?
-	bne.s	.WaitSubCPU2			; If not, wait
+.WaitSubCpu2:
+	tst.w	MCD_SUB_COMM_2					; Is the Sub CPU ready for more commands?
+	bne.s	.WaitSubCpu2					; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Give Sub CPU Word RAM access
 ; ------------------------------------------------------------------------------
 
-GiveWordRAMAccess:
-	bset	#1,GAMEMMODE			; Give Sub CPU Word RAM access
-	btst	#1,GAMEMMODE			; Has it been given?
-	beq.s	GiveWordRAMAccess		; If not, wait
+GiveWordRamAccess:
+	bset	#MCDR_DMNA_BIT,MCD_MEM_MODE			; Give Sub CPU Word RAM access
+	btst	#MCDR_DMNA_BIT,MCD_MEM_MODE			; Has it been given?
+	beq.s	GiveWordRamAccess				; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Wait for Word RAM access
 ; ------------------------------------------------------------------------------
 
-WaitWordRAMAccess:
-	btst	#0,GAMEMMODE			; Do we have Word RAM access?
-	beq.s	WaitWordRAMAccess		; If not, wait
+WaitWordRamAccess:
+	btst	#MCDR_RET_BIT,MCD_MEM_MODE			; Do we have Word RAM access?
+	beq.s	WaitWordRamAccess				; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Wait for the Sub CPU program to start
 ; ------------------------------------------------------------------------------
 
-WaitSubCPUStart:
-	btst	#7,GASUBFLAG			; Has the Sub CPU program started?
-	beq.s	WaitSubCPUStart			; If not, wait
+WaitSubCpuStart:
+	btst	#7,MCD_SUB_FLAG					; Has the Sub CPU program started?
+	beq.s	WaitSubCpuStart					; If not, wait
 	rts 
 
 ; ------------------------------------------------------------------------------
 ; Wait for the Sub CPU program to finish initializing
 ; ------------------------------------------------------------------------------
 
-WaitSubCPUInit:
-	btst	#7,GASUBFLAG			; Has the Sub CPU program initialized?
-	bne.s	WaitSubCPUInit			; If not, wait
+WaitSubCpuInit:
+	btst	#7,MCD_SUB_FLAG					; Has the Sub CPU program initialized?
+	bne.s	WaitSubCpuInit					; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -299,57 +298,57 @@ WaitSubCPUInit:
 ; ------------------------------------------------------------------------------
 
 InitMD:
-	lea	.VDPRegs(pc),a0			; Set up VDP registers
+	lea	.VDPRegs(pc),a0					; Set up VDP registers
 	move.w	#$8000,d0
 	moveq	#.VDPRegsEnd-.VDPRegs-1,d7
 
 .SetVDPRegs:
 	move.b	(a0)+,d0
-	move.w	d0,VDPCTRL
+	move.w	d0,VDP_CTRL
 	addi.w	#$100,d0
 	dbf	d7,.SetVDPRegs
 
-	moveq	#$40,d0				; Set up controller ports
-	move.b	d0,IOCTRL1
-	move.b	d0,IOCTRL2
-	move.b	d0,IOCTRL3
-	move.b	#$C0,IODATA1
+	moveq	#$40,d0						; Set up controller ports
+	move.b	d0,IO_CTRL_1
+	move.b	d0,IO_CTRL_2
+	move.b	d0,IO_CTRL_3
+	move.b	#$C0,IO_DATA_1
 
-	bsr.w	StopZ80				; Stop the Z80
-	DMAFILL	0,$10000,0			; Clear VRAM
+	bsr.w	StopZ80						; Stop the Z80
+	vramFill 0,$10000,0					; Clear VRAM
 
-	VDPCMD	move.l,$C000,VRAM,WRITE,VDPCTRL	; Clear Plane A
+	vdpCmd move.l,$C000,VRAM,WRITE,VDP_CTRL			; Clear Plane A
 	move.w	#$1000/2-1,d7
 
 .ClearPlaneA:
-	move.w	#0,VDPDATA
+	move.w	#0,VDP_DATA
 	dbf	d7,.ClearPlaneA
 
-	VDPCMD	move.l,$E000,VRAM,WRITE,VDPCTRL	; Clear Plane B
+	vdpCmd move.l,$E000,VRAM,WRITE,VDP_CTRL			; Clear Plane B
 	move.w	#$1000/2-1,d7
 
 .ClearPlaneB:
-	move.w	#0,VDPDATA
+	move.w	#0,VDP_DATA
 	dbf	d7,.ClearPlaneB
 
-	VDPCMD	move.l,0,CRAM,WRITE,VDPCTRL	; Load palette
+	vdpCmd move.l,0,CRAM,WRITE,VDP_CTRL			; Load palette
 	lea	.Palette(pc),a0
 	moveq	#(.PaletteEnd-.Palette)/4-1,d7
 
 .LoadPal:
-	move.l	(a0)+,VDPDATA
+	move.l	(a0)+,VDP_DATA
 	dbf	d7,.LoadPal
 
-	VDPCMD	move.l,0,VSRAM,WRITE,VDPCTRL	; Clear VSRAM
-	moveq	#VSCROLLSZ/4-1,d0
+	vdpCmd move.l,0,VSRAM,WRITE,VDP_CTRL			; Clear VSRAM
+	moveq	#$50/4-1,d0
 
 .ClearVSRAM:
-	move.w	#0,VDPDATA
-	move.w	#0,VDPDATA
+	move.w	#0,VDP_DATA
+	move.w	#0,VDP_DATA
 	dbf	d0,.ClearVSRAM
 
-	bsr.w	StartZ80			; Start the Z80
-	move.w	#$8134,ipx_vdp_reg_81		; Reset IPX VDP register 1 cache
+	bsr.w	StartZ80					; Start the Z80
+	move.w	#$8134,ipx_vdp_reg_81				; Reset IPX VDP register 1 cache
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -360,25 +359,25 @@ InitMD:
 	even
 
 .VDPRegs:
-	dc.b	%00000100			; No H-INT
-	dc.b	%00110100			; V-INT, DMA, mode 5
-	dc.b	$C000/$400			; Plane A location
-	dc.b	0				; Window location
-	dc.b	$E000/$2000			; Plane B location
-	dc.b	$BC00/$200			; Sprite table location
-	dc.b	0				; Reserved
-	dc.b	0				; BG color line 0 color 0
-	dc.b	0				; Reserved
-	dc.b	0				; Reserved
-	dc.b	0				; H-INT counter 0
-	dc.b	%00000110			; Scroll by tile
-	dc.b	%10000001			; H40
-	dc.b	$D000/$400			; Horizontal scroll table lcation
-	dc.b	0				; Reserved
-	dc.b	2				; Auto increment by 2
-	dc.b	%00000001			; 64x32 tile plane size
-	dc.b	0				; Window horizontal position 0
-	dc.b	0				; Window vertical position 0
+	dc.b	%00000100					; No H-BLANK interrupt
+	dc.b	%00110100					; V-BLANK interrupt, DMA, mode 5
+	dc.b	$C000/$400					; Plane A location
+	dc.b	0						; Window location
+	dc.b	$E000/$2000					; Plane B location
+	dc.b	$BC00/$200					; Sprite table location
+	dc.b	0						; Reserved
+	dc.b	0						; Background color line 0 color 0
+	dc.b	0						; Reserved
+	dc.b	0						; Reserved
+	dc.b	0						; H-INT counter 0
+	dc.b	%00000110					; Scroll by tile
+	dc.b	%10000001					; H40
+	dc.b	$D000/$400					; Horizontal scroll table lcation
+	dc.b	0						; Reserved
+	dc.b	2						; Auto increment by 2
+	dc.b	%00000001					; 64x32 tile plane size
+	dc.b	0						; Window horizontal position 0
+	dc.b	0						; Window vertical position 0
 .VDPRegsEnd:
 	even
 
@@ -387,8 +386,8 @@ InitMD:
 ; ------------------------------------------------------------------------------
 
 StopZ80:
-	move	sr,savedSR.w			; Save status register
-	Z80STOP					; Stop the Z80
+	move	sr,saved_sr					; Save status register
+	getZ80Bus						; Get Z80 bus access
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -396,8 +395,8 @@ StopZ80:
 ; ------------------------------------------------------------------------------
 
 StartZ80:
-	Z80START				; Start the Z80
-	move	savedSR.w,sr			; Restore status register
+	releaseZ80Bus						; Release Z80 bus
+	move	saved_sr,sr					; Restore status register
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -405,49 +404,49 @@ StartZ80:
 ; ------------------------------------------------------------------------------
 
 ReadController:
-	lea	ctrlData,a0			; Controller data buffer
-	lea	IODATA1,a1			; Controller port 1
+	lea	ctrl_data,a0					; Controller data buffer
+	lea	IO_DATA_1,a1					; Controller port 1
 	
-	move.b	#0,(a1)				; TH = 0
-	tst.w	(a0)				; Delay
-	move.b	(a1),d0				; Read start and A buttons
+	move.b	#0,(a1)						; TH = 0
+	tst.w	(a0)						; Delay
+	move.b	(a1),d0						; Read start and A buttons
 	lsl.b	#2,d0
 	andi.b	#$C0,d0
 	
-	move.b	#$40,(a1)			; TH = 1
-	tst.w	(a0)				; Delay
-	move.b	(a1),d1				; Read B, C, and D-pad buttons
+	move.b	#$40,(a1)					; TH = 1
+	tst.w	(a0)						; Delay
+	move.b	(a1),d1						; Read B, C, and D-pad buttons
 	andi.b	#$3F,d1
 
-	or.b	d1,d0				; Combine button data
-	not.b	d0				; Flip bits
-	move.b	d0,d1				; Make copy
+	or.b	d1,d0						; Combine button data
+	not.b	d0						; Flip bits
+	move.b	d0,d1						; Make copy
 
-	move.b	(a0),d2				; Mask out tapped buttons
+	move.b	(a0),d2						; Mask out tapped buttons
 	eor.b	d2,d0
-	move.b	d1,(a0)+			; Store pressed buttons
-	and.b	d1,d0				; store tapped buttons
+	move.b	d1,(a0)+					; Store pressed buttons
+	and.b	d1,d0						; Store tapped buttons
 	move.b	d0,(a0)+
 	rts
 
 ; ------------------------------------------------------------------------------
-; Load dummy Z80 code
+; Initialize the Z80
 ; ------------------------------------------------------------------------------
 
-LoadDummyZ80:
-	Z80RESOFF				; Set Z80 reset off
-	jsr	StopZ80(pc)			; Stop the Z80
+InitZ80:
+	resetZ80Off						; Set Z80 reset off
+	jsr	StopZ80(pc)					; Stop the Z80
 
-	lea	Z80RAM,a1			; Load dummy Z80 code
-	move.b	#$F3,(a1)+			; DI
-	move.b	#$F3,(a1)+			; DI
-	move.b	#$C3,(a1)+			; JP $0000
+	lea	Z80_RAM,a1					; Load dummy Z80 code
+	move.b	#$F3,(a1)+					; DI
+	move.b	#$F3,(a1)+					; DI
+	move.b	#$C3,(a1)+					; JP $0000
 	move.b	#0,(a1)+
 	move.b	#0,(a1)+
 
-	Z80RESON				; Set Z80 reset on
-	Z80RESOFF				; Set Z80 reset off
-	jmp	StartZ80(pc)			; Start the Z80
+	resetZ80On						; Set Z80 reset on
+	resetZ80Off						; Set Z80 reset off
+	jmp	StartZ80(pc)					; Start the Z80
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -458,7 +457,7 @@ LoadDummyZ80:
 ; ------------------------------------------------------------------------------
 
 PlaySound:
-	move.b	d0,fmSndQueue1.w
+	move.b	d0,fm_queue_1					; Play sound
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -469,7 +468,7 @@ PlaySound:
 ; ------------------------------------------------------------------------------
 
 PlaySound2:
-	move.b	d0,fmSndQueue2.w
+	move.b	d0,fm_queue_2					; Play sound
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -477,23 +476,25 @@ PlaySound2:
 ; ------------------------------------------------------------------------------
 
 FlushSoundQueue:
-	jsr	StopZ80				; Stop the Z80
+	jsr	StopZ80						; Stop the Z80
 
 .CheckQueue2:
-	tst.b	fmSndQueue1.w			; Is the 1st sound queue set?
-	beq.s	.CheckQueue3			; If not, branch
-	move.b	fmSndQueue1.w,FMDrvQueue1	; Queue sound in driver
-	move.b	#0,fmSndQueue1.w		; Clear 1st sound queue
-	bra.s	.End				; Exit
+	tst.b	fm_queue_1					; Is the 1st sound queue set?
+	beq.s	.CheckQueue3					; If not, branch
+	
+	move.b	fm_queue_1,FMDrvQueue1				; Queue sound in driver
+	move.b	#0,fm_queue_1					; Clear 1st sound queue
+	bra.s	.End						; Exit
 
 .CheckQueue3:
-	tst.b	fmSndQueue2.w			; Is the 2nd sound queue set?
-	beq.s	.End				; If not, branch
-	move.b	fmSndQueue2.w,FMDrvQueue1	; Queue sound in driver
-	move.b	#0,fmSndQueue2.w		; Clear 2nd sound queue
+	tst.b	fm_queue_2					; Is the 2nd sound queue set?
+	beq.s	.End						; If not, branch
+	
+	move.b	fm_queue_2,FMDrvQueue1				; Queue sound in driver
+	move.b	#0,fm_queue_2					; Clear 2nd sound queue
 
 .End:
-	jmp	StartZ80			; Start the Z80
+	jmp	StartZ80					; Start the Z80
 
 ; ------------------------------------------------------------------------------
 ; Mass fill
@@ -577,69 +578,69 @@ Fill4:
 ;	a1.l - VDP control port
 ; ------------------------------------------------------------------------------
 
-Fill128VDP:
+Fill128Vdp:
 	move.l	d1,(a1)
-Fill124VDP:
+Fill124Vdp:
 	move.l	d1,(a1)
-Fill120VDP:
+Fill120Vdp:
 	move.l	d1,(a1)
-Fill116VDP:
+Fill116Vdp:
 	move.l	d1,(a1)
-Fill112VDP:
+Fill112Vdp:
 	move.l	d1,(a1)
-Fill108VDP:
+Fill108Vdp:
 	move.l	d1,(a1)
-Fill104VDP:
+Fill104Vdp:
 	move.l	d1,(a1)
-Fill100VDP:
+Fill100Vdp:
 	move.l	d1,(a1)
-Fill96VDP:
+Fill96Vdp:
 	move.l	d1,(a1)
-Fill92VDP:
+Fill92Vdp:
 	move.l	d1,(a1)
-Fill88VDP:
+Fill88Vdp:
 	move.l	d1,(a1)
-Fill84VDP:
+Fill84Vdp:
 	move.l	d1,(a1)
-Fill80VDP:
+Fill80Vdp:
 	move.l	d1,(a1)
-Fill76VDP:
+Fill76Vdp:
 	move.l	d1,(a1)
-Fill72VDP:
+Fill72Vdp:
 	move.l	d1,(a1)
-Fill68VDP:
+Fill68Vdp:
 	move.l	d1,(a1)
-Fill64VDP:
+Fill64Vdp:
 	move.l	d1,(a1)
-Fill60VDP:
+Fill60Vdp:
 	move.l	d1,(a1)
-Fill56VDP:
+Fill56Vdp:
 	move.l	d1,(a1)
-Fill52VDP:
+Fill52Vdp:
 	move.l	d1,(a1)
-Fill48VDP:
+Fill48Vdp:
 	move.l	d1,(a1)
-Fill44VDP:
+Fill44Vdp:
 	move.l	d1,(a1)
-Fill40VDP:
+Fill40Vdp:
 	move.l	d1,(a1)
-Fill36VDP:
+Fill36Vdp:
 	move.l	d1,(a1)
-Fill32VDP:
+Fill32Vdp:
 	move.l	d1,(a1)
-Fill28VDP:
+Fill28Vdp:
 	move.l	d1,(a1)
-Fill24VDP:
+Fill24Vdp:
 	move.l	d1,(a1)
-Fill20VDP:
+Fill20Vdp:
 	move.l	d1,(a1)
-Fill16VDP:
+Fill16Vdp:
 	move.l	d1,(a1)
-Fill12VDP:
+Fill12Vdp:
 	move.l	d1,(a1)
-Fill8VDP:
+Fill8Vdp:
 	move.l	d1,(a1)
-Fill4VDP:
+Fill4Vdp:
 	move.l	d1,(a1)
 	rts
 
@@ -725,69 +726,69 @@ Copy4:
 ;	a2.l - VDP control port
 ; ------------------------------------------------------------------------------
 
-Copy128VDP:
+Copy128Vdp:
 	move.l	(a1)+,(a2)
-Copy124VDP:
+Copy124Vdp:
 	move.l	(a1)+,(a2)
-Copy120VDP:
+Copy120Vdp:
 	move.l	(a1)+,(a2)
-Copy116VDP:
+Copy116Vdp:
 	move.l	(a1)+,(a2)
-Copy112VDP:
+Copy112Vdp:
 	move.l	(a1)+,(a2)
-Copy108VDP:
+Copy108Vdp:
 	move.l	(a1)+,(a2)
-Copy104VDP:
+Copy104Vdp:
 	move.l	(a1)+,(a2)
-Copy100VDP:
+Copy100Vdp:
 	move.l	(a1)+,(a2)
-Copy96VDP:
+Copy96Vdp:
 	move.l	(a1)+,(a2)
-Copy92VDP:
+Copy92Vdp:
 	move.l	(a1)+,(a2)
-Copy88VDP:
+Copy88Vdp:
 	move.l	(a1)+,(a2)
-Copy84VDP:
+Copy84Vdp:
 	move.l	(a1)+,(a2)
-Copy80VDP:
+Copy80Vdp:
 	move.l	(a1)+,(a2)
-Copy76VDP:
+Copy76Vdp:
 	move.l	(a1)+,(a2)
-Copy72VDP:
+Copy72Vdp:
 	move.l	(a1)+,(a2)
-Copy68VDP:
+Copy68Vdp:
 	move.l	(a1)+,(a2)
-Copy64VDP:
+Copy64Vdp:
 	move.l	(a1)+,(a2)
-Copy60VDP:
+Copy60Vdp:
 	move.l	(a1)+,(a2)
-Copy56VDP:
+Copy56Vdp:
 	move.l	(a1)+,(a2)
-Copy52VDP:
+Copy52Vdp:
 	move.l	(a1)+,(a2)
-Copy48VDP:
+Copy48Vdp:
 	move.l	(a1)+,(a2)
-Copy44VDP:
+Copy44Vdp:
 	move.l	(a1)+,(a2)
-Copy40VDP:
+Copy40Vdp:
 	move.l	(a1)+,(a2)
-Copy36VDP:
+Copy36Vdp:
 	move.l	(a1)+,(a2)
-Copy32VDP:
+Copy32Vdp:
 	move.l	(a1)+,(a2)
-Copy28VDP:
+Copy28Vdp:
 	move.l	(a1)+,(a2)
-Copy24VDP:
+Copy24Vdp:
 	move.l	(a1)+,(a2)
-Copy20VDP:
+Copy20Vdp:
 	move.l	(a1)+,(a2)
-Copy16VDP:
+Copy16Vdp:
 	move.l	(a1)+,(a2)
-Copy12VDP:
+Copy12Vdp:
 	move.l	(a1)+,(a2)
-Copy8VDP:
+Copy8Vdp:
 	move.l	(a1)+,(a2)
-Copy4VDP:
+Copy4Vdp:
 	move.l	(a1)+,(a2)
 	rts
 
@@ -796,12 +797,12 @@ Copy4VDP:
 ; ------------------------------------------------------------------------------
 
 VSync:
-	move.b	#1,vsyncFlag.w			; Set VSync flag
-	move	#$2500,sr			; Enable interrupts
+	move.b	#1,vsync_flag					; Set VSync flag
+	move	#$2500,sr					; Enable interrupts
 
 .Wait:
-	tst.b	vsyncFlag.w			; Has the V-INT handler run?
-	bne.s	.Wait				; If not, wait
+	tst.b	vsync_flag					; Has the V-BLANK handler run?
+	bne.s	.Wait						; If not, wait
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -809,7 +810,7 @@ VSync:
 ; ------------------------------------------------------------------------------
 
 SetAllButtons:
-	move.w	#$FF00,ctrlData			; Press down all buttons
+	move.w	#$FF00,ctrl_data				; Press down all buttons
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -820,13 +821,13 @@ SetAllButtons:
 ; ------------------------------------------------------------------------------
 
 Random:
-	move.l	d1,-(sp)			; Save d1
-	move.l	rngSeed.w,d1			; Get RNG seed
-	bne.s	.GetRandom			; If it's set, branch
-	move.l	#$2A6D365A,d1			; If not, initialize it
+	move.l	d1,-(sp)					; Save registers
+	move.l	rng_seed,d1					; Get RNG seed
+	bne.s	.GetRandom					; If it's set, branch
+	move.l	#$2A6D365A,d1					; If not, initialize it
 
 .GetRandom:
-	move.l	d1,d0				; Perform various operations
+	move.l	d1,d0						; Perform various operations
 	asl.l	#2,d1
 	add.l	d0,d1
 	asl.l	#3,d1
@@ -837,8 +838,8 @@ Random:
 	move.w	d0,d1
 	swap	d1
 
-	move.l	d1,rngSeed.w			; Update RNG seed
-	move.l	(sp)+,d1			; Restore d1
+	move.l	d1,rng_seed					; Update RNG seed
+	move.l	(sp)+,d1					; Restore registers
 	rts
 
 ; ------------------------------------------------------------------------------
@@ -853,249 +854,268 @@ Random:
 ; ------------------------------------------------------------------------------
 
 LoadMessageArt:
-	lea	VDPCTRL,a5			; VDP control port
-	moveq	#4-1,d2				; Number of IDs to check
+	lea	VDP_CTRL,a5					; VDP control port
+	moveq	#4-1,d2						; Number of IDs to check
 
 .QueueLoop:
-	moveq	#0,d1				; Get ID from queue
+	moveq	#0,d1						; Get ID from queue
 	move.b	d0,d1
-	beq.s	.Next				; If it's blank, branch
+	beq.s	.Next						; If it's blank, branch
 
-	lsl.w	#3,d1				; Get art metadata
+	lsl.w	#3,d1						; Get art metadata
 	lea	.MessageArt(pc),a0
 
-	move.l	-8(a0,d1.w),(a5)		; VDP command
-	movea.l	-4(a0,d1.w),a0			; Art data
-	jsr	NemDec(pc)			; Decompress and load art
+	move.l	-8(a0,d1.w),(a5)				; VDP command
+	movea.l	-4(a0,d1.w),a0					; Art data
+	jsr	DecompressNemesisVdp(pc)			; Decompress and load art
 
 .Next:
-	ror.l	#8,d0				; Shift queue
-	dbf	d2,.QueueLoop			; Loop until queue is scanned
+	ror.l	#8,d0						; Shift queue
+	dbf	d2,.QueueLoop					; Loop until queue is scanned
 	rts
 
 ; ------------------------------------------------------------------------------
 
 .MessageArt:
-	VDPCMD	dc.l,$20,VRAM,WRITE		; Eggman art
-	dc.l	Art_Eggman
-	VDPCMD	dc.l,$340,VRAM,WRITE		; Message art
-	dc.l	Art_Message
+	vdpCmd dc.l,$20,VRAM,WRITE				; Eggman art
+	dc.l	EggmanArt
+	vdpCmd dc.l,$340,VRAM,WRITE				; Message art
+	dc.l	MessageArt
 	if REGION=USA
-		VDPCMD	dc.l,$1C40,VRAM,WRITE	; Message art (extension)
-		dc.l	Art_MessageUSA
+		vdpCmd dc.l,$1C40,VRAM,WRITE			; Message art (extension)
+		dc.l	MessageUsaArt
 	endif
+
+; ------------------------------------------------------------------------------
+; Advance data bitstream
+; ------------------------------------------------------------------------------
+; PARAMETERS:
+;	branch - Branch to take if no new byte is needed (optional)
+; ------------------------------------------------------------------------------
+
+advanceBitstream macro branch
+	cmpi.w	#9,d6						; Does a new byte need to be read?
+	if narg>0						; If not, branch
+		bcc.s	\branch
+	else
+		bcc.s	.NoNewByte\@
+	endif
+	
+	addq.w	#8,d6						; Read next byte from bitstream
+	asl.w	#8,d5
+	move.b	(a0)+,d5
+
+.NoNewByte\@:
+	endm
 
 ; ------------------------------------------------------------------------------
 ; Decompress Nemesis art into VRAM (Note: VDP write command must be
 ; set beforehand)
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
-;	a0.l - Pointer to Nemesis art
+;	a0.l - Nemesis art pointer
 ; ------------------------------------------------------------------------------
 
-NemDec:
-	movem.l	d0-a1/a3-a5,-(sp)
-	lea	NemPCD_WriteRowToVDP.l,a3	; Write all data to the same location
-	lea	VDPDATA,a4			; (the VDP data port)
-	bra.s	NemDecMain
+DecompressNemesisVdp:
+	movem.l	d0-a1/a3-a5,-(sp)				; Save registers
+	lea	WriteNemesisRowVdp,a3				; Write all data to the same location
+	lea	VDP_DATA,a4					; VDP data port
+	bra.s	DecompressNemesisMain
 
 ; ------------------------------------------------------------------------------
 ; Decompress Nemesis data into RAM
 ; ------------------------------------------------------------------------------
 ; PARAMETERS:
-;	a0.l - Pointer to Nemesis art
-;	a4.l - Pointer to destination buffer
+;	a0.l - Nemesis data pointer
+;	a4.l - Destination buffer pointer
 ; ------------------------------------------------------------------------------
 
-NemDecToRAM:
-	movem.l	d0-a1/a3-a5,-(sp)
-	lea	NemPCD_WriteRowToRAM,a3		; Advance to the next location after each write
+DecompressNemesis:
+	movem.l	d0-a1/a3-a5,-(sp)				; Save registers
+	lea	WriteNemesisRow,a3				; Advance to the next location after each write
 
 ; ------------------------------------------------------------------------------
 
-NemDecMain:
-	lea	decompBuffer.w,a1		; Prepare decompression buffer
-	move.w	(a0)+,d2			; Get number of patterns
-	lsl.w	#1,d2
-	bcc.s	.NormalMode			; Branch if not in XOR mode
-	adda.w	#NemPCD_WriteRowToVDP_XOR-NemPCD_WriteRowToVDP,a3
+DecompressNemesisMain:
+	lea	nem_code_table,a1				; Prepare decompression buffer
+	
+	move.w	(a0)+,d2					; Get number of tiles
+	lsl.w	#1,d2						; Should we use XOR mode?
+	bcc.s	.GetRows					; If not, branch
+	adda.w	#WriteNemesisRowVdpXor-WriteNemesisRowVdp,a3	; Use XOR mode
 
-.NormalMode:
-	lsl.w	#2,d2				; Get number of 8-pixel rows in the uncompressed data
-	movea.w	d2,a5				; and store it in a5
-	moveq	#8,d3				; 8 pixels in a pattern row
-	moveq	#0,d2
-	moveq	#0,d4
-	jsr	NemDec_BuildCodeTable(pc)
-	move.b	(a0)+,d5			; Get first word of compressed data
+.GetRows:
+	lsl.w	#2,d2						; Get number of rows
+	movea.w	d2,a5
+	moveq	#8,d3						; 8 pixels per row
+	moveq	#0,d2						; XOR row buffer
+	moveq	#0,d4						; Row buffer
+	
+	jsr	BuildNemesisCodeTable(pc)			; Build code table
+	
+	move.b	(a0)+,d5					; Get first word of compressed data
 	asl.w	#8,d5
 	move.b	(a0)+,d5
-	move.w	#16,d6				; Set initial shift value
-	bsr.s	NemDec_ProcessCompressedData
+	move.w	#16,d6						; Set bitstream read data position
+	
+	bsr.s	GetNemesisCode					; Decompress data
+	
 	nop
 	nop
 	nop
 	nop
-	movem.l	(sp)+,d0-a1/a3-a5
+	
+	movem.l	(sp)+,d0-a1/a3-a5				; Restore registers
 	rts
 
 ; ------------------------------------------------------------------------------
 
-NemDec_ProcessCompressedData:
-	move.w	d6,d7
-	subq.w	#8,d7				; Get shift value
+GetNemesisCode:
+	move.w	d6,d7						; Peek 8 bits from bitstream
+	subq.w	#8,d7
 	move.w	d5,d1
-	lsr.w	d7,d1				; Shift so that the high bit of the code is in bit 7
-	cmpi.b	#%11111100,d1			; Are the high 6 bits set?
-	bcc.s	NemPCD_InlineData		; If they are, it signifies inline data
-	andi.w	#$FF,d1
+	lsr.w	d7,d1
+	cmpi.b	#%11111100,d1					; Should we read inline data?
+	bcc.s	ReadInlineNemesisData				; If so, branch
+	
+	andi.w	#$FF,d1						; Get code length
 	add.w	d1,d1
-	move.b	(a1,d1.w),d0			; Get the length of the code in bits
+	move.b	(a1,d1.w),d0
 	ext.w	d0
-	sub.w	d0,d6				; Subtract from shift value so that the next code is read next time around
-	cmpi.w	#9,d6				; Does a new byte need to be read?
-	bcc.s	.GotEnoughBits			; If not, branch
-	addq.w	#8,d6
-	asl.w	#8,d5
-	move.b	(a0)+,d5			; Read next byte
+	
+	sub.w	d0,d6						; Advance bitstream read data position
+	advanceBitstream
 
-.GotEnoughBits:
-	move.b	1(a1,d1.w),d1
+	move.b	1(a1,d1.w),d1					; Get palette index
 	move.w	d1,d0
-	andi.w	#$F,d1				; Get palette index for pixel
-	andi.w	#$F0,d0
+	andi.w	#$F,d1
+	andi.w	#$F0,d0						; Get repeat count
 
-NemDec_GetRunLength:
-	lsr.w	#4,d0				; Get repeat count
+GetNemesisCodeLength:
+	lsr.w	#4,d0						; Isolate repeat count
 
-NemDec_RunLoop:
-	lsl.l	#4,d4				; Shift up by a nibble
-	or.b	d1,d4				; Write pixel
-	subq.w	#1,d3				; Has an entire 8-pixel row been written?
-	bne.s	NemPCD_WritePixel_Loop		; If not, loop
-	jmp	(a3)				; Otherwise, write the row to its destination
-
-; ------------------------------------------------------------------------------
-
-NemPCD_NewRow:
-	moveq	#0,d4				; Reset row
-	moveq	#8,d3				; Reset nibble counter
-
-NemPCD_WritePixel_Loop:
-	dbf	d0,NemDec_RunLoop
-	bra.s	NemDec_ProcessCompressedData
+WriteNemesisPixel:
+	lsl.l	#4,d4						; Shift up by a nibble
+	or.b	d1,d4						; Write pixel
+	subq.w	#1,d3						; Has an entire 8-pixel row been written?
+	bne.s	NextNemesisPixel				; If not, loop
+	jmp	(a3)						; Otherwise, write the row to its destination
 
 ; ------------------------------------------------------------------------------
 
-NemPCD_InlineData:
-	subq.w	#6,d6				; 6 bits needed to signal inline data
-	cmpi.w	#9,d6
-	bcc.s	.GotEnoughBits
-	addq.w	#8,d6
-	asl.w	#8,d5
-	move.b	(a0)+,d5
+ResetNemesisRow:
+	moveq	#0,d4						; Reset row
+	moveq	#8,d3						; Reset nibble counter
 
-.GotEnoughBits:
-	subq.w	#7,d6				; And 7 bits needed for the inline data itself
+NextNemesisPixel:
+	dbf	d0,WriteNemesisPixel				; Loop until finished
+	bra.s	GetNemesisCode					; Read next code
+
+; ------------------------------------------------------------------------------
+
+ReadInlineNemesisData:
+	subq.w	#6,d6						; Advance bitstream read data position
+	advanceBitstream
+
+	subq.w	#7,d6						; Read inline data
 	move.w	d5,d1
-	lsr.w	d6,d1				; Shift so that the low bit of the code is in bit 0
+	lsr.w	d6,d1
 	move.w	d1,d0
-	andi.w	#$F,d1				; Get palette index for pixel
-	andi.w	#$70,d0				; High nibble is repeat count for pixel
-	cmpi.w	#9,d6
-	bcc.s	NemDec_GetRunLength
-	addq.w	#8,d6
-	asl.w	#8,d5
-	move.b	(a0)+,d5
-	bra.s	NemDec_GetRunLength
+	andi.w	#$F,d1						; Get palette index
+	andi.w	#$70,d0						; Get repeat count
+	
+	advanceBitstream GetNemesisCodeLength			; Advance bitstream read data position
+	bra.s	GetNemesisCodeLength
 
 ; ------------------------------------------------------------------------------
 
-NemPCD_WriteRowToVDP:
-	move.l	d4,(a4)				; Write 8-pixel row
-	subq.w	#1,a5
-	move.w	a5,d4				; Have all the 8-pixel rows been written?
-	bne.s	NemPCD_NewRow			; If not, branch
+WriteNemesisRowVdp:
+	move.l	d4,(a4)						; Write row
+	subq.w	#1,a5						; Decrement number of rows left
+	move.w	a5,d4						; Are we done now?
+	bne.s	ResetNemesisRow					; If not, branch
 	rts
 
 ; ------------------------------------------------------------------------------
 
-NemPCD_WriteRowToVDP_XOR:
-	eor.l	d4,d2				; XOR the previous row with the current row
-	move.l	d2,(a4)				; and store it
-	subq.w	#1,a5
-	move.w	a5,d4				; Have all the 8-pixel rows been written?
-	bne.s	NemPCD_NewRow			; If not, branch
+WriteNemesisRowVdpXor:
+	eor.l	d4,d2						; XOR the previous row with the current row
+	move.l	d2,(a4)						; Write row
+	subq.w	#1,a5						; Decrement number of rows left
+	move.w	a5,d4						; Are we done now?
+	bne.s	ResetNemesisRow					; If not, branch
 	rts
 
 ; ------------------------------------------------------------------------------
 
-NemPCD_WriteRowToRAM:
-	move.l	d4,(a4)+			; Write 8-pixel row
-	subq.w	#1,a5
-	move.w	a5,d4				; Have all the 8-pixel rows been written?
-	bne.s	NemPCD_NewRow			; If not, branch
+WriteNemesisRow:
+	move.l	d4,(a4)+					; Write row
+	subq.w	#1,a5						; Decrement number of rows left
+	move.w	a5,d4						; Are we done now?
+	bne.s	ResetNemesisRow					; If not, branch
 	rts
 
 ; ------------------------------------------------------------------------------
 
-NemPCD_WriteRowToRAM_XOR:
-	eor.l	d4,d2				; XOR the previous row with the current row
-	move.l	d2,(a4)+			; and store it
-	subq.w	#1,a5
-	move.w	a5,d4				; Have all the 8-pixel rows been written?
-	bne.s	NemPCD_NewRow			; If not, branch
+WriteNemesisRowXor:
+	eor.l	d4,d2						; XOR the previous row with the current row
+	move.l	d2,(a4)+					; Write row
+	subq.w	#1,a5						; Decrement number of rows left
+	move.w	a5,d4						; Are we done now?
+	bne.s	ResetNemesisRow					; If not, branch
 	rts
 
 ; ------------------------------------------------------------------------------
 
-NemDec_BuildCodeTable:
-	move.b	(a0)+,d0			; Read first byte
+BuildNemesisCodeTable:
+	move.b	(a0)+,d0					; Read first byte
 
-NemBCT_ChkEnd:
-	cmpi.b	#$FF,d0				; Has the end of the code table description been reached?
-	bne.s	NemBCT_NewPALIndex		; If not, branch
+.CheckEnd:
+	cmpi.b	#$FF,d0						; Has the end of the code table been reached?
+	bne.s	.NewPaletteIndex				; If not, branch
 	rts
 
-NemBCT_NewPALIndex:
-	move.w	d0,d7
+.NewPaletteIndex:
+	move.w	d0,d7						; Set palette index
 
-NemBCT_Loop:
-	move.b	(a0)+,d0			; Read next byte
-	cmpi.b	#$80,d0				; Sign bit signifies a new palette index
-	bcc.s	NemBCT_ChkEnd
+.Loop:
+	move.b	(a0)+,d0					; Read next byte
+	cmpi.b	#$80,d0						; Should we set a new palette index?
+	bcc.s	.CheckEnd					; If so, branch
 
-	move.b	d0,d1
-	andi.w	#$F,d7				; Get palette index
-	andi.w	#$70,d1				; Get repeat count for palette index
-	or.w	d1,d7				; Combine the 2
-	andi.w	#$F,d0				; Get the length of the code in bits
+	move.b	d0,d1						; Copy repeat count
+	andi.w	#$F,d7						; Get palette index
+	andi.w	#$70,d1						; Get repeat count
+	or.w	d1,d7						; Combine them
+	
+	andi.w	#$F,d0						; Get code length
 	move.b	d0,d1
 	lsl.w	#8,d1
-	or.w	d1,d7				; Combine with palette index and repeat count to form code table entry
-	moveq	#8,d1
-	sub.w	d0,d1				; Is the code 8 bits long?
-	bne.s	NemBCT_ShortCode		; If not, a bit of extra processing is needed
-	move.b	(a0)+,d0			; Get code
-	add.w	d0,d0				; Each code gets a word sized entry in the table
-	move.w	d7,(a1,d0.w)			; Store the entry for the code
+	or.w	d1,d7						; Combine with palette index and repeat count
+	
+	moveq	#8,d1						; Is the code length 8 bits in size?
+	sub.w	d0,d1
+	bne.s	.ShortCode					; If not, branch
+	
+	move.b	(a0)+,d0					; Store code entry
+	add.w	d0,d0
+	move.w	d7,(a1,d0.w)
+	bra.s	.Loop
 
-	bra.s	NemBCT_Loop			; Loop
-
-NemBCT_ShortCode:
-	move.b	(a0)+,d0			; Get code
-	lsl.w	d1,d0				; Get index into code table
-	add.w	d0,d0				; Shift so that the high bit is in bit 7
-	moveq	#1,d5
+.ShortCode:
+	move.b	(a0)+,d0					; Get index
+	lsl.w	d1,d0
+	add.w	d0,d0
+	
+	moveq	#1,d5						; Get number of entries
 	lsl.w	d1,d5
-	subq.w	#1,d5				; d5 = 2^d1 - 1
+	subq.w	#1,d5
 
-NemBCT_ShortCode_Loop:
-	move.w	d7,(a1,d0.w)			; Store entry
-	addq.w	#2,d0				; Increment index
-	dbf	d5,NemBCT_ShortCode_Loop	; Repeat for required number of entries
-
-	bra.s	NemBCT_Loop			; Loop
+.ShortCode_Loop:
+	move.w	d7,(a1,d0.w)					; Store code entry
+	addq.w	#2,d0						; Increment index
+	dbf	d5,.ShortCode_Loop				; Loop until finished
+	bra.s	.Loop
 
 ; ------------------------------------------------------------------------------
 ; Draw message tilemap
@@ -1105,117 +1125,117 @@ NemBCT_ShortCode_Loop:
 ; ------------------------------------------------------------------------------
 
 DrawMessageTilemap:
-	andi.l	#$FFFF,d0			; Get mappings metadata
+	andi.l	#$FFFF,d0					; Get mappings metadata
 	mulu.w	#14,d0
 	lea	.Tilemaps,a1
 	adda.w	d0,a1
 
-	movea.l	(a1)+,a0			; Mappings data
-	move.w	(a1)+,d0			; Base tile attributes
+	movea.l	(a1)+,a0					; Mappings data
+	move.w	(a1)+,d0					; Base tile attributes
 
-	move.l	a1,-(sp)			; Decompress mappings
-	lea	decompBuffer.w,a1
-	bsr.w	EniDec
+	move.l	a1,-(sp)					; Decompress mappings
+	lea	decomp_buffer,a1
+	bsr.w	DecompressEnigma
 	movea.l	(sp)+,a1
 
-	move.w	(a1)+,d3			; Width
-	move.w	(a1)+,d2			; Height
-	move.l	(a1),d0				; VDP command
+	move.w	(a1)+,d3					; Width
+	move.w	(a1)+,d2					; Height
+	move.l	(a1),d0						; VDP command
 	
-	lea	decompBuffer.w,a0		; Load mappings into VRAM
-	movea.l	#VDPDATA,a1			; VDP data port
+	lea	decomp_buffer,a0				; Load mappings into VRAM
+	movea.l	#VDP_DATA,a1					; VDP data port
 
 .Row:
-	move.l	d0,VDPCTRL			; Set VDP command
-	move.w	d3,d1				; Get width
+	move.l	d0,VDP_CTRL					; Set VDP command
+	move.w	d3,d1						; Get width
 
 .Tile:
-	move.w	(a0)+,(a1)			; Copy tile
-	dbf	d1,.Tile			; Loop until row is copied
-	addi.l	#$800000,d0			; Next row
-	dbf	d2,.Row				; Loop until map is copied
+	move.w	(a0)+,(a1)					; Copy tile
+	dbf	d1,.Tile					; Loop until row is copied
+	addi.l	#$800000,d0					; Next row
+	dbf	d2,.Row						; Loop until map is copied
 	rts
 
 ; ------------------------------------------------------------------------------
 
 .Tilemaps:
 	; Backup RAM data corrupted
-	dc.l	Map_Eggman
+	dc.l	EggmanTilemap
 	dc.w	1
 	dc.w	$A-1, 6-1
-	VDPCMD	dc.l,$C31E,VRAM,WRITE
+	vdpCmd dc.l,$C31E,VRAM,WRITE
 
-	dc.l	Map_DataCorrupt
+	dc.l	DataCorruptTilemap
 	dc.w	$201A
 	if REGION=JAPAN
 		dc.w	$24-1, 6-1
-		VDPCMD	dc.l,$E584,VRAM,WRITE
+		vdpCmd dc.l,$E584,VRAM,WRITE
 	else
 		dc.w	$1D-1, 6-1
-		VDPCMD	dc.l,$E58A,VRAM,WRITE
+		vdpCmd dc.l,$E58A,VRAM,WRITE
 	endif
 	
 	; Internal Backup RAM unformatted
-	dc.l	Map_Eggman
+	dc.l	EggmanTilemap
 	dc.w	1
 	dc.w	$A-1, 6-1
-	VDPCMD	dc.l,$C31E,VRAM,WRITE
+	vdpCmd dc.l,$C31E,VRAM,WRITE
 
 	if REGION=JAPAN
-		dc.l	Map_IntUnformatted
+		dc.l	UnformattedTilemap
 		dc.w	$201A
 		dc.w	$24-1, 6-1
-		VDPCMD	dc.l,$E584,VRAM,WRITE
+		vdpCmd dc.l,$E584,VRAM,WRITE
 	elseif REGION=USA
-		dc.l	Map_IntUnformattedUSA
+		dc.l	UnformattedUsaTilemap
 		dc.w	$20E2
 		dc.w	$1D-1, 8-1
-		VDPCMD	dc.l,$E58A,VRAM,WRITE
+		vdpCmd dc.l,$E58A,VRAM,WRITE
 	else
-		dc.l	Map_IntUnformatted
+		dc.l	UnformattedTilemap
 		dc.w	$201A
 		dc.w	$1D-1, 6-1
-		VDPCMD	dc.l,$E58A,VRAM,WRITE
+		vdpCmd dc.l,$E58A,VRAM,WRITE
 	endif
 	
 	; Cartridge Backup RAM unformatted
-	dc.l	Map_Eggman
+	dc.l	EggmanTilemap
 	dc.w	1
 	dc.w	9, 5
 	if REGION=JAPAN
-		VDPCMD	dc.l,$C21E,VRAM,WRITE
+		vdpCmd dc.l,$C21E,VRAM,WRITE
 	else
-		VDPCMD	dc.l,$C29E,VRAM,WRITE
+		vdpCmd dc.l,$C29E,VRAM,WRITE
 	endif
 
-	dc.l	Map_CartUnformatted
+	dc.l	CartUnformattedTilemap
 	dc.w	$201A
 	if REGION=JAPAN
 		dc.w	$24-1, $A-1
-		VDPCMD	dc.l,$E484,VRAM,WRITE
+		vdpCmd dc.l,$E484,VRAM,WRITE
 	else
 		dc.w	$1D-1, 8-1
-		VDPCMD	dc.l,$E50A,VRAM,WRITE
+		vdpCmd dc.l,$E50A,VRAM,WRITE
 	endif
 	
 	; Backup RAM full
-	dc.l	Map_Eggman
+	dc.l	EggmanTilemap
 	dc.w	1
 	dc.w	9, 5
 	if REGION=JAPAN
-		VDPCMD	dc.l,$C29E,VRAM,WRITE
+		vdpCmd dc.l,$C29E,VRAM,WRITE
 	else
-		VDPCMD	dc.l,$C31E,VRAM,WRITE
+		vdpCmd dc.l,$C31E,VRAM,WRITE
 	endif
 
-	dc.l	Map_BuRAMFull
+	dc.l	BuramFullTilemap
 	dc.w	$201A
 	if REGION=JAPAN
 		dc.w	$24-1, 8-1
-		VDPCMD	dc.l,$E504,VRAM,WRITE
+		vdpCmd dc.l,$E504,VRAM,WRITE
 	else
 		dc.w	$1D-1, 6-1
-		VDPCMD	dc.l,$E58A,VRAM,WRITE
+		vdpCmd dc.l,$E58A,VRAM,WRITE
 	endif
 
 ; ------------------------------------------------------------------------------
@@ -1227,245 +1247,280 @@ DrawMessageTilemap:
 ;	d0.w - Base tile attributes
 ; ------------------------------------------------------------------------------
 
-EniDec:
-	movem.l	d0-d7/a1-a5,-(sp)
-	movea.w	d0,a3				; Store base tile
-	move.b	(a0)+,d0
+DecompressEnigma:
+	movem.l	d0-d7/a1-a5,-(sp)				; Save registers
+	
+	movea.w	d0,a3						; Get base tile
+	
+	move.b	(a0)+,d0					; Get size of inline copy value
 	ext.w	d0
-	movea.w	d0,a5				; Store number of bits in inline copy value
-	move.b	(a0)+,d4
-	lsl.b	#3,d4				; Store PCCVH flags bitfield
-	movea.w	(a0)+,a2
-	adda.w	a3,a2				; Store incremental copy word
-	movea.w	(a0)+,a4
-	adda.w	a3,a4				; Store literal copy word
-	move.b	(a0)+,d5
-	asl.w	#8,d5
-	move.b	(a0)+,d5			; Get first word in format list
-	moveq	#16,d6				; Initial shift value
+	movea.w	d0,a5
 
-EniDec_Loop:
-	moveq	#7,d0				; Assume a format list entry is 7 bits
+	move.b	(a0)+,d4					; Get tile flags
+	lsl.b	#3,d4
+
+	movea.w	(a0)+,a2					; Get incremental copy word
+	adda.w	a3,a2
+	
+	movea.w	(a0)+,a4					; Get static copy word
+	adda.w	a3,a4
+
+	move.b	(a0)+,d5					; Get read first word
+	asl.w	#8,d5
+	move.b	(a0)+,d5
+	moveq	#16,d6						; Initial shift value
+
+GetEnigmaCode:
+	moveq	#7,d0						; Assume a code entry is 7 bits
 	move.w	d6,d7
 	sub.w	d0,d7
-	move.w	d5,d1
+	
+	move.w	d5,d1						; Get code entry
 	lsr.w	d7,d1
-	andi.w	#$7F,d1				; Get format list entry
-	move.w	d1,d2				; and copy it
-	cmpi.w	#$40,d1				; Is the high bit of the entry set?
-	bcc.s	.SevenBitEntry
-	moveq	#6,d0				; If it isn't, the entry is actually 6 bits
+	andi.w	#$7F,d1
+	move.w	d1,d2
+
+	cmpi.w	#$40,d1						; Is this code entry actually 6 bits long?
+	bcc.s	.GotCode					; If not, branch
+	
+	moveq	#6,d0						; Code entry is actually 6 bits
 	lsr.w	#1,d2
 
-.SevenBitEntry:
-	bsr.w	EniDec_ChkGetNextByte
-	andi.w	#$F,d2				; Get repeat count
+.GotCode:
+	bsr.w	AdvanceEnigmaBitstream				; Advance bitstream
+	
+	andi.w	#$F,d2						; Handle code
 	lsr.w	#4,d1
 	add.w	d1,d1
-	jmp	EniDec_JmpTable(pc,d1.w)
+	jmp	HandleEnigmaCode(pc,d1.w)
 
 ; ------------------------------------------------------------------------------
 
-EniDec_Sub0:
-	move.w	a2,(a1)+			; Copy incremental copy word
-	addq.w	#1,a2				; Increment it
-	dbf	d2,EniDec_Sub0			; Repeat
-	bra.s	EniDec_Loop
+EnigmaCopyInc:
+	move.w	a2,(a1)+					; Copy incremental copy word
+	addq.w	#1,a2						; Increment it
+	dbf	d2,EnigmaCopyInc				; Loop until finished
+	bra.s	GetEnigmaCode
 
 ; ------------------------------------------------------------------------------
 
-EniDec_Sub4:
-	move.w	a4,(a1)+			; Copy literal copy word
-	dbf	d2,EniDec_Sub4			; Repeat
-	bra.s	EniDec_Loop
+EnigmaCopyStatic:
+	move.w	a4,(a1)+					; Copy static copy word
+	dbf	d2,EnigmaCopyStatic				; Loop until finished
+	bra.s	GetEnigmaCode
 
 ; ------------------------------------------------------------------------------
 
-EniDec_Sub8:
-	bsr.w	EniDec_GetInlineCopyVal
+EnigmaCopyInline:
+	bsr.w	ReadInlineEnigmaData				; Read inline data	
 
 .Loop:
-	move.w	d1,(a1)+			; Copy inline value
-	dbf	d2,.Loop			; Repeat
-	bra.s	EniDec_Loop
+	move.w	d1,(a1)+					; Copy inline value
+	dbf	d2,.Loop					; Loop until finished
+	bra.s	GetEnigmaCode
 
 ; ------------------------------------------------------------------------------
 
-EniDec_SubA:
-	bsr.w	EniDec_GetInlineCopyVal
+EnigmaCopyInlineInc:
+	bsr.w	ReadInlineEnigmaData				; Read inline data
 
 .Loop:
-	move.w	d1,(a1)+			; Copy inline value
-	addq.w	#1,d1				; Increment it
-	dbf	d2,.Loop			; Repeat
-	bra.s	EniDec_Loop
+	move.w	d1,(a1)+					; Copy inline value
+	addq.w	#1,d1						; Increment it
+	dbf	d2,.Loop					; Loop until finished
+	bra.s	GetEnigmaCode
 
 ; ------------------------------------------------------------------------------
 
-EniDec_SubC:
-	bsr.w	EniDec_GetInlineCopyVal
+EnigmaCopyInlineDec:
+	bsr.w	ReadInlineEnigmaData				; Read inline data
 
 .Loop:
-	move.w	d1,(a1)+			; Copy inline value
-	subq.w	#1,d1				; Decrement it
-	dbf	d2,.Loop			; Repeat
-	bra.s	EniDec_Loop
+	move.w	d1,(a1)+					; Copy inline value
+	subq.w	#1,d1						; Decrement it
+	dbf	d2,.Loop					; Loop until finished
+	bra.s	GetEnigmaCode
 
 ; ------------------------------------------------------------------------------
 
-EniDec_SubE:
-	cmpi.w	#$F,d2
-	beq.s	EniDec_End
+EnigmaCopyInlineMult:
+	cmpi.w	#$F,d2						; Are we done?
+	beq.s	EnigmaDone					; If so, branch
 
 .Loop4:
-	bsr.w	EniDec_GetInlineCopyVal		; Fetch new inline value
-	move.w	d1,(a1)+			; Copy it
-	dbf	d2,.Loop4			; Repeat
-	bra.s	EniDec_Loop
+	bsr.w	ReadInlineEnigmaData				; Read inline data
+	move.w	d1,(a1)+					; Copy it
+	dbf	d2,.Loop4					; Loop until finished
+	bra.s	GetEnigmaCode
 
 ; ------------------------------------------------------------------------------
 
-EniDec_JmpTable:
-	bra.s	EniDec_Sub0
-	bra.s	EniDec_Sub0
-	bra.s	EniDec_Sub4
-	bra.s	EniDec_Sub4
-	bra.s	EniDec_Sub8
-	bra.s	EniDec_SubA
-	bra.s	EniDec_SubC
-	bra.s	EniDec_SubE
+HandleEnigmaCode:
+	bra.s	EnigmaCopyInc
+	bra.s	EnigmaCopyInc
+	bra.s	EnigmaCopyStatic
+	bra.s	EnigmaCopyStatic
+	bra.s	EnigmaCopyInline
+	bra.s	EnigmaCopyInlineInc
+	bra.s	EnigmaCopyInlineDec
+	bra.s	EnigmaCopyInlineMult
 
 ; ------------------------------------------------------------------------------
 
-EniDec_End:
-	subq.w	#1,a0				; Go back by one byte
-	cmpi.w	#16,d6				; Were we going to start a completely new byte?
-	bne.s	.NotNewByte			; If not, branch
-	subq.w	#1,a0				; And another one if needed
+EnigmaDone:
+	subq.w	#1,a0						; Go back by one byte
+	cmpi.w	#16,d6						; Were we going to start a completely new byte?
+	bne.s	.NotNewByte					; If not, branch
+	subq.w	#1,a0						; Go back another
 
 .NotNewByte:
-	move.w	a0,d0
-	lsr.w	#1,d0				; Are we on an odd byte?
-	bcc.s	.Even				; If not, branch
-	addq.w	#1,a0				; Ensure we're on an even byte
+	move.w	a0,d0						; Are we on an odd byte?
+	lsr.w	#1,d0
+	bcc.s	.Even						; If not, branch
+	addq.w	#1,a0						; Ensure we're on an even byte
 
 .Even:
-	movem.l	(sp)+,d0-d7/a1-a5
+	movem.l	(sp)+,d0-d7/a1-a5				; Restore registers
 	rts
 
 ; ------------------------------------------------------------------------------
 
-EniDec_GetInlineCopyVal:
-	move.w	a3,d3				; Copy base tile
-	move.b	d4,d1				; Copy PCCVH bitfield
-	add.b	d1,d1				; Is the priority bit set?
-	bcc.s	.NoPriority			; If not, branch
-	subq.w	#1,d6
-	btst	d6,d5				; Is the priority bit set in the inline render flags?
-	beq.s	.NoPriority			; If not, branch
-	ori.w	#$8000,d3			; Set priority bit in the base tile
+ReadInlineEnigmaData:
+	move.w	a3,d3						; Copy base tile
+	move.b	d4,d1						; Copy tile flags
+	
+	add.b	d1,d1						; Is the priority bit set?
+	bcc.s	.NoPriority					; If not, branch
+	
+	subq.w	#1,d6						; Is the priority bit set in the inline flags?
+	btst	d6,d5
+	beq.s	.NoPriority					; If not, branch
+	
+	ori.w	#$8000,d3					; Set priority bit in the base tile
 
 .NoPriority:
-	add.b	d1,d1				; Is the high palette line bit set?
-	bcc.s	.NoPal1				; If not, branch
-	subq.w	#1,d6
-	btst	d6,d5				; Is the high palette line bit set in the inline render flags?
-	beq.s	.NoPal1				; If not, branch
-	addi.w	#$4000,d3			; Set second palette line bit
+	add.b	d1,d1						; Is the high palette line bit set?
+	bcc.s	.NoPal1						; If not, branch
+	
+	subq.w	#1,d6						; Is the high palette bit set in the inline flags?
+	btst	d6,d5
+	beq.s	.NoPal1						; If not, branch
+	
+	addi.w	#$4000,d3					; Set high palette bit
 
 .NoPal1:
-	add.b	d1,d1				; Is the low palette line bit set?
-	bcc.s	.NoPal0				; If not, branch
-	subq.w	#1,d6
-	btst	d6,d5				; Is the low palette line bit set in the inline render flags?
-	beq.s	.NoPal0				; If not, branch
-	addi.w	#$2000,d3			; Set first palette line bit
+	add.b	d1,d1						; Is the low palette line bit set?
+	bcc.s	.NoPal0						; If not, branch
+	
+	subq.w	#1,d6						; Is the low palette bit set in the inline flags?
+	btst	d6,d5
+	beq.s	.NoPal0						; If not, branch
+	
+	addi.w	#$2000,d3					; Set low palette bit
 
 .NoPal0:
-	add.b	d1,d1				; Is the Y flip bit set?
-	bcc.s	.NoYFlip			; If not, branch
-	subq.w	#1,d6
-	btst	d6,d5				; Is the Y flip bit set in the inline render flags?
-	beq.s	.NoYFlip			; If not, branch
-	ori.w	#$1000,d3			; Set Y flip bit
+	add.b	d1,d1						; Is the Y flip bit set?
+	bcc.s	.NoYFlip					; If not, branch
+	
+	subq.w	#1,d6						; Is the Y flip bit set in the inline flags?
+	btst	d6,d5
+	beq.s	.NoYFlip					; If not, branch
+	
+	ori.w	#$1000,d3					; Set Y flip bit
 
 .NoYFlip:
-	add.b	d1,d1				; Is the X flip bit set?
-	bcc.s	.NoXFlip			; If not, branch
-	subq.w	#1,d6
-	btst	d6,d5				; Is the X flip bit set in the inline render flags?
-	beq.s	.NoXFlip			; If not, branch
-	ori.w	#$800,d3			; Set X flip bit
+	add.b	d1,d1						; Is the X flip bit set?
+	bcc.s	.NoXFlip					; If not, branch
+	
+	subq.w	#1,d6						; Is the X flip bit set in the inline flags?
+	btst	d6,d5
+	beq.s	.NoXFlip					; If not, branch
+	
+	ori.w	#$800,d3					; Set X flip bit
 
 .NoXFlip:
-	move.w	d5,d1
+	move.w	d5,d1						; Prepare to advance bitstream to tile ID
 	move.w	d6,d7
-	sub.w	a5,d7				; Subtract length in bits of inline copy value
-	bcc.s	.GotEnoughBits			; Branch if a new word doesn't need to be read
-	move.w	d7,d6
+	sub.w	a5,d7
+	bcc.s	.GotEnoughBits					; If we don't need a new word, branch
+	
+	move.w	d7,d6						; Make space for the rest of the tile ID
 	addi.w	#16,d6
-	neg.w	d7				; Calculate bit deficit
-	lsl.w	d7,d1				; and make space for that many bits
-	move.b	(a0),d5				; Get next byte
-	rol.b	d7,d5				; and rotate the required bits into the lowest positions
+	neg.w	d7
+	lsl.w	d7,d1
+	
+	move.b	(a0),d5						; Add in the rest of the tile ID
+	rol.b	d7,d5
 	add.w	d7,d7
-	and.w	EniDec_Masks-2(pc,d7.w),d5
-	add.w	d5,d1				; Combine upper bits with lower bits
+	and.w	EnigmaInlineMasks-2(pc,d7.w),d5
+	add.w	d5,d1
 
-.AddBits:
-	move.w	a5,d0				; Get length in bits of inline copy value
+.CombineBits:
+	move.w	a5,d0						; Mask out garbage
 	add.w	d0,d0
-	and.w	EniDec_Masks-2(pc,d0.w),d1	; Mask value
-	add.w	d3,d1				; Add base tile
-	move.b	(a0)+,d5
+	and.w	EnigmaInlineMasks-2(pc,d0.w),d1
+
+	add.w	d3,d1						; Add base tile
+	
+	move.b	(a0)+,d5					; Read another word from the bitstream
 	lsl.w	#8,d5
 	move.b	(a0)+,d5
 	rts
 
 .GotEnoughBits:
-	beq.s	.JustEnough			; If the word has been exactly exhausted, branch
-	lsr.w	d7,d1				; Get inline copy value
-	move.w	a5,d0
+	beq.s	.JustEnough					; If the word has been exactly exhausted, branch
+	
+	lsr.w	d7,d1						; Shift tile data down
+	
+	move.w	a5,d0						; Mask out garbage
 	add.w	d0,d0
-	and.w	EniDec_Masks-2(pc,d0.w),d1	; Mask it
-	add.w	d3,d1				; Add base tile
-	move.w	a5,d0
-	bra.s	EniDec_ChkGetNextByte
+	and.w	EnigmaInlineMasks-2(pc,d0.w),d1	
+	
+	add.w	d3,d1						; Add base tile
+
+	move.w	a5,d0						; Advance bitstream
+	bra.s	AdvanceEnigmaBitstream
 
 .JustEnough:
-	moveq	#16,d6				; Reset shift value
-	bra.s	.AddBits
+	moveq	#16,d6						; Reset shift value
+	bra.s	.CombineBits
 
 ; ------------------------------------------------------------------------------
 
-EniDec_Masks:
-	dc.w	1,     3,     7,     $F
-	dc.w	$1F,   $3F,   $7F,   $FF
-	dc.w	$1FF,  $3FF,  $7FF,  $FFF
-	dc.w	$1FFF, $3FFF, $7FFF, $FFFF
+EnigmaInlineMasks:
+	dc.w	%0000000000000001
+	dc.w	%0000000000000011
+	dc.w	%0000000000000111
+	dc.w	%0000000000001111
+	dc.w	%0000000000011111
+	dc.w	%0000000000111111
+	dc.w	%0000000001111111
+	dc.w	%0000000011111111
+	dc.w	%0000000111111111
+	dc.w	%0000001111111111
+	dc.w	%0000011111111111
+	dc.w	%0000111111111111
+	dc.w	%0001111111111111
+	dc.w	%0011111111111111
+	dc.w	%0111111111111111
+	dc.w	%1111111111111111
 
 ; ------------------------------------------------------------------------------
 
-EniDec_ChkGetNextByte:
-	sub.w	d0,d6				; Subtract length of current entry from shift value so that next entry is read next time around
-	cmpi.w	#9,d6				; Does a new byte need to be read?
-	bcc.s	.End				; If not, branch
-	addq.w	#8,d6
-	asl.w	#8,d5
-	move.b	(a0)+,d5
-
-.End:
+AdvanceEnigmaBitstream:
+	sub.w	d0,d6						; Advance bitstream
+	advanceBitstream
 	rts
 
 ; ------------------------------------------------------------------------------
 ; Data
 ; ------------------------------------------------------------------------------
 
-Art_Eggman:
+EggmanArt:
 	incbin	"Backup RAM/Initialization/Data/Eggman Art.nem"
 	even
 
-Map_Eggman:
+EggmanTilemap:
 	incbin	"Backup RAM/Initialization/Data/Eggman Mappings.eni"
 	even
 
@@ -1473,23 +1528,23 @@ Map_Eggman:
 
 	if REGION=JAPAN
 	
-Art_Message:
+MessageArt:
 		incbin	"Backup RAM/Initialization/Data/Message Art (Japanese).nem"
 		even
 
-Map_DataCorrupt:
+DataCorruptTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Data Corrupt, Japanese).eni"
 		even
 	
-Map_IntUnformatted:
+Unformatted:
 		incbin	"Backup RAM/Initialization/Data/Message (Internal Unformatted, Japanese).eni"
 		even
 
-Map_CartUnformatted:
+CartUnformattedTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Cart Unformatted, Japanese).eni"
 		even
 
-Map_BuRAMFull:
+BuramFullTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (RAM Full, Japanese).eni"
 		even
 		
@@ -1497,31 +1552,31 @@ Map_BuRAMFull:
 
 	elseif REGION=USA
 	
-Art_Message:
+MessageArt:
 		incbin	"Backup RAM/Initialization/Data/Message Art (English).nem"
 		even
 
-Map_DataCorrupt:
+DataCorruptTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Data Corrupt, English).eni"
 		even
 
-Map_IntUnformatted:
+UnformattedTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Internal Unformatted, English).eni"
 		even
 
-Map_CartUnformatted:
+CartUnformattedTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Cart Unformatted, English).eni"
 		even
 
-Map_BuRAMFull:
+BuramFullTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (RAM Full, English).eni"
 		even
 	
-Art_MessageUSA:
+MessageUsaArt:
 		incbin	"Backup RAM/Initialization/Data/Message Art (USA).nem"
 		even
 
-Map_IntUnformattedUSA:
+UnformattedUsaTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Internal Unformatted, USA).eni"
 		even
 
@@ -1529,23 +1584,23 @@ Map_IntUnformattedUSA:
 
 	else
 	
-Art_Message:
+MessageArt:
 		incbin	"Backup RAM/Initialization/Data/Message Art (English).nem"
 		even
 
-Map_DataCorrupt:
+DataCorruptTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Data Corrupt, English).eni"
 		even
 	
-Map_IntUnformatted:
+UnformattedTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Internal Unformatted, English).eni"
 		even
 
-Map_CartUnformatted:
+CartUnformattedTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (Cart Unformatted, English).eni"
 		even
 
-Map_BuRAMFull:
+BuramFullTilemap:
 		incbin	"Backup RAM/Initialization/Data/Message (RAM Full, English).eni"
 		even
 	

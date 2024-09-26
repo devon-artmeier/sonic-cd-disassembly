@@ -2,10 +2,10 @@
 ; Sonic CD (1993) Disassembly
 ; By Devon Artmeier
 ; ------------------------------------------------------------------------------
-; Initial Backup RAM data
+; Initial save data
 ; ------------------------------------------------------------------------------
 
-SaveTimeAttack:
+SaveDataTimeAttack:
 	dc.b	$00, $05, $00, $00				; Palmtree Panic Act 1 1st place time
 	dc.b	$00, $05, $00, $00				; Palmtree Panic Act 1 2nd place time
 	dc.b	$00, $05, $00, $00				; Palmtree Panic Act 1 3rd place time
@@ -204,7 +204,7 @@ SaveTimeAttack:
 
 	dc.b	$23, $19, $1F, $00				; Default time attack initials
 
-SaveMain:
+SaveDataMain:
 	dc.b	$00						; Zone
 	dc.b	$00						; Last unlocked time attack zone
 	dc.b	$00						; Unknown
@@ -215,6 +215,6 @@ SaveMain:
 	dc.b	$00
 	dc.b	$00						; Special stage
 	dc.b	$00						; Time stones retrieved flags
-	dcb.b	save.main_struct_size-(*-SaveMain), $00
+	dcb.b	save.main_struct_size-(*-SaveDataMain), $00
 
 ; ------------------------------------------------------------------------------

@@ -35,7 +35,7 @@ LevelStart:
 	endif
 	move.b	#0,paused			; Clear pause flag
 
-	bset	#0,nem_art_queue_flags		; Mark PLCs as loaded
+	bset	#0,nemesis_queue_flags		; Mark PLCs as loaded
 	bne.s	.NoReset			; If they were loaded before, branch
 
 	clr.b	palette_fade_flags		; Mark palette fading as inactive
@@ -98,7 +98,7 @@ LevelStart:
 .CheckNoLives:
 	tst.b	lives				; Do we have any lives?
 	bne.s	.CheckNormalLoad		; If so, branch
-	move.b	#0,nem_art_queue_flags		; Mark PLCs as not loaded
+	move.b	#0,nemesis_queue_flags		; Mark PLCs as not loaded
 	move.b	#0,checkpoint			; Reset checkpoint
 	move.b	#0,spawn_mode			; Spawn at beginning
 	move.b	#0,palette_fade_flags		; Mark palette fading as inactive
@@ -269,7 +269,7 @@ LevelStart:
 	move.b	#$19,hud_icon_object		; Load HUD time icon object
 	move.b	#$A,hud_icon_object+obj.subtype
 
-	bset	#1,nem_art_queue_flags		; Mark title card as loaded
+	bset	#1,nemesis_queue_flags		; Mark title card as loaded
 	bne.s	.SkipTitleCard			; If it was already loaded, branch
 	move.b	#$3C,title_card_object		; Load the title card
 	move.b	#1,ctrl_locked			; Lock controls

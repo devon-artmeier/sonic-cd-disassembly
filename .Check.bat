@@ -11,8 +11,8 @@ if %REGION%==2 fc /b _Original\IP_EUR.BIN _Built\Misc\IP.BIN
 fc /b _Original\SP.BIN _Built\Misc\SP.BIN
 fc /b _Original\%REGPATH%\IPX___.MMD _Built\Files\IPX___.MMD
 fc /b _Original\%REGPATH%\SPX___.BIN _Built\Files\SPX___.BIN
-REM fc /b _Original\%REGPATH%\BRAMINIT.MMD _Built\Files\BRAMINIT.MMD
-REM fc /b _Original\%REGPATH%\BRAMSUB.BIN _Built\Files\BRAMSUB.BIN
+fc /b _Original\%REGPATH%\BRAMINIT.MMD _Built\Files\BRAMINIT.MMD
+fc /b _Original\%REGPATH%\BRAMSUB.BIN _Built\Files\BRAMSUB.BIN
 REM fc /b _Original\%REGPATH%\MDINIT.MMD _Built\Files\MDINIT.MMD
 REM fc /b _Original\%REGPATH%\WARP__.MMD _Built\Files\WARP__.MMD
 REM fc /b _Original\%REGPATH%\SNCBNK1B.BIN _Built\Files\SNCBNK1B.BIN

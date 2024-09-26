@@ -45,8 +45,8 @@ REM %ASM68K% "DA Garden\Sub.asm", "_Built\Files\PLANET_S.BIN", , "DA Garden\Sub.
 %ASM68K% "CD Initial Program\IP.asm", "_Built\Misc\IP.BIN", , "CD Initial Program\IP.lst"
 %ASM68K% "CD Initial Program\IPX.asm", "_Built\Files\IPX___.MMD",  , "CD Initial Program\IPX.lst"
 
-REM %ASM68K% "Backup RAM\Initialization\Main.asm", "_Built\Files\BRAMINIT.MMD", , "Backup RAM\Initialization\Main.lst"
-REM %ASM68K% "Backup RAM\Sub.asm", "_Built\Files\BRAMSUB.BIN", , "Backup RAM\Sub.lst"
+%ASM68K% "Backup RAM\Initialization\Main.asm", "_Built\Files\BRAMINIT.MMD", , "Backup RAM\Initialization\Main.lst"
+%ASM68K% "Backup RAM\Sub.asm", "_Built\Files\BRAMSUB.BIN", , "Backup RAM\Sub.lst"
 REM %ASM68K% "Mega Drive Init\Main.asm", "_Built\Files\MDINIT.MMD", , "Mega Drive Init\Main.lst"
 REM %ASM68K% "Time Warp Cutscene\Main.asm", "_Built\Files\WARP__.MMD", , "Time Warp Cutscene\Main.lst"
 REM %ASM68K% "Sound Drivers\PCM\Palmtree Panic.asm", "_Built\Files\SNCBNK1B.BIN", , "Sound Drivers\PCM\Palmtree Panic.lst"

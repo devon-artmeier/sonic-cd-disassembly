@@ -46,12 +46,12 @@ CARTRIDGE		equ $400000				; Cartridge start
 CARTRIDGE_SIZE		equ $400000				; Cartridge size
 CARTRIDGE_END		equ CARTRIDGE+CARTRIDGE_SIZE		; Cartridge end
 
-; RAM cartridge
-RAM_CART_ID		equ CARTRIDGE+1				; RAM cartridge ID
-RAM_CART_DATA		equ CARTRIDGE+$200001			; RAM cartridge data
-RAM_CART_DATA_SIZE	equ $80000				; RAM cartridge data size
-RAM_CART_DATA_END	equ RAM_CART_DATA+RAM_CART_DATA_SIZE	; RAM cartridge data end
-RAM_CART_PROTECT	equ CARTRIDGE+$3FFFFF			; RAM cartridge memory protection flag
+; Backup RAM cartridge
+BURAM_CART_ID		equ CARTRIDGE+1				; RAM cartridge ID
+BURAM_CART_DATA		equ CARTRIDGE+$200001			; RAM cartridge data
+BURAM_CART_DATA_SIZE	equ $80000				; RAM cartridge data size
+BURAM_CART_DATA_END	equ RAM_CART_DATA+RAM_CART_DATA_SIZE	; RAM cartridge data end
+BURAM_CART_PROTECT	equ CARTRIDGE+$3FFFFF			; RAM cartridge memory protection flag
 
 ; Special cartridge
 SPECIAL_CART_ID		equ CARTRIDGE+$10			; Special cartridge ID
@@ -318,7 +318,7 @@ resetZ80Off macro reg
 waitDma macro ctrl
 .Wait\@:
 	if narg>0
-		btst	#1,\reg
+		btst	#1,\ctrl
 	else
 		move.w	VDP_CTRL,d0
 		btst	#1,d0
@@ -450,7 +450,7 @@ dma68k macro src, dest, size, type
 ;	byte - Byte to fill VRAM with
 ; ------------------------------------------------------------------------------
 
-vramFill macro addr, size, byte, ctrl, data
+vramFill macro addr, size, byte
 	lea	VDP_CTRL,a6
 	move.w	#$8F01,(a6)
 	move.l	#$93009400|((((\size)-1)&$FF00)>>8)|((((\size)-1)&$FF)<<16),(a6)
@@ -474,7 +474,7 @@ vramFill macro addr, size, byte, ctrl, data
 ;	size - Size of copy in bytes
 ; ------------------------------------------------------------------------------
 
-vramCopy macro src, dest, size, ctrl
+vramCopy macro src, dest, size
 	lea	VDP_CTRL,a6
 	move.w	#$8F01,(a6)
 	move.l	#$93009400|((((\size)-1)&$FF00)>>8)|((((\size)-1)&$FF)<<16),(a6)

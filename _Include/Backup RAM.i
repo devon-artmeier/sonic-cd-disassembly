@@ -10,25 +10,25 @@
 ; ------------------------------------------------------------------------------
 
 ; Backup RAM command IDs
-	rsset	1
-BRCMD_INIT		rs.b 1			; Initialize Backup RAM interaction
-BRCMD_STATUS		rs.b 1			; Get Backup RAM status
-BRCMD_SEARCH		rs.b 1			; Search Backup RAM
-BRCMD_READ		rs.b 1			; Read from Backup RAM
-BRCMD_WRITE		rs.b 1			; Write to Backup RAM
-BRCMD_DELETE		rs.b 1			; Delete Backup RAM
-BRCMD_FORMAT		rs.b 1			; Format Backup RAM
-BRCMD_DIR		rs.b 1			; Get Backup RAM directory
-BRCMD_VERIFY		rs.b 1			; Verify Backup RAM
-BRCMD_RDSAVE		rs.b 1			; Read save data (Sub CPU)
-BRCMD_WRSAVE		rs.b 1			; Write save data (Sub CPU)
+	rsset 1
+BURAM_CMD_INIT		rs.b 1					; Initialize Backup RAM interaction
+BURAM_CMD_STATUS	rs.b 1					; Get Backup RAM status
+BURAM_CMD_SEARCH	rs.b 1					; Search Backup RAM
+BURAM_CMD_READ		rs.b 1					; Read from Backup RAM
+BURAM_CMD_WRITE		rs.b 1					; Write to Backup RAM
+BURAM_CMD_DELETE	rs.b 1					; Delete Backup RAM
+BURAM_CMD_FORMAT	rs.b 1					; Format Backup RAM
+BURAM_CMD_DIRECTORY	rs.b 1					; Get Backup RAM directory
+BURAM_CMD_VERIFY	rs.b 1					; Verify Backup RAM
+BURAM_CMD_READ_SAVE	rs.b 1					; Read save data (Sub CPU)
+BURAM_CMD_WRITE_SAVE	rs.b 1					; Write save data (Sub CPU)
 
 ; Backup RAM types
-BRTYPE_INT	EQU	0			; Internal Backup RAM
-BRTYPE_CART	EQU	1			; RAM cartridge
+BURAM_TYPE_INTERNAL	equ 0					; Internal
+BURAM_TYPE_CART		equ 1					; Cartridge
 
 ; Backup RAM file
-BRFILENAMESZ	EQU	$B			; File name length
+BURAM_FILE_NAME_SIZE	equ 11					; File name length
 
 ; ------------------------------------------------------------------------------
 ; Save data
@@ -72,29 +72,29 @@ buram_time_stones	equ WORD_RAM_2M+save.time_stones
 ; ------------------------------------------------------------------------------
 
 	rsreset
-buramFile		rs.b BRFILENAMESZ		; File name
-buramMisc		rs.b 0				; Misc. parameters start
-buramFlag		rs.b 1				; Flag
-buramBlkSz		rs.w 1				; Block size
-BURAMPARAMSZ		rs.b 0				; Size of structure
+buram_param.file_name	rs.b BURAM_FILE_NAME_SIZE		; File name
+buram_param.misc	rs.b 0					; Misc. parameters start
+buram_param.flag	rs.b 1					; Flag
+buram_param.block_size	rs.w 1					; Block size
+buram_param.struct_size	rs.b 0					; Size of structure
 
 ; ------------------------------------------------------------------------------
 ; Shared Word RAM variables
 ; ------------------------------------------------------------------------------
 
-	rsset	WORD_RAM_2M+$20
-commandID		rs.b 1				; Command ID
-cmdStatus		rs.b 1				; Command status
-buramD0			rs.w 1				; Backup RAM function returned d0
-buramD1			rs.w 1				; Backup RAM function returned d1
-buramType		rs.b 1				; Backup RAM type
-ramCartFound		rs.b 1				; RAM cart found flag
-buramDisabled		rs.b 1				; Backup RAM disabled flag
-writeFlag		rs.b 1				; Backup RAM function write flag
-blockSize		rs.w 1				; Backup RAM function block size
+	rsset WORD_RAM_2M+$20
+buram_command		rs.b 1					; Command ID
+buram_status		rs.b 1					; Command status
+buram_d0		rs.w 1					; Backup RAM function returned d0
+buram_d1		rs.w 1					; Backup RAM function returned d1
+buram_type		rs.b 1					; Backup RAM type
+buram_cart_found	rs.b 1					; RAM cart found flag
+buram_disabled		rs.b 1					; Backup RAM disabled flag
+buram_write_flag	rs.b 1					; Backup RAM function write flag
+buram_block_size	rs.w 1					; Backup RAM function block size
 			rs.b 4
-buramParams		rs.b BURAMPARAMSZ		; Backup RAM function parameters
+buram_params		rs.b buram_param.struct_size		; Backup RAM function parameters
 			rs.b 2
-buramData		rs.b save.struct_size		; Backup RAM data
+buram_data		rs.b save.struct_size			; Backup RAM data
 
 ; ------------------------------------------------------------------------------
