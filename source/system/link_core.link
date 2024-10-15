@@ -1,0 +1,20 @@
+MEMORY {
+	ram: org = 0x6000, len = 0x2C00
+}
+
+SECTIONS {
+	code: {
+		*(code)
+		. = 0x7400;
+		*(data_temp_save)
+		. = 0x7700;
+		*(code_md_irq)
+		. = 0x7800;
+		*(code_load_file)
+		. = 0x7840;
+		*(code_get_file_name)
+		. = 0x7880;
+		*(code_file_engine)
+		*(code_end)
+	} > ram
+}

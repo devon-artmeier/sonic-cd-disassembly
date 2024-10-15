@@ -1,0 +1,13 @@
+MEMORY {
+	ram: org = 0xB800, len = 0x4400
+}
+
+SECTIONS {
+	code: {
+		*(data)
+		. = 0xC000;
+		*(code)
+		. = 0xFBFE;
+		SHORT(0);
+	} > ram
+}

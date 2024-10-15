@@ -1,0 +1,13 @@
+VASM_M68K         := vasmm68k_mot
+VASM_Z80          := vasmz80_oldstyle
+VLINK             := vlink
+EXTRACT_SYM       := extract-asm-symbols
+
+MKDIR             := mkdir -p
+RM                := rm -rf
+
+VASM_FLAGS        := -Fvobj -quiet -ldots -unsshift 
+VASM_M68K_FLAGS   := $(VASM_FLAGS) -devpac -opt-p=68000 -opt-o3+ -opt-ow-
+VASM_Z80_FLAGS    := $(VASM_FLAGS)
+VLINK_FLAGS       := -b rawbin1
+EXTRACT_SYM_FLAGS := -m asm -v u64
