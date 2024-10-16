@@ -1,13 +1,46 @@
+# Tools
 VASM_M68K         := vasmm68k_mot
 VASM_Z80          := vasmz80_oldstyle
 VLINK             := vlink
 EXTRACT_SYM       := extract-asm-symbols
 
+# Commands
 MKDIR             := mkdir -p
 RM                := rm -rf
 
-VASM_FLAGS        := -Fvobj -quiet -ldots -unsshift 
+# Folder paths
+BUILD_PATH        := $(ROOT_PATH)/build
+FILES_PATH        := $(BUILD_PATH)/files
+INCLUDE_PATH      := $(ROOT_PATH)/include
+OBJ_PATH          := .obj
+
+# Flags
+VASM_FLAGS        := -Fvobj -quiet -ldots -unsshift -I$(INCLUDE_PATH)
 VASM_M68K_FLAGS   := $(VASM_FLAGS) -devpac -opt-p=68000 -opt-o3+ -opt-ow-
 VASM_Z80_FLAGS    := $(VASM_FLAGS)
 VLINK_FLAGS       := -b rawbin1
 EXTRACT_SYM_FLAGS := -m asm -v u64
+
+# Main CPU dependencies
+DEPEND_MAIN       := $(INCLUDE_PATH)/backup_ram.inc \
+                     $(INCLUDE_PATH)/da_garden.inc \
+                     $(INCLUDE_PATH)/game_variables.inc \
+                     $(INCLUDE_PATH)/fm_sound_ids.inc \
+                     $(INCLUDE_PATH)/fm_driver.inc \
+                     $(INCLUDE_PATH)/mcd_main.inc \
+                     $(INCLUDE_PATH)/mmd.inc \
+                     $(INCLUDE_PATH)/special_stage.inc \
+                     $(INCLUDE_PATH)/system_ids.inc
+
+# Sub CPU dependencies
+DEPEND_SUB        := $(INCLUDE_PATH)/backup_ram.inc \
+                     $(INCLUDE_PATH)/cdda_ids.inc \
+                     $(INCLUDE_PATH)/da_garden.inc \
+                     $(INCLUDE_PATH)/mcd_sub.inc \
+                     $(INCLUDE_PATH)/pcm_driver.inc \
+                     $(INCLUDE_PATH)/pcm_sound_ids.inc \
+                     $(INCLUDE_PATH)/special_stage.inc \
+                     $(INCLUDE_PATH)/system.inc \
+                     $(INCLUDE_PATH)/system_ids.inc \
+                     $(INCLUDE_PATH)/system_symbols.inc \
+                     $(ROOT_PATH)/sound/pcm/variables.inc

@@ -7,7 +7,7 @@ SECTIONS {
 		*(data)
 		. = 0xC000;
 		*(code)
-		. = 0xFBFE;
-		SHORT(0);
+		. = 0xFBFF;
+		BYTE(0);
 	} > ram
 }

@@ -1,0 +1,9 @@
+MEMORY {
+	ram: org = 0xFF0000, len = 0xE00
+}
+
+SECTIONS {
+	code: {
+		*(code)
+	} > ram
+}

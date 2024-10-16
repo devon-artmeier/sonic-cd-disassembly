@@ -1,0 +1,11 @@
+MEMORY {
+	ram: org = 0xFEFF00, len = 0x1000
+}
+
+SECTIONS {
+	code: {
+		*(code)
+		. = 0xFF0EFF;
+		BYTE(0);
+	} > ram
+}

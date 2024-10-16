@@ -378,7 +378,7 @@ BRMVERIFY		equ 8					; Verify written Backup RAM data
 ; ------------------------------------------------------------------------------
 
 requestZ80Bus macro
-	if (\#)>0
+	ifgt \#
 		move.w	#$100,\1
 	else
 		move.w	#$100,Z80_BUS
@@ -394,7 +394,7 @@ requestZ80Bus macro
 
 waitZ80Bus macro
 .Wait\@:
-	if (\#)>0
+	ifgt \#
 		btst	#0,\1
 	else
 		btst	#0,Z80_BUS
@@ -410,7 +410,7 @@ waitZ80Bus macro
 ; ------------------------------------------------------------------------------
 
 getZ80Bus macro
-	if (\#)>0
+	ifgt \#
 		requestZ80Bus \1
 		waitZ80Bus \1
 	else
@@ -427,7 +427,7 @@ getZ80Bus macro
 ; ------------------------------------------------------------------------------
 
 releaseZ80Bus macro
-	if (\#)>0
+	ifgt \#
 		move.w	#0,\1
 	else
 		move.w	#0,Z80_BUS
@@ -442,7 +442,7 @@ releaseZ80Bus macro
 ; ------------------------------------------------------------------------------
 
 resetZ80On macro
-	if (\#)>0
+	ifgt \#
 		move.w	#0,\1
 	else
 		move.w	#0,Z80_RESET
@@ -458,7 +458,7 @@ resetZ80On macro
 ; ------------------------------------------------------------------------------
 
 resetZ80Off macro
-	if (\#)>0
+	ifgt \#
 		move.w	#$100,\1
 	else
 		move.w	#$100,Z80_RESET
@@ -474,7 +474,7 @@ resetZ80Off macro
 
 waitDma macro ctrl
 .Wait\@:
-	if (\#)>0
+	ifgt \#
 		btst	#1,\1
 	else
 		move.w	VDP_CTRL,d0
@@ -509,7 +509,7 @@ VRAM_COPY_CMD		equ $000000C0				; VRAM DMA copy
 
 vdpCmd macro
 	__cmd: set (\3\_\4\_CMD)|(((\2)&$3FFF)<<16)|((\2)/$4000)
-	if (\#)=5
+	ifeq (\#)-5
 		\1	#__cmd,\5
 	else
 		\1	__cmd
@@ -529,7 +529,7 @@ vdpCmd macro
 
 vdpCmdLo macro
 	__cmd: set ((\3\_\4\_CMD)&$FFFF)|((\2)/$4000)
-	if (\#)=5
+	ifeq (\#)-5
 		\1	#__cmd,\5
 	else
 		\1	__cmd
@@ -549,7 +549,7 @@ vdpCmdLo macro
 
 vdpCmdHi macro
 	__cmd: set ((\3\_\4\_CMD)>>16)|((\2)&$3FFF)
-	if (\#)=5
+	ifeq (\#)-5
 		\1	#__cmd,\5
 	else
 		\1	__cmd
