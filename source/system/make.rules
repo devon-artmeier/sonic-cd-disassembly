@@ -1,0 +1,144 @@
+# Source folder paths
+SRC_PATH_SYSTEM    := $(SRC_PATH)/system
+SRC_PATH_SUB_CORE  := $(SRC_PATH_SYSTEM)/sub_core
+SRC_PATH_SUB_EXT   := $(SRC_PATH_SYSTEM)/sub_extension
+SRC_PATH_MAIN_BOOT := $(SRC_PATH_SYSTEM)/main_boot
+SRC_PATH_MAIN_CORE := $(SRC_PATH_SYSTEM)/main_core
+
+# Object folder paths
+OBJ_PATH_SUB_CORE  := $(OBJ_PATH)/$(SRC_PATH_SUB_CORE)
+OBJ_PATH_SUB_EXT   := $(OBJ_PATH)/$(SRC_PATH_SUB_EXT)
+OBJ_PATH_MAIN_BOOT := $(OBJ_PATH)/$(SRC_PATH_MAIN_BOOT)
+OBJ_PATH_MAIN_CORE := $(OBJ_PATH)/$(SRC_PATH_MAIN_CORE)
+
+# Sub CPU core files
+SRC_SUB_CORE       := $(SRC_PATH_SUB_CORE)/header.asm \
+                      $(SRC_PATH_SUB_CORE)/initialize.asm \
+                      $(SRC_PATH_SUB_CORE)/temp_save.asm \
+                      $(SRC_PATH_SUB_CORE)/interrupt.asm \
+                      $(SRC_PATH_SUB_CORE)/load_file.asm \
+                      $(SRC_PATH_SUB_CORE)/get_file_name.asm \
+                      $(SRC_PATH_SUB_CORE)/file_engine.asm
+OBJ_SUB_CORE       := $(patsubst %.asm,$(OBJ_PATH)/%.o,$(SRC_SUB_CORE))
+
+DEPEND_SUB_CORE    := $(INCLUDE_PATH)/backup_ram.inc \
+                      $(INCLUDE_PATH)/mcd_sub.inc \
+                      $(INCLUDE_PATH)/system.inc
+
+SYMBOLS_SUB_CORE   := -iy TempSaveData \
+                      -iy MegaDriveIrq \
+                      -iy LoadFile \
+                      -iy GetFileName \
+                      -iy FileFunction
+
+# Sub CPU extension files
+SRC_SUB_EXT        := $(SRC_PATH_SUB_EXT)/file_name_table.asm \
+                      $(SRC_PATH_SUB_EXT)/backup_ram_params.asm \
+                      $(SRC_PATH_SUB_EXT)/main.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_pencil_test.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_backup_ram_manager.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_thank_you.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_special_stage_flags.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_backup_ram_init.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_save_data.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_stage.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_md_init.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_title.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_comin_soon.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_easter_egg.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_simple_file.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_visual_mode.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_warp.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_time_attack.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_da_garden.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_fmv.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_special_stage.asm \
+                      $(SRC_PATH_SUB_EXT)/cmd_sound.asm \
+                      $(SRC_PATH_SUB_EXT)/interrupt.asm \
+                      $(SRC_PATH_SUB_EXT)/communication.asm \
+                      $(SRC_PATH_SUB_EXT)/cdda_ids.asm \
+                      $(SRC_PATH_SUB_EXT)/backup_ram_scratch.asm
+OBJ_SUB_EXT        := $(patsubst %.asm,$(OBJ_PATH)/%.o,$(SRC_SUB_EXT))
+
+DEPEND_SUB_EXT     := $(INCLUDE_PATH)/backup_ram.inc \
+                      $(INCLUDE_PATH)/cdda_ids.inc \
+                      $(INCLUDE_PATH)/da_garden.inc \
+                      $(INCLUDE_PATH)/mcd_sub.inc \
+                      $(INCLUDE_PATH)/pcm_driver.inc \
+                      $(INCLUDE_PATH)/pcm_sound_ids.inc \
+                      $(INCLUDE_PATH)/special_stage.inc \
+                      $(INCLUDE_PATH)/system.inc \
+                      $(INCLUDE_PATH)/system_symbols.inc
+
+SYMBOLS_SUB_EXT    := -ip FILE_ \
+                      -ip SYS_ \
+                      -xp FILE_STATUS_ \
+                      -xy FILE_NAME_SIZE
+
+# Main CPU bootloader files
+SRC_MAIN_BOOT      := $(SRC_PATH_MAIN_BOOT)/security_usa.asm \
+                      $(SRC_PATH_MAIN_BOOT)/boot.asm
+OBJ_MAIN_BOOT      := $(patsubst %.asm,$(OBJ_PATH)/%.o,$(SRC_MAIN_BOOT))
+
+# Main CPU core files
+SRC_MAIN_CORE      := $(SRC_PATH_MAIN_CORE)/main.asm \
+                      $(SRC_PATH_MAIN_CORE)/best_staff_times.asm \
+                      $(SRC_PATH_MAIN_CORE)/backup_ram_manager.asm \
+                      $(SRC_PATH_MAIN_CORE)/special_stage_demo.asm \
+                      $(SRC_PATH_MAIN_CORE)/game.asm \
+                      $(SRC_PATH_MAIN_CORE)/stage_select.asm \
+                      $(SRC_PATH_MAIN_CORE)/demo.asm \
+                      $(SRC_PATH_MAIN_CORE)/sound_test.asm \
+                      $(SRC_PATH_MAIN_CORE)/visual_mode.asm \
+                      $(SRC_PATH_MAIN_CORE)/da_garden.asm \
+                      $(SRC_PATH_MAIN_CORE)/time_attack.asm \
+                      $(SRC_PATH_MAIN_CORE)/mmd.asm \
+                      $(SRC_PATH_MAIN_CORE)/interrupt.asm \
+                      $(SRC_PATH_MAIN_CORE)/save_data.asm \
+                      $(SRC_PATH_MAIN_CORE)/functions.asm
+OBJ_MAIN_CORE      := $(patsubst %.asm,$(OBJ_PATH)/%.o,$(SRC_MAIN_CORE))
+
+# Main CPU core rules
+$(OUT_MAIN_CORE): $(OBJ_MAIN_CORE)
+	$(VLINK) $(VLINK_FLAGS) -T $(SRC_PATH_SYSTEM)/link_main_core.link -o $@ $^
+
+$(OBJ_MAIN_CORE): $(OBJ_PATH)/%.o: %.asm $(OBJ_PATH_MAIN_CORE) $(DEPEND_MAIN) $(OUT_SUB_EXT)
+	$(VASM_M68K) $(VASM_M68K_FLAGS) -o $@ $<
+
+# Main CPU bootloader rules
+$(OUT_MAIN_BOOT): $(OBJ_MAIN_BOOT)
+	$(VLINK) $(VLINK_FLAGS) -T $(SRC_PATH_SYSTEM)/link_main_boot.link -o $@ $^
+
+$(OBJ_MAIN_BOOT): $(OBJ_PATH)/%.o: %.asm $(OBJ_PATH_MAIN_BOOT) $(DEPEND_MAIN) $(OUT_SUB_EXT)
+	$(VASM_M68K) $(VASM_M68K_FLAGS) -o $@ $<
+	
+# Sub CPU extension rules
+$(OUT_SUB_EXT): $(OBJ_SUB_EXT)
+	$(VLINK) $(VLINK_FLAGS) -T $(SRC_PATH_SYSTEM)/link_sub_extension.link -o $@ $^
+	$(EXTRACT_SYM) $(EXTRACT_SYM_FLAGS) -o $(INCLUDE_PATH)/system_ids.inc $(SYMBOLS_SUB_EXT) $(OBJ_PATH_SUB_EXT)/file_name_table.o $(OBJ_PATH_SUB_EXT)/main.o
+	$(RM) "spx.sym"
+
+$(OBJ_SUB_EXT): $(OBJ_PATH)/%.o: %.asm $(OBJ_PATH_SUB_EXT) $(DEPEND_SUB_EXT) $(OUT_SUB_CORE)
+	$(VASM_M68K) $(VASM_M68K_FLAGS) -o $@ $<
+
+# Sub CPU core rules
+$(OUT_SUB_CORE): $(OBJ_SUB_CORE)
+	$(VLINK) $(VLINK_FLAGS) -T $(SRC_PATH_SYSTEM)/link_sub_core.link -symfile "sp.sym" -o $@ $^
+	$(EXTRACT_SYM) $(EXTRACT_SYM_FLAGS) -o $(INCLUDE_PATH)/system_symbols.inc $(SYMBOLS_SUB_CORE) sp.sym
+	$(RM) "sp.sym"
+
+$(OBJ_SUB_CORE): $(OBJ_PATH)/%.o: %.asm $(OBJ_PATH_SUB_CORE) $(DEPEND_SUB_CORE)
+	$(VASM_M68K) $(VASM_M68K_FLAGS) -o $@ $<
+
+# Create folders
+$(OBJ_PATH_SUB_CORE): $(OBJ_PATH)
+	$(MKDIR) "$@"
+
+$(OBJ_PATH_SUB_EXT): $(OBJ_PATH)
+	$(MKDIR) "$@"
+
+$(OBJ_PATH_MAIN_BOOT): $(OBJ_PATH)
+	$(MKDIR) "$@"
+
+$(OBJ_PATH_MAIN_CORE): $(OBJ_PATH)
+	$(MKDIR) "$@"

@@ -1,0 +1,12 @@
+MEMORY {
+	ram: org = 0xFF1F00, len = 0xDC00
+}
+
+SECTIONS {
+	code: {
+		*(code)
+		*(code_buram_funcs)
+		*(code_2)
+		*(data)
+	} > ram
+}

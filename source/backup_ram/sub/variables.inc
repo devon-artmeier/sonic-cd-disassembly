@@ -3,18 +3,17 @@
 ; By Devon Artmeier
 ; ------------------------------------------------------------------------------
 
-	include	"mcd_sub.inc"
-	include	"system.inc"
-	include	"backup_ram.inc"
-
-	section data_temp_save
-	
 ; ------------------------------------------------------------------------------
-; Temporary save data area
+; Variables
 ; ------------------------------------------------------------------------------
 
-	xdef TempSaveData
-TempSaveData:
-	include	"../../backup_ram/core/initial_data.asm"
+	rsset	PRG_RAM+$16000
+VARIABLES		rs.b 0					; Start of variables
+			rs.b $800
+irq1_flag		rs.b 1					; Graphics interrupt flag
+			rs.b $17FF
+VARIABLES_SIZE		equ __RS-VARIABLES			; Size of variables area
+
+decomp_window		equ WORD_RAM_2M+$38000			; Decompression sliding window
 
 ; ------------------------------------------------------------------------------

@@ -3,18 +3,18 @@
 ; By Devon Artmeier
 ; ------------------------------------------------------------------------------
 
-	include	"mcd_sub.inc"
-	include	"system.inc"
-	include	"backup_ram.inc"
+	include	"include_sub.inc"
+	include	"variables.inc"
 
-	section data_temp_save
-	
+	section code
+
 ; ------------------------------------------------------------------------------
-; Temporary save data area
+; Unknown graphics interrupt handler
 ; ------------------------------------------------------------------------------
 
-	xdef TempSaveData
-TempSaveData:
-	include	"../../backup_ram/core/initial_data.asm"
+	xdef GraphicsIrq
+GraphicsIrq:
+	move.b	#0,irq1_flag					; Clear IRQ1 flag
+	rte
 
 ; ------------------------------------------------------------------------------

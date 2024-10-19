@@ -14,7 +14,6 @@ SUB_CPU			equ 1
 	include	"backup_ram.inc"
 	include	"cdda_ids.inc"
 	include	"pcm_sound_ids.inc"
-	include	"pcm_driver.inc"
 	include	"da_garden.inc"
 	include	"special_stage.inc"
 

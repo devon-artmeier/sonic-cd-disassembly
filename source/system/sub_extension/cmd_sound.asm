@@ -8,6 +8,7 @@
 	include	"system_symbols.inc"
 	include	"pcm_sound_ids.inc"
 	include	"pcm_driver.inc"
+	include	"../../sound/pcm/variables.inc"
 
 	section code
 	

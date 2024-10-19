@@ -4,15 +4,12 @@ VASM_Z80          := vasmz80_oldstyle
 VLINK             := vlink
 EXTRACT_SYM       := extract-asm-symbols
 
-# Commands
-MKDIR             := mkdir -p
-RM                := rm -rf
-
 # Folder paths
-BUILD_PATH        := $(ROOT_PATH)/build
+BUILD_PATH        := build
 FILES_PATH        := $(BUILD_PATH)/files
-INCLUDE_PATH      := $(ROOT_PATH)/include
-OBJ_PATH          := .obj
+OBJ_PATH          := $(BUILD_PATH)/.obj
+INCLUDE_PATH      := include
+SRC_PATH          := source
 
 # Flags
 VASM_FLAGS        := -Fvobj -quiet -ldots -unsshift -I$(INCLUDE_PATH)
@@ -25,6 +22,7 @@ EXTRACT_SYM_FLAGS := -m asm -v u64
 DEPEND_MAIN       := $(INCLUDE_PATH)/backup_ram.inc \
                      $(INCLUDE_PATH)/da_garden.inc \
                      $(INCLUDE_PATH)/game_variables.inc \
+                     $(INCLUDE_PATH)/include_main.inc \
                      $(INCLUDE_PATH)/fm_sound_ids.inc \
                      $(INCLUDE_PATH)/fm_driver.inc \
                      $(INCLUDE_PATH)/mcd_main.inc \
@@ -36,11 +34,47 @@ DEPEND_MAIN       := $(INCLUDE_PATH)/backup_ram.inc \
 DEPEND_SUB        := $(INCLUDE_PATH)/backup_ram.inc \
                      $(INCLUDE_PATH)/cdda_ids.inc \
                      $(INCLUDE_PATH)/da_garden.inc \
+                     $(INCLUDE_PATH)/include_sub.inc \
                      $(INCLUDE_PATH)/mcd_sub.inc \
-                     $(INCLUDE_PATH)/pcm_driver.inc \
                      $(INCLUDE_PATH)/pcm_sound_ids.inc \
                      $(INCLUDE_PATH)/special_stage.inc \
                      $(INCLUDE_PATH)/system.inc \
                      $(INCLUDE_PATH)/system_ids.inc \
                      $(INCLUDE_PATH)/system_symbols.inc \
-                     $(ROOT_PATH)/sound/pcm/variables.inc
+                     source/sound/pcm/variables.inc
+
+# Output files
+OUT_SUB_CORE      := $(BUILD_PATH)/sp.bin
+OUT_SUB_EXT       := $(FILES_PATH)/SPX___.BIN
+OUT_MAIN_BOOT     := $(BUILD_PATH)/ip.bin
+OUT_MAIN_CORE     := $(FILES_PATH)/IPX___.MMD
+OUT_BURAM_INIT    := $(FILES_PATH)/BRAMINIT.MMD
+OUT_BURAM_SUB     := $(FILES_PATH)/BRAMSUB.BIN
+
+OUT_FILES         := $(OUT_SUB_CORE) \
+                     $(OUT_SUB_EXT) \
+		     $(OUT_MAIN_BOOT) \
+		     $(OUT_MAIN_CORE) \
+		     $(OUT_BURAM_INIT) \
+		     $(OUT_BURAM_SUB)
+
+# Compile everything together
+all: $(BUILD_PATH) $(FILES_PATH) $(OBJ_PATH) $(OUT_FILES)
+
+# Clean
+clean:
+	$(RM) $(BUILD_PATH)
+
+# Rules files
+        include $(SRC_PATH)/system/make.rules
+        include $(SRC_PATH)/backup_ram/make.rules
+
+# Create folders
+$(OBJ_PATH):
+	$(MKDIR) "$@"
+
+$(FILES_PATH): $(BUILD_PATH)
+	$(MKDIR) "$@"
+
+$(BUILD_PATH):
+	$(MKDIR) "$@"

@@ -1,0 +1,76 @@
+# Source folder paths
+SRC_PATH_BURAM      := $(SRC_PATH)/backup_ram
+SRC_PATH_BURAM_CORE := $(SRC_PATH_BURAM)/core
+SRC_PATH_BURAM_INIT := $(SRC_PATH_BURAM)/initialize
+SRC_PATH_BURAM_SUB  := $(SRC_PATH_BURAM)/sub
+
+# Object folder paths
+OBJ_PATH_BURAM_INIT := $(OBJ_PATH)/$(SRC_PATH_BURAM_INIT)
+OBJ_PATH_BURAM_SUB  := $(OBJ_PATH)/$(SRC_PATH_BURAM_SUB)
+
+# Initialization files
+SRC_BURAM_INIT     := $(SRC_PATH_BURAM_INIT)/main.asm \
+                      $(SRC_PATH_BURAM_INIT)/interrupt.asm \
+                      $(SRC_PATH_BURAM_INIT)/message.asm \
+                      $(SRC_PATH_BURAM_INIT)/finish.asm \
+                      $(SRC_PATH_BURAM_INIT)/functions.asm \
+                      $(SRC_PATH_BURAM_INIT)/load_message_art.asm \
+                      $(SRC_PATH_BURAM_INIT)/nemesis.asm \
+                      $(SRC_PATH_BURAM_INIT)/draw_message_tilemap.asm \
+                      $(SRC_PATH_BURAM_INIT)/enigma.asm \
+                      $(SRC_PATH_BURAM_INIT)/data_usa.asm
+OBJ_BURAM_INIT     := $(patsubst %.asm,$(OBJ_PATH)/%.o,$(SRC_BURAM_INIT))
+
+BURAM_INIT_DEPEND  := $(DEPEND_MAIN) \
+                      $(SRC_PATH_BURAM_INIT)/variables.inc \
+                      $(SRC_PATH_BURAM_INIT)/data/cart_unformatted_english_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/cart_unformatted_japan_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/data_corrupt_english_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/data_corrupt_japan_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/eggman_art.nem \
+                      $(SRC_PATH_BURAM_INIT)/data/eggman_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/message_english_art.nem \
+                      $(SRC_PATH_BURAM_INIT)/data/message_japan_art.nem \
+                      $(SRC_PATH_BURAM_INIT)/data/message_usa_art.nem \
+                      $(SRC_PATH_BURAM_INIT)/data/palette.pal \
+                      $(SRC_PATH_BURAM_INIT)/data/ram_full_english_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/ram_full_japan_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/unformatted_english_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/unformatted_japan_tilemap.eni \
+                      $(SRC_PATH_BURAM_INIT)/data/unformatted_usa_tilemap.eni \
+
+BURAM_INIT_FUNCS   := $(OBJ_PATH)/$(SRC_PATH_BURAM_INIT)/backup_ram_functions.obj
+
+# Sub CPU extension files
+SRC_BURAM_SUB      := $(SRC_PATH_BURAM_SUB)/main.asm \
+                      $(SRC_PATH_BURAM_SUB)/interrupt.asm \
+                      $(SRC_PATH_BURAM_SUB)/functions.asm \
+                      $(SRC_PATH_BURAM_SUB)/command.asm
+OBJ_BURAM_SUB      := $(patsubst %.asm,$(OBJ_PATH)/%.o,$(SRC_BURAM_SUB))
+
+BURAM_SUB_DEPEND   := $(DEPEND_SUB) \
+                      $(SRC_PATH_BURAM_SUB)/variables.inc
+
+# Initialization rules
+$(OUT_BURAM_INIT): $(OBJ_BURAM_INIT) $(BURAM_INIT_FUNCS)
+	$(VLINK) $(VLINK_FLAGS) -T $(SRC_PATH_BURAM)/link_initialize.link -o $@ $^
+
+$(OBJ_BURAM_INIT): $(OBJ_PATH)/%.o: %.asm $(OBJ_PATH_BURAM_INIT) $(BURAM_INIT_DEPEND)
+	$(VASM_M68K) $(VASM_M68K_FLAGS) -o $@ $<
+
+$(BURAM_INIT_FUNCS): $(SRC_PATH_BURAM_CORE)/main_functions.asm
+	$(VASM_M68K) $(VASM_M68K_FLAGS) -o $@ $<
+	
+# Sub CPU program rules
+$(OUT_BURAM_SUB): $(OBJ_BURAM_SUB)
+	$(VLINK) $(VLINK_FLAGS) -T $(SRC_PATH_BURAM)/link_sub.link -o $@ $^
+
+$(OBJ_BURAM_SUB): $(OBJ_PATH)/%.o: %.asm $(OBJ_PATH_BURAM_SUB) $(BURAM_SUB_DEPEND)
+	$(VASM_M68K) $(VASM_M68K_FLAGS) -o $@ $<
+
+# Create folders
+$(OBJ_PATH_BURAM_INIT): $(OBJ_PATH)
+	$(MKDIR) "$@"
+
+$(OBJ_PATH_BURAM_SUB): $(OBJ_PATH)
+	$(MKDIR) "$@"
